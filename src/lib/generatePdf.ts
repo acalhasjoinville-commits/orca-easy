@@ -579,6 +579,23 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   </div>
 </div>
 
+<script>
+  function preparePrintA4() {
+    document.body.classList.add('a4-export');
+    setTimeout(() => {
+      window.print();
+    }, 120);
+  }
+
+  window.addEventListener('beforeprint', () => {
+    document.body.classList.add('a4-export');
+  });
+
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('a4-export');
+  });
+</script>
+
 </body>
 </html>`;
 
