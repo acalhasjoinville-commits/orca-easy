@@ -123,6 +123,7 @@ function dbToPolitica(row: any): PoliticaComercial {
     formasPagamento: row.formas_pagamento || '',
     garantia: row.garantia || '',
     tempoGarantia: row.tempo_garantia || '',
+    termoRecebimentoOs: row.termo_recebimento_os || '',
   };
 }
 
@@ -134,6 +135,7 @@ function politicaToDb(p: PoliticaComercial) {
     formas_pagamento: p.formasPagamento,
     garantia: p.garantia,
     tempo_garantia: p.tempoGarantia,
+    termo_recebimento_os: p.termoRecebimentoOs,
   };
 }
 

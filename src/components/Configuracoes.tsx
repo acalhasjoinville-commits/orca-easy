@@ -487,6 +487,12 @@ export function Configuracoes() {
         <Textarea value={form.garantia || ''} onChange={e => setField('garantia', e.target.value)}
           placeholder="Detalhes dos termos de garantia..." rows={2} className="text-sm" />
       </div>
+      <div>
+        <Label className="text-xs font-semibold text-accent">Termo de Recebimento (OS)</Label>
+        <Textarea value={form.termoRecebimentoOs || ''} onChange={e => setField('termoRecebimentoOs', e.target.value)}
+          placeholder="Texto do canhoto de entrega da Ordem de Serviço..." rows={3} className="text-sm" />
+        <p className="text-[10px] text-muted-foreground mt-1">Este texto será exibido no canhoto de entrega da OS.</p>
+      </div>
     </div>
   );
 

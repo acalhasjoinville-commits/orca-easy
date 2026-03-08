@@ -150,11 +150,11 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
           </>
         ) : null}
 
-        {/* TERMO DE RECEBIMENTO */}
-        <Text style={s.sectionTitle}>Termo de Recebimento</Text>
+        {/* CANHOTO DE ENTREGA */}
+        <Text style={s.sectionTitle}>Canhoto de Entrega (Assinar somente após a execução)</Text>
         <View style={s.termoBox}>
           <Text style={s.termoText}>
-            Declaro que os serviços acima descritos foram executados e entregues conforme o solicitado, em perfeitas condições.
+            {termoRecebimento || 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.'}
           </Text>
         </View>
 
