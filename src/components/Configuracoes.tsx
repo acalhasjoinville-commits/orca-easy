@@ -87,6 +87,7 @@ export function Configuracoes() {
         descricaoGeral: form.descricaoGeral || '',
         formasPagamento: form.formasPagamento || '',
         garantia: form.garantia || '',
+        tempoGarantia: form.tempoGarantia || '1 ano',
       };
       const updated = editItem ? politicas.map(e => e.id === id ? entry : e) : [...politicas, entry];
       setPoliticas(updated); storage.setPoliticas(updated);
