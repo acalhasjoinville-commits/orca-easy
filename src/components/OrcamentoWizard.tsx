@@ -429,19 +429,60 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   <><Check className="mr-2 h-5 w-5" /> Salvar ({itens.length})</>
                 )}
               </Button>
-              {isEditing && (
-                <Button
-                  onClick={() => {
-                    const cli = clientes.find(c => c.id === editingOrcamento?.clienteId);
-                    generatePdf(editingOrcamento!, cli, empresa);
-                  }}
-                  variant="outline"
-                  className="h-11 px-4 font-semibold"
-                  style={{ borderColor: corDestaque, color: corDestaque }}
-                >
-                  <FileDown className="mr-1 h-5 w-5" /> PDF
-                </Button>
-              )}
+              <Button
+                onClick={() => {
+                  if (itens.length === 0 || !selectedCliente) return;
+                  // Build current orcamento from UI state
+                  let orcToSave: Orcamento;
+                  if (isEditing && editingOrcamento) {
+                    orcToSave = {
+                      ...editingOrcamento,
+                      clienteId: selectedCliente.id,
+                      nomeCliente: selectedCliente.nomeRazaoSocial,
+                      itensServico: itens,
+                      custoTotalObra: totalCusto,
+                      valorVenda: totalVenda,
+                      desconto: descontoNum,
+                      valorFinal,
+                      status,
+                      validade,
+                      descricaoGeral,
+                      formasPagamento,
+                      garantia,
+                      tempoGarantia,
+                    };
+                    storage.updateOrcamento(orcToSave);
+                  } else {
+                    orcToSave = {
+                      id: crypto.randomUUID(),
+                      numeroOrcamento: storage.getNextNumeroOrcamento(),
+                      dataCriacao: new Date().toISOString(),
+                      clienteId: selectedCliente.id,
+                      nomeCliente: selectedCliente.nomeRazaoSocial,
+                      itensServico: itens,
+                      custoTotalObra: totalCusto,
+                      valorVenda: totalVenda,
+                      desconto: descontoNum,
+                      valorFinal,
+                      status,
+                      validade,
+                      descricaoGeral,
+                      formasPagamento,
+                      garantia,
+                      tempoGarantia,
+                    };
+                    storage.addOrcamento(orcToSave);
+                  }
+                  const cli = clientes.find(c => c.id === selectedCliente.id);
+                  generatePdf(orcToSave, cli, empresa);
+                  toast.success('PDF gerado e orçamento salvo!');
+                }}
+                variant="outline"
+                className="h-11 px-4 font-semibold"
+                style={{ borderColor: corDestaque, color: corDestaque }}
+              >
+                <FileDown className="mr-1 h-5 w-5" /> PDF
+              </Button>
             </div>
           </div>
         </div>
