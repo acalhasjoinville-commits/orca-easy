@@ -60,9 +60,7 @@ export interface ServicoTemplate {
   id: string;
   nomeServico: string;
   regraId: string;
-  permiteMotor1: boolean;
-  permiteMotor2: boolean;
-  motorPreferencial: MotorType;
+  motorType: MotorType;
   materialPadrao: string;
   espessuraPadrao: number;
   cortePadrao: number;
