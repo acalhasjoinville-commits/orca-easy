@@ -32,39 +32,59 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
 
   const handleDownload = async () => {
     if (generating) return;
+
+    const popup = window.open('about:blank', '_blank');
     setGenerating(true);
 
-    // Yield to UI thread so spinner renders
+    // Yield to UI thread so spinner renders before heavy PDF work
     await new Promise((r) => setTimeout(r, 50));
 
-    try {
-      const blob = await pdf(
+    const buildBlob = async (withLogo: boolean) => {
+      return pdf(
         <OrcamentoPDF
           orcamento={orcamento}
           cliente={cliente}
           empresa={empresa}
-          logoBase64={logoBase64}
+          logoBase64={withLogo ? logoBase64 : null}
         />
       ).toBlob();
+    };
+
+    try {
+      let blob: Blob;
+
+      try {
+        blob = await buildBlob(Boolean(logoBase64));
+      } catch (firstError) {
+        if (!logoBase64) throw firstError;
+        console.warn('Falha ao renderizar PDF com logo, tentando sem logo.', firstError);
+        blob = await buildBlob(false);
+      }
 
       const url = URL.createObjectURL(blob);
       const fileName = `orcamento-${orcamento.numeroOrcamento || 'novo'}.pdf`;
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        window.open(url, '_blank');
+      if (popup && !popup.closed) {
+        popup.location.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
       } else {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          window.open(url, '_blank');
+        } else {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 15000);
       }
     } catch (err) {
+      if (popup && !popup.closed) popup.close();
       console.error('Erro ao gerar PDF:', err);
-      toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente.', variant: 'destructive' });
+      toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente. Se persistir, gere sem logo.', variant: 'destructive' });
     } finally {
       setGenerating(false);
     }
