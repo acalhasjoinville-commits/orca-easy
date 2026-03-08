@@ -20,6 +20,7 @@ function MinhaEmpresaForm() {
     logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
     bairro: '', cidade: '', estado: '', corPrimaria: '#0B1B32', corDestaque: '#F57C00',
+    slogan: '',
   });
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
