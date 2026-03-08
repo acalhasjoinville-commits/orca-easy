@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Plus, DollarSign, FileText } from 'lucide-react';
+import { LayoutDashboard, Settings, Plus, DollarSign, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { Tab } from '@/components/AppSidebar';
