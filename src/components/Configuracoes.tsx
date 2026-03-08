@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { storage } from '@/lib/storage';
-import { Motor1Entry, Motor2Entry, InsumoEntry, ReceitaServico } from '@/lib/types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, MotorType } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,20 +16,15 @@ export function Configuracoes() {
   const [motor1, setMotor1] = useState(storage.getMotor1());
   const [motor2, setMotor2] = useState(storage.getMotor2());
   const [insumos, setInsumos] = useState(storage.getInsumos());
-  const [receitas, setReceitas] = useState(storage.getReceitas());
+  const [regras, setRegras] = useState(storage.getRegras());
+  const [servicos, setServicos] = useState(storage.getServicos());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
 
-  // Form state
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  const openAdd = () => {
-    setEditItem(null);
-    setForm({});
-    setDialogOpen(true);
-  };
-
+  const openAdd = () => { setEditItem(null); setForm({}); setDialogOpen(true); };
   const openEdit = (item: any) => {
     setEditItem(item);
     const f: Record<string, string> = {};
@@ -52,18 +48,29 @@ export function Configuracoes() {
       const entry: InsumoEntry = { id, nome: form.nome || '', custoUnitario: parseFloat(form.custoUnitario) || 0 };
       const updated = editItem ? insumos.map(e => e.id === id ? entry : e) : [...insumos, entry];
       setInsumos(updated); storage.setInsumos(updated);
-    } else {
-      const entry: ReceitaServico = {
-        id, nomeServico: form.nomeServico || '',
+    } else if (tab === 'regras') {
+      const entry: RegraCalculo = {
+        id, nomeRegra: form.nomeRegra || '',
         divisorSuporte: parseFloat(form.divisorSuporte) || 0,
         divisorPU: parseFloat(form.divisorPU) || 0,
         multiplicadorRebite: parseFloat(form.multiplicadorRebite) || 0,
+      };
+      const updated = editItem ? regras.map(e => e.id === id ? entry : e) : [...regras, entry];
+      setRegras(updated); storage.setRegras(updated);
+    } else if (tab === 'catalogo') {
+      const entry: ServicoTemplate = {
+        id, nomeServico: form.nomeServico || '',
+        regraId: form.regraId || '',
+        motorPadrao: (form.motorPadrao as MotorType) || 'motor1',
+        materialPadrao: form.materialPadrao || '',
+        espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
+        cortePadrao: parseFloat(form.cortePadrao) || 0,
         dificuldadeFacil: parseFloat(form.dificuldadeFacil) || 2.6,
         dificuldadeMedia: parseFloat(form.dificuldadeMedia) || 3.5,
         dificuldadeDificil: parseFloat(form.dificuldadeDificil) || 4.6,
       };
-      const updated = editItem ? receitas.map(e => e.id === id ? entry : e) : [...receitas, entry];
-      setReceitas(updated); storage.setReceitas(updated);
+      const updated = editItem ? servicos.map(e => e.id === id ? entry : e) : [...servicos, entry];
+      setServicos(updated); storage.setServicos(updated);
     }
 
     setDialogOpen(false);
@@ -74,7 +81,8 @@ export function Configuracoes() {
     if (tab === 'motor1') { const u = motor1.filter(e => e.id !== id); setMotor1(u); storage.setMotor1(u); }
     else if (tab === 'motor2') { const u = motor2.filter(e => e.id !== id); setMotor2(u); storage.setMotor2(u); }
     else if (tab === 'insumos') { const u = insumos.filter(e => e.id !== id); setInsumos(u); storage.setInsumos(u); }
-    else { const u = receitas.filter(e => e.id !== id); setReceitas(u); storage.setReceitas(u); }
+    else if (tab === 'regras') { const u = regras.filter(e => e.id !== id); setRegras(u); storage.setRegras(u); }
+    else if (tab === 'catalogo') { const u = servicos.filter(e => e.id !== id); setServicos(u); storage.setServicos(u); }
     toast.success('Removido!');
   };
 
@@ -84,7 +92,7 @@ export function Configuracoes() {
     <Card key={item.id} className="mb-2">
       <CardContent className="flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate">{item.material || item.nome || item.nomeServico}</p>
+          <p className="text-sm font-medium truncate">{item.material || item.nome || item.nomeRegra || item.nomeServico}</p>
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
         <div className="flex gap-1 shrink-0">
@@ -95,7 +103,71 @@ export function Configuracoes() {
     </Card>
   );
 
-  const fields: Record<string, { label: string; key: string; type?: string }[]> = {
+  const materiaisUnicos = [...new Set([...motor1.map(m => m.material), ...motor2.map(m => m.material)])];
+  const regraName = (id: string) => regras.find(r => r.id === id)?.nomeRegra || '—';
+
+  const renderCatalogoForm = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Nome do Serviço</Label>
+        <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
+      </div>
+      <div>
+        <Label className="text-xs">Regra de Cálculo</Label>
+        <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
+          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>
+            {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Motor Padrão</Label>
+        <Select value={form.motorPadrao || 'motor1'} onValueChange={v => setField('motorPadrao', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
+            <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Material Padrão</Label>
+        <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
+          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>
+            {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">Espessura (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Corte (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <Label className="text-xs">Fator Fácil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Fator Médio</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Fator Difícil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
+        </div>
+      </div>
+    </div>
+  );
+
+  const simpleFields: Record<string, { label: string; key: string; type?: string }[]> = {
     motor1: [
       { label: 'Material', key: 'material' },
       { label: 'Densidade (g/cm³)', key: 'densidade', type: 'number' },
@@ -111,14 +183,11 @@ export function Configuracoes() {
       { label: 'Nome', key: 'nome' },
       { label: 'Custo Unitário (R$)', key: 'custoUnitario', type: 'number' },
     ],
-    receitas: [
-      { label: 'Nome do Serviço', key: 'nomeServico' },
+    regras: [
+      { label: 'Nome da Regra', key: 'nomeRegra' },
       { label: 'Divisor Suporte (m)', key: 'divisorSuporte', type: 'number' },
       { label: 'Divisor PU (m)', key: 'divisorPU', type: 'number' },
       { label: 'Mult. Rebite', key: 'multiplicadorRebite', type: 'number' },
-      { label: 'Fator Fácil', key: 'dificuldadeFacil', type: 'number' },
-      { label: 'Fator Médio', key: 'dificuldadeMedia', type: 'number' },
-      { label: 'Fator Difícil', key: 'dificuldadeDificil', type: 'number' },
     ],
   };
 
@@ -127,11 +196,12 @@ export function Configuracoes() {
       <h1 className="mb-4 text-xl font-bold text-primary">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-4 mb-4">
+        <TabsList className="w-full grid grid-cols-5 mb-4">
           <TabsTrigger value="motor1" className="text-xs">Motor 1</TabsTrigger>
           <TabsTrigger value="motor2" className="text-xs">Motor 2</TabsTrigger>
           <TabsTrigger value="insumos" className="text-xs">Insumos</TabsTrigger>
-          <TabsTrigger value="receitas" className="text-xs">Receitas</TabsTrigger>
+          <TabsTrigger value="regras" className="text-xs">Regras</TabsTrigger>
+          <TabsTrigger value="catalogo" className="text-xs">Catálogo</TabsTrigger>
         </TabsList>
 
         <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
@@ -147,29 +217,34 @@ export function Configuracoes() {
         <TabsContent value="insumos">
           {insumos.map(e => renderItem(e, fmt(e.custoUnitario)))}
         </TabsContent>
-        <TabsContent value="receitas">
-          {receitas.map(e => renderItem(e, `Sup: ${e.divisorSuporte}m · PU: ${e.divisorPU}m · Reb: ×${e.multiplicadorRebite}`))}
+        <TabsContent value="regras">
+          {regras.map(e => renderItem(e, `Sup: ${e.divisorSuporte}m · PU: ${e.divisorPU}m · Reb: ×${e.multiplicadorRebite}`))}
+        </TabsContent>
+        <TabsContent value="catalogo">
+          {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
         </TabsContent>
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editItem ? 'Editar' : 'Adicionar'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            {fields[tab]?.map(f => (
-              <div key={f.key}>
-                <Label className="text-xs">{f.label}</Label>
-                <Input
-                  type={f.type || 'text'}
-                  inputMode={f.type === 'number' ? 'decimal' : 'text'}
-                  value={form[f.key] || ''}
-                  onChange={e => setField(f.key, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
+          {tab === 'catalogo' ? renderCatalogoForm() : (
+            <div className="space-y-3">
+              {simpleFields[tab]?.map(f => (
+                <div key={f.key}>
+                  <Label className="text-xs">{f.label}</Label>
+                  <Input
+                    type={f.type || 'text'}
+                    inputMode={f.type === 'number' ? 'decimal' : 'text'}
+                    value={form[f.key] || ''}
+                    onChange={e => setField(f.key, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           <DialogFooter>
             <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
           </DialogFooter>

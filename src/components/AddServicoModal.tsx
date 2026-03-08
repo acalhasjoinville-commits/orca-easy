@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { storage } from '@/lib/storage';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumos, getFatorDificuldade } from '@/lib/calcEngine';
-import { Dificuldade, MotorType, ItemServico } from '@/lib/types';
+import { Dificuldade, ItemServico } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,55 +16,45 @@ interface Props {
 }
 
 export function AddServicoModal({ open, onClose, onSave }: Props) {
-  const receitas = storage.getReceitas();
+  const servicosList = storage.getServicos();
+  const regrasList = storage.getRegras();
   const motor1List = storage.getMotor1();
   const motor2List = storage.getMotor2();
   const insumosList = storage.getInsumos();
 
-  const [receitaId, setReceitaId] = useState('');
+  const [servicoId, setServicoId] = useState('');
   const [metragem, setMetragem] = useState('');
-  const [espessura, setEspessura] = useState('');
-  const [corte, setCorte] = useState('');
-  const [materialId, setMaterialId] = useState('');
-  const [motorType, setMotorType] = useState<MotorType>('motor1');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
 
   const [editQtdSuportes, setEditQtdSuportes] = useState<number | null>(null);
   const [editQtdPU, setEditQtdPU] = useState<number | null>(null);
   const [editQtdRebites, setEditQtdRebites] = useState<number | null>(null);
 
-  const receita = receitas.find(r => r.id === receitaId);
-
-  const materiaisUnicos = useMemo(() => {
-    if (motorType === 'motor1') return motor1List;
-    const nomes = [...new Set(motor2List.map(m => m.material))];
-    return nomes.map(n => ({ id: n, material: n }));
-  }, [motorType, motor1List, motor2List]);
+  const servico = servicosList.find(s => s.id === servicoId);
+  const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
 
   const calc = useMemo(() => {
-    if (!receita || !metragem || !espessura || !corte || !materialId) return null;
+    if (!servico || !regra || !metragem) return null;
     const m = parseFloat(metragem);
-    const esp = parseFloat(espessura);
-    const cor = parseFloat(corte);
-    if (isNaN(m) || isNaN(esp) || isNaN(cor) || m <= 0) return null;
+    if (isNaN(m) || m <= 0) return null;
 
     let custoMetroLinear: number;
-    if (motorType === 'motor1') {
-      const motor1 = motor1List.find(e => e.id === materialId);
+    if (servico.motorPadrao === 'motor1') {
+      const motor1 = motor1List.find(e => e.material === servico.materialPadrao);
       if (!motor1) return null;
-      custoMetroLinear = calcCustoMetroMotor1(esp, cor, motor1);
+      custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
     } else {
-      const resultado = calcCustoMetroMotor2(materialId, esp, cor, motor2List);
+      const resultado = calcCustoMetroMotor2(servico.materialPadrao, servico.espessuraPadrao, servico.cortePadrao, motor2List);
       if (resultado === null) return null;
       custoMetroLinear = resultado;
     }
 
     const custoTotalMaterial = custoMetroLinear * m;
-    const ins = calcInsumos(m, receita, insumosList);
-    const fator = getFatorDificuldade(receita, dificuldade);
+    const ins = calcInsumos(m, regra, insumosList);
+    const fator = getFatorDificuldade(servico, dificuldade);
 
     return { custoMetroLinear, custoTotalMaterial, ...ins, fatorDificuldade: fator };
-  }, [receita, metragem, espessura, corte, materialId, motorType, dificuldade, motor1List, motor2List, insumosList]);
+  }, [servico, regra, metragem, dificuldade, motor1List, motor2List, insumosList]);
 
   const finalCalc = useMemo(() => {
     if (!calc) return null;
@@ -97,18 +87,18 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
-  const canSave = !!finalCalc && !!receitaId && !!materialId;
+  const canSave = !!finalCalc && !!servicoId;
 
   const handleSave = () => {
-    if (!finalCalc || !receita) return;
+    if (!finalCalc || !servico) return;
     const item: ItemServico = {
       id: crypto.randomUUID(),
-      receitaId,
-      nomeServico: receita.nomeServico,
-      motorType,
-      materialId,
-      espessura: parseFloat(espessura),
-      corte: parseFloat(corte),
+      servicoTemplateId: servico.id,
+      nomeServico: servico.nomeServico,
+      motorType: servico.motorPadrao,
+      materialId: servico.materialPadrao,
+      espessura: servico.espessuraPadrao,
+      corte: servico.cortePadrao,
       metragem: parseFloat(metragem),
       dificuldade,
       fatorDificuldade: finalCalc.fatorDificuldade,
@@ -129,12 +119,8 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
   };
 
   const resetForm = () => {
-    setReceitaId('');
+    setServicoId('');
     setMetragem('');
-    setEspessura('');
-    setCorte('');
-    setMaterialId('');
-    setMotorType('motor1');
     setDificuldade('facil');
     setEditQtdSuportes(null);
     setEditQtdPU(null);
@@ -149,73 +135,41 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Receita */}
+          {/* Serviço da Biblioteca */}
           <div>
-            <Label>Tipo de Serviço</Label>
-            <Select value={receitaId} onValueChange={setReceitaId}>
-              <SelectTrigger><SelectValue placeholder="Selecione o serviço" /></SelectTrigger>
+            <Label>Serviço</Label>
+            <Select value={servicoId} onValueChange={setServicoId}>
+              <SelectTrigger><SelectValue placeholder="Selecione do catálogo" /></SelectTrigger>
               <SelectContent>
-                {receitas.map(r => (
-                  <SelectItem key={r.id} value={r.id}>{r.nomeServico}</SelectItem>
+                {servicosList.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Motor toggle */}
-          <div className="flex gap-2">
-            <Button
-              variant={motorType === 'motor1' ? 'default' : 'outline'}
-              className={cn('flex-1 text-xs', motorType === 'motor1' && 'bg-primary')}
-              onClick={() => { setMotorType('motor1'); setMaterialId(''); }}
-            >
-              Fabricar (Motor 1)
-            </Button>
-            <Button
-              variant={motorType === 'motor2' ? 'default' : 'outline'}
-              className={cn('flex-1 text-xs', motorType === 'motor2' && 'bg-primary')}
-              onClick={() => { setMotorType('motor2'); setMaterialId(''); }}
-            >
-              Comprar Dobrado (Motor 2)
-            </Button>
-          </div>
+          {/* Info do serviço selecionado */}
+          {servico && regra && (
+            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+              <p><span className="font-medium text-foreground">Motor:</span> {servico.motorPadrao === 'motor1' ? 'Fabricar (Motor 1)' : 'Comprar Dobrado (Motor 2)'}</p>
+              <p><span className="font-medium text-foreground">Material:</span> {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm</p>
+              <p><span className="font-medium text-foreground">Regra:</span> {regra.nomeRegra}</p>
+            </div>
+          )}
 
-          {/* Material */}
+          {/* Metragem */}
           <div>
-            <Label>Material</Label>
-            <Select value={materialId} onValueChange={setMaterialId}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {materiaisUnicos.map(m => (
-                  <SelectItem key={m.id} value={m.id}>{m.material}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Medidas */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">Metragem (m)</Label>
-              <Input type="number" inputMode="decimal" placeholder="12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Espessura (mm)</Label>
-              <Input type="number" inputMode="decimal" placeholder="0.5" value={espessura} onChange={e => setEspessura(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Corte (mm)</Label>
-              <Input type="number" inputMode="decimal" placeholder="300" value={corte} onChange={e => setCorte(e.target.value)} />
-            </div>
+            <Label>Metragem Total (m)</Label>
+            <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
           </div>
 
           {/* Dificuldade */}
-          {receita && (
+          {servico && (
             <div>
               <Label>Dificuldade</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => {
-                  const fator = getFatorDificuldade(receita, d);
+                  const fator = getFatorDificuldade(servico, d);
                   return (
                     <button
                       key={d}
@@ -245,8 +199,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
                 <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>
               </div>
 
-              {/* Editable insumos */}
-              {receita && receita.divisorSuporte > 0 && (
+              {regra && regra.divisorSuporte > 0 && (
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs flex-1">Suportes</span>
                   <Input type="number" className="w-14 h-7 text-center text-xs" value={editQtdSuportes ?? finalCalc.qtdSuportes} onChange={e => setEditQtdSuportes(parseInt(e.target.value) || 0)} />

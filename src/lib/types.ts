@@ -19,12 +19,22 @@ export interface InsumoEntry {
   custoUnitario: number;
 }
 
-export interface ReceitaServico {
+export interface RegraCalculo {
   id: string;
-  nomeServico: string;
+  nomeRegra: string;
   divisorSuporte: number;
   divisorPU: number;
   multiplicadorRebite: number;
+}
+
+export interface ServicoTemplate {
+  id: string;
+  nomeServico: string;
+  regraId: string;
+  motorPadrao: MotorType;
+  materialPadrao: string;
+  espessuraPadrao: number;
+  cortePadrao: number;
   dificuldadeFacil: number;
   dificuldadeMedia: number;
   dificuldadeDificil: number;
@@ -35,7 +45,7 @@ export type Dificuldade = 'facil' | 'medio' | 'dificil';
 
 export interface ItemServico {
   id: string;
-  receitaId: string;
+  servicoTemplateId: string;
   nomeServico: string;
   motorType: MotorType;
   materialId: string;
