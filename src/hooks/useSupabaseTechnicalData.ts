@@ -55,11 +55,11 @@ function servicoToDb(e: ServicoTemplate) {
 
 // ─── SEED HELPER ───
 
-async function seedIfEmpty<T>(table: string, seedData: any[], mapper: (row: any) => any) {
-  const { count } = await supabase.from(table).select('id', { count: 'exact', head: true });
+async function seedIfEmpty(table: string, seedData: any[], mapper: (row: any) => any) {
+  const { count } = await (supabase as any).from(table).select('id', { count: 'exact', head: true });
   if ((count ?? 0) === 0 && seedData.length > 0) {
     const rows = seedData.map(mapper);
-    await supabase.from(table).insert(rows);
+    await (supabase as any).from(table).insert(rows);
   }
 }
 
