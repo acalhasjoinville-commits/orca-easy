@@ -63,8 +63,8 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          <Button onClick={onNewOrcamento} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
+          <Button onClick={onNewOrcamento} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base">
+            <Plus className="mr-2 h-5 w-5" /> Novo Orçamento
           </Button>
 
           <div className="relative">

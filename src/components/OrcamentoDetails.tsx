@@ -71,7 +71,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         <p className="text-lg font-medium text-foreground">{orcamento.nomeCliente}</p>
         <p className="text-sm text-muted-foreground">
           Criado em {new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR')}
-          {orcamento.validade && ` · Válido até ${new Date(orcamento.validade).toLocaleDateString('pt-BR')}`}
+          {orcamento.validade && !isNaN(new Date(orcamento.validade).getTime()) && ` · Válido até ${new Date(orcamento.validade).toLocaleDateString('pt-BR')}`}
         </p>
       </div>
 
@@ -163,7 +163,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               </div>
             </>
           )}
-          <div className="flex justify-between text-xs text-muted-foreground pt-1">
+          <div className="flex justify-between text-xs text-muted-foreground pt-2 pb-1">
             <span>Margem</span>
             <span>{((1 - orcamento.custoTotalObra / displayValue) * 100).toFixed(1)}%</span>
           </div>
@@ -200,12 +200,12 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
       )}
 
       {/* Desktop Action Bar — inline in the flow */}
-      <div className="hidden lg:flex items-center gap-2 mt-2">
+      <div className="hidden lg:flex items-center gap-3 mt-6">
         <PDFDownloadButton
           orcamento={orcamento}
           cliente={cliente}
           empresa={empresa}
-          className="flex-1 min-w-[140px] bg-accent hover:bg-accent/90 text-accent-foreground"
+          className="h-10 px-5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
         />
 
         {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
@@ -213,14 +213,14 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
             orcamento={orcamento}
             cliente={cliente}
             empresa={empresa}
-            className="flex-1 min-w-[140px]"
+            className="h-10 px-5"
           />
         )}
 
         <Button
           variant="outline"
           onClick={() => onEdit(orcamento)}
-          className="flex-1 min-w-[100px]"
+          className="h-10 px-5"
         >
           <Pencil className="mr-1.5 h-4 w-4" />
           Editar
@@ -228,7 +228,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" className="text-destructive hover:text-destructive border-destructive/30">
+            <Button variant="outline" size="icon" className="h-10 w-10 text-destructive hover:text-destructive border-destructive/30">
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
