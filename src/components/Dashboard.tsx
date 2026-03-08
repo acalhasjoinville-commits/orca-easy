@@ -3,10 +3,11 @@ import { Orcamento, StatusOrcamento } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, FileText, Trash2, Pencil, Search, Copy, Loader2 } from 'lucide-react';
+import { Plus, FileText, Trash2, Pencil, Search, Copy, Loader2, FileDown } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { PDFDownloadButton } from './PDFDownloadButton';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
