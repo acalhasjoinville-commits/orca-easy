@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = roles.includes('admin');
   const isVendedor = roles.includes('vendedor');
   const isFinanceiro = roles.includes('financeiro');
-  const hasAnyRole = roles.length > 0;
+  const hasAnyRole = rolesLoaded && roles.length > 0;
 
   const value: AuthContextType = {
     user,
