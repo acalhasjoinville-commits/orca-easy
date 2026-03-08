@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  rolesLoaded: boolean;
   roles: AppRole[];
   isAdmin: boolean;
   isVendedor: boolean;
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
 
   const fetchRoles = useCallback(async (userId: string) => {
     try {
@@ -40,12 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Error fetching roles:', error);
         setRoles([]);
-        return;
+      } else {
+        setRoles((data || []).map((r: any) => r.role as AppRole));
       }
-      setRoles((data || []).map((r: any) => r.role as AppRole));
     } catch (err) {
       console.error('Error fetching roles:', err);
       setRoles([]);
+    } finally {
+      setRolesLoaded(true);
     }
   }, []);
 
@@ -56,23 +60,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
-          // setTimeout avoids Supabase client deadlock
+          setRolesLoaded(false);
           setTimeout(() => fetchRoles(newSession.user.id), 0);
         } else {
           setRoles([]);
+          setRolesLoaded(true);
         }
-        setLoading(false);
       }
     );
 
-    // Check existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
       if (existingSession?.user) {
-        fetchRoles(existingSession.user.id);
+        fetchRoles(existingSession.user.id).then(() => setLoading(false));
+      } else {
+        setRolesLoaded(true);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -81,12 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = roles.includes('admin');
   const isVendedor = roles.includes('vendedor');
   const isFinanceiro = roles.includes('financeiro');
-  const hasAnyRole = roles.length > 0;
+  const hasAnyRole = rolesLoaded && roles.length > 0;
 
   const value: AuthContextType = {
     user,
     session,
     loading,
+    rolesLoaded,
     roles,
     isAdmin,
     isVendedor,

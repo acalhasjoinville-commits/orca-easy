@@ -20,7 +20,7 @@ import { LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
@@ -44,6 +44,15 @@ const Index = () => {
   // Not authenticated → login page
   if (!user) {
     return <LoginPage />;
+  }
+
+  // Still loading roles → show spinner (avoid flashing PendingApproval)
+  if (!rolesLoaded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Authenticated but no role → pending approval
