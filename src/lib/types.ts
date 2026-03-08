@@ -133,6 +133,7 @@ export interface Orcamento {
   numeroOrcamento: number;
   clienteId: string;
   nomeCliente: string;
+  motorType?: MotorType;
   itensServico: ItemServico[];
   custoTotalObra: number;
   valorVenda: number;

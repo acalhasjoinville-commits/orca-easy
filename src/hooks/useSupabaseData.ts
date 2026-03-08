@@ -103,6 +103,7 @@ function orcamentoToDb(o: Orcamento, empresaId: string) {
     numero_orcamento: o.numeroOrcamento,
     cliente_id: o.clienteId || null,
     nome_cliente: o.nomeCliente,
+    motor_type: o.motorType || null,
     itens_servico: o.itensServico as unknown as Json,
     custo_total_obra: o.custoTotalObra,
     valor_venda: o.valorVenda,
