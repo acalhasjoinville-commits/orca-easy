@@ -48,7 +48,7 @@ const Index = () => {
           <span className="text-base font-bold text-primary">OrçaCalhas</span>
           <span className="ml-3 text-sm text-muted-foreground">
             {tab === 'dashboard' && 'Dashboard'}
-            {tab === 'orcamento' && 'Novo Orçamento'}
+            {tab === 'orcamento' && (editingOrcamento ? 'Editar Orçamento' : 'Novo Orçamento')}
             {tab === 'clientes' && 'Clientes'}
             {tab === 'financeiro' && 'Financeiro'}
             {tab === 'config' && 'Configurações'}
@@ -72,7 +72,7 @@ const Index = () => {
             <SidebarTrigger className="mr-3" />
             <span className="text-sm font-semibold text-muted-foreground">
               {tab === 'dashboard' && 'Dashboard'}
-              {tab === 'orcamento' && 'Novo Orçamento'}
+              {tab === 'orcamento' && (editingOrcamento ? 'Editar Orçamento' : 'Novo Orçamento')}
               {tab === 'clientes' && 'Clientes'}
               {tab === 'financeiro' && 'Financeiro'}
               {tab === 'config' && 'Configurações'}
