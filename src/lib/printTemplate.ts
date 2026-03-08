@@ -319,10 +319,11 @@ export function buildProposalHtml(params: TemplateParams): string {
   <table class="services">
     <thead>
       <tr>
-        <th style="width:30px;text-align:center;">#</th>
-        <th>Descrição do Serviço</th>
-        <th style="width:80px;text-align:center;">Qtd/Metragem</th>
-        <th style="width:90px;text-align:right;">Preço Unit.</th>
+        <th style="width:28px;text-align:center;">#</th>
+        <th>Serviço / Descrição</th>
+        <th style="width:50px;text-align:center;">Unid.</th>
+        <th style="width:60px;text-align:center;">Qtd.</th>
+        <th style="width:90px;text-align:right;">Valor Unit.</th>
         <th style="width:90px;text-align:right;">Total</th>
       </tr>
     </thead>
