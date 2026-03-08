@@ -50,6 +50,7 @@ function dbToEmpresa(row: any): MinhaEmpresa {
     estado: row.estado || '',
     corPrimaria: row.cor_primaria || '#0B1B32',
     corDestaque: row.cor_destaque || '#F57C00',
+    slogan: row.slogan || '',
   };
 }
 
@@ -68,6 +69,7 @@ function empresaToDb(e: MinhaEmpresa) {
     cor_primaria: e.corPrimaria,
     cor_destaque: e.corDestaque,
     logo_url: e.logoUrl,
+    slogan: e.slogan,
   };
 }
 

@@ -75,6 +75,7 @@ export type Database = {
           nome_fantasia: string
           numero: string | null
           razao_social: string | null
+          slogan: string | null
           telefone_whatsapp: string | null
           updated_at: string
         }
@@ -93,6 +94,7 @@ export type Database = {
           nome_fantasia?: string
           numero?: string | null
           razao_social?: string | null
+          slogan?: string | null
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -111,6 +113,7 @@ export type Database = {
           nome_fantasia?: string
           numero?: string | null
           razao_social?: string | null
+          slogan?: string | null
           telefone_whatsapp?: string | null
           updated_at?: string
         }

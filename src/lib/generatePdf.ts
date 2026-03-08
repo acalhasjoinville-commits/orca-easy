@@ -20,9 +20,8 @@ function drawFooterBar(doc: jsPDF, empresa: MinhaEmpresa | null) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  const footerText = empresa?.nomeFantasia
-    ? `${empresa.nomeFantasia} — A solução está no nome`
-    : 'OrçaCalhas — A solução está no nome';
+  const name = empresa?.nomeFantasia || 'OrçaCalhas';
+  const footerText = empresa?.slogan ? `${name} — ${empresa.slogan}` : name;
   doc.text(footerText, PAGE_W / 2, PAGE_H - 6, { align: 'center' });
 }
 
@@ -60,10 +59,12 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const endParts = [empresa?.endereco, empresa?.numero, empresa?.cidade, empresa?.estado].filter(Boolean);
   if (endParts.length) { doc.text(endParts.join(', '), rightX, hy, { align: 'right' }); hy += 4.5; }
   if (empresa?.cnpjCpf) { doc.text(`CNPJ: ${empresa.cnpjCpf}`, rightX, hy, { align: 'right' }); hy += 4.5; }
-  doc.setTextColor(...rgbD);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.text('A solução está no nome', rightX, hy, { align: 'right' });
+  if (empresa?.slogan) {
+    doc.setTextColor(...rgbD);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(empresa.slogan, rightX, hy, { align: 'right' });
+  }
 
   y = 34;
 

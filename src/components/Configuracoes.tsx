@@ -20,6 +20,7 @@ function MinhaEmpresaForm() {
     logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
     bairro: '', cidade: '', estado: '', corPrimaria: '#0B1B32', corDestaque: '#F57C00',
+    slogan: '',
   });
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -116,6 +117,11 @@ function MinhaEmpresaForm() {
               <Label className="text-xs">Razão Social</Label>
               <Input value={form.razaoSocial} onChange={e => set('razaoSocial', e.target.value)} placeholder="Razão social" className="h-9" />
             </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Slogan</Label>
+            <Input value={form.slogan} onChange={e => set('slogan', e.target.value)} placeholder="Ex: A solução está no nome" className="h-9" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
