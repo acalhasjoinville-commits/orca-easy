@@ -228,7 +228,6 @@ export function Configuracoes() {
         id,
         nomePolitica: form.nomePolitica || '',
         validadeDias: parseInt(form.validadeDias) || 15,
-        descricaoGeral: form.descricaoGeral || '',
         formasPagamento: form.formasPagamento || '',
         garantia: form.garantia || '',
         tempoGarantia: form.tempoGarantia || '1 ano',
