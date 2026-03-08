@@ -21,6 +21,7 @@ export type Database = {
           cidade: string | null
           created_at: string
           documento: string | null
+          empresa_id: string
           endereco: string | null
           id: string
           nome_razao_social: string
@@ -35,6 +36,7 @@ export type Database = {
           cidade?: string | null
           created_at?: string
           documento?: string | null
+          empresa_id: string
           endereco?: string | null
           id?: string
           nome_razao_social: string
@@ -49,6 +51,7 @@ export type Database = {
           cidade?: string | null
           created_at?: string
           documento?: string | null
+          empresa_id?: string
           endereco?: string | null
           id?: string
           nome_razao_social?: string
@@ -57,7 +60,15 @@ export type Database = {
           updated_at?: string
           whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clientes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       empresa: {
         Row: {
@@ -122,6 +133,7 @@ export type Database = {
       insumos: {
         Row: {
           created_at: string
+          empresa_id: string
           id: string
           nome_embalagem_compra: string
           nome_unidade_consumo: string
@@ -131,6 +143,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id: string
           id?: string
           nome_embalagem_compra: string
           nome_unidade_consumo: string
@@ -140,6 +153,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string
           id?: string
           nome_embalagem_compra?: string
           nome_unidade_consumo?: string
@@ -147,12 +161,21 @@ export type Database = {
           qtd_embalagem?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "insumos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       motor1: {
         Row: {
           created_at: string
           densidade: number
+          empresa_id: string
           id: string
           material: string
           preco_quilo: number
@@ -161,6 +184,7 @@ export type Database = {
         Insert: {
           created_at?: string
           densidade?: number
+          empresa_id: string
           id?: string
           material: string
           preco_quilo?: number
@@ -169,17 +193,27 @@ export type Database = {
         Update: {
           created_at?: string
           densidade?: number
+          empresa_id?: string
           id?: string
           material?: string
           preco_quilo?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "motor1_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       motor2: {
         Row: {
           corte: number
           created_at: string
+          empresa_id: string
           espessura: number
           id: string
           material: string
@@ -189,6 +223,7 @@ export type Database = {
         Insert: {
           corte?: number
           created_at?: string
+          empresa_id: string
           espessura?: number
           id?: string
           material: string
@@ -198,13 +233,22 @@ export type Database = {
         Update: {
           corte?: number
           created_at?: string
+          empresa_id?: string
           espessura?: number
           id?: string
           material?: string
           preco_metro_linear?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "motor2_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orcamentos: {
         Row: {
@@ -214,6 +258,7 @@ export type Database = {
           data_criacao: string
           desconto: number
           descricao_geral: string | null
+          empresa_id: string
           formas_pagamento: string | null
           garantia: string | null
           id: string
@@ -234,6 +279,7 @@ export type Database = {
           data_criacao?: string
           desconto?: number
           descricao_geral?: string | null
+          empresa_id: string
           formas_pagamento?: string | null
           garantia?: string | null
           id?: string
@@ -254,6 +300,7 @@ export type Database = {
           data_criacao?: string
           desconto?: number
           descricao_geral?: string | null
+          empresa_id?: string
           formas_pagamento?: string | null
           garantia?: string | null
           id?: string
@@ -275,11 +322,19 @@ export type Database = {
             referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orcamentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
         ]
       }
       politicas_comerciais: {
         Row: {
           created_at: string
+          empresa_id: string
           formas_pagamento: string | null
           garantia: string | null
           id: string
@@ -291,6 +346,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id: string
           formas_pagamento?: string | null
           garantia?: string | null
           id?: string
@@ -302,6 +358,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string
           formas_pagamento?: string | null
           garantia?: string | null
           id?: string
@@ -311,32 +368,55 @@ export type Database = {
           updated_at?: string
           validade_dias?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "politicas_comerciais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           created_at: string | null
+          email: string | null
+          empresa_id: string | null
           full_name: string | null
           id: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
           full_name?: string | null
           id: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
           full_name?: string | null
           id?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       regras_calculo: {
         Row: {
           created_at: string
+          empresa_id: string
           id: string
           itens_regra: Json
           nome_regra: string
@@ -344,6 +424,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          empresa_id: string
           id?: string
           itens_regra?: Json
           nome_regra: string
@@ -351,12 +432,21 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          empresa_id?: string
           id?: string
           itens_regra?: Json
           nome_regra?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "regras_calculo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       servicos_catalogo: {
         Row: {
@@ -365,6 +455,7 @@ export type Database = {
           dificuldade_dificil: number
           dificuldade_facil: number
           dificuldade_media: number
+          empresa_id: string
           espessura_padrao: number
           id: string
           material_padrao: string
@@ -379,6 +470,7 @@ export type Database = {
           dificuldade_dificil?: number
           dificuldade_facil?: number
           dificuldade_media?: number
+          empresa_id: string
           espessura_padrao?: number
           id?: string
           material_padrao?: string
@@ -393,6 +485,7 @@ export type Database = {
           dificuldade_dificil?: number
           dificuldade_facil?: number
           dificuldade_media?: number
+          empresa_id?: string
           espessura_padrao?: number
           id?: string
           material_padrao?: string
@@ -401,31 +494,51 @@ export type Database = {
           regra_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "servicos_catalogo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
+          empresa_id: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          empresa_id: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          empresa_id?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

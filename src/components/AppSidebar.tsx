@@ -13,18 +13,19 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-export type Tab = 'dashboard' | 'orcamentos' | 'orcamento-detalhes' | 'orcamento-novo' | 'clientes' | 'financeiro' | 'config';
+export type Tab = 'dashboard' | 'orcamentos' | 'orcamento-detalhes' | 'orcamento-novo' | 'clientes' | 'financeiro' | 'usuarios' | 'config';
 
 interface AppSidebarProps {
   active: Tab;
   onNavigate: (tab: Tab) => void;
 }
 
-const allItems: { title: string; tab: Tab; icon: React.ElementType; permission: 'all' | 'canManageClientes' | 'canViewFinanceiro' | 'canManageSettings' }[] = [
+const allItems: { title: string; tab: Tab; icon: React.ElementType; permission: 'all' | 'canManageClientes' | 'canViewFinanceiro' | 'canManageSettings' | 'canManageUsers' }[] = [
   { title: 'Dashboard', tab: 'dashboard', icon: LayoutDashboard, permission: 'all' },
   { title: 'Orçamentos', tab: 'orcamentos', icon: FileText, permission: 'all' },
   { title: 'Clientes', tab: 'clientes', icon: Users, permission: 'canManageClientes' },
   { title: 'Financeiro', tab: 'financeiro', icon: DollarSign, permission: 'canViewFinanceiro' },
+  { title: 'Usuários', tab: 'usuarios', icon: Users, permission: 'canManageUsers' },
   { title: 'Configurações', tab: 'config', icon: Settings, permission: 'canManageSettings' },
 ];
 
@@ -35,13 +36,14 @@ function isOrcamentoTab(tab: Tab) {
 export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { canManageClientes, canViewFinanceiro, canManageSettings } = useAuth();
+  const { canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
 
   const permissionMap: Record<string, boolean> = {
     all: true,
     canManageClientes,
     canViewFinanceiro,
     canManageSettings,
+    canManageUsers,
   };
 
   const visibleItems = allItems.filter(item => permissionMap[item.permission]);

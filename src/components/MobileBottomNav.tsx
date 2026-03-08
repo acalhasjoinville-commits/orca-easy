@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Plus, DollarSign, FileText } from 'lucide-react';
+import { LayoutDashboard, Settings, Plus, DollarSign, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { Tab } from '@/components/AppSidebar';
@@ -14,7 +14,7 @@ function isOrcamentoTab(tab: Tab) {
 }
 
 export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBottomNavProps) {
-  const { canCreateEditBudget, canViewFinanceiro, canManageSettings } = useAuth();
+  const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
 
   // Build items dynamically based on permissions
   const items: { title: string; tab: Tab; icon: React.ElementType; accent?: boolean; action?: () => void }[] = [
@@ -28,6 +28,10 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
 
   if (canViewFinanceiro) {
     items.push({ title: 'Financeiro', tab: 'financeiro', icon: DollarSign });
+  }
+
+  if (canManageUsers) {
+    items.push({ title: 'Usuários', tab: 'usuarios', icon: Users });
   }
 
   if (canManageSettings) {

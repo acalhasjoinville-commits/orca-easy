@@ -8,6 +8,7 @@ import { OrcamentoDetails } from '@/components/OrcamentoDetails';
 import { Configuracoes } from '@/components/Configuracoes';
 import { Clientes } from '@/components/Clientes';
 import { Financeiro } from '@/components/Financeiro';
+import { Usuarios } from '@/components/Usuarios';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
@@ -20,7 +21,7 @@ import { LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget, canManageUsers } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
@@ -78,6 +79,10 @@ const Index = () => {
       toast.error('Sem permissão para criar/editar orçamentos.');
       return;
     }
+    if (newTab === 'usuarios' && !canManageUsers) {
+      toast.error('Sem permissão para gerenciar usuários.');
+      return;
+    }
     setTab(newTab);
   };
 
@@ -130,6 +135,7 @@ const Index = () => {
       case 'orcamento-novo': return editingOrcamento ? 'Editar Orçamento' : 'Novo Orçamento';
       case 'clientes': return 'Clientes';
       case 'financeiro': return 'Financeiro';
+      case 'usuarios': return 'Usuários';
       case 'config': return 'Configurações';
       default: return '';
     }
@@ -165,6 +171,9 @@ const Index = () => {
       )}
       {tab === 'financeiro' && (
         canViewFinanceiro ? <Financeiro /> : <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
+      )}
+      {tab === 'usuarios' && (
+        canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />
       )}
       {tab === 'config' && (
         canManageSettings ? <Configuracoes /> : <AccessDenied message="Você não tem permissão para acessar Configurações." />
