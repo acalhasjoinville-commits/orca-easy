@@ -14,7 +14,212 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          created_at: string
+          documento: string | null
+          endereco: string | null
+          id: string
+          nome_razao_social: string
+          numero: string | null
+          tipo: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          endereco?: string | null
+          id?: string
+          nome_razao_social: string
+          numero?: string | null
+          tipo?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          documento?: string | null
+          endereco?: string | null
+          id?: string
+          nome_razao_social?: string
+          numero?: string | null
+          tipo?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      empresa: {
+        Row: {
+          bairro: string | null
+          cidade: string | null
+          cnpj_cpf: string | null
+          cor_destaque: string
+          cor_primaria: string
+          created_at: string
+          email_contato: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          logo_url: string | null
+          nome_fantasia: string
+          numero: string | null
+          razao_social: string | null
+          telefone_whatsapp: string | null
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string | null
+          cidade?: string | null
+          cnpj_cpf?: string | null
+          cor_destaque?: string
+          cor_primaria?: string
+          created_at?: string
+          email_contato?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          logo_url?: string | null
+          nome_fantasia?: string
+          numero?: string | null
+          razao_social?: string | null
+          telefone_whatsapp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string | null
+          cidade?: string | null
+          cnpj_cpf?: string | null
+          cor_destaque?: string
+          cor_primaria?: string
+          created_at?: string
+          email_contato?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          logo_url?: string | null
+          nome_fantasia?: string
+          numero?: string | null
+          razao_social?: string | null
+          telefone_whatsapp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orcamentos: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          custo_total_obra: number
+          data_criacao: string
+          desconto: number
+          descricao_geral: string | null
+          formas_pagamento: string | null
+          garantia: string | null
+          id: string
+          itens_servico: Json
+          nome_cliente: string
+          numero_orcamento: number
+          status: string
+          tempo_garantia: string | null
+          updated_at: string
+          validade: string | null
+          valor_final: number
+          valor_venda: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          custo_total_obra?: number
+          data_criacao?: string
+          desconto?: number
+          descricao_geral?: string | null
+          formas_pagamento?: string | null
+          garantia?: string | null
+          id?: string
+          itens_servico?: Json
+          nome_cliente: string
+          numero_orcamento: number
+          status?: string
+          tempo_garantia?: string | null
+          updated_at?: string
+          validade?: string | null
+          valor_final?: number
+          valor_venda?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          custo_total_obra?: number
+          data_criacao?: string
+          desconto?: number
+          descricao_geral?: string | null
+          formas_pagamento?: string | null
+          garantia?: string | null
+          id?: string
+          itens_servico?: Json
+          nome_cliente?: string
+          numero_orcamento?: number
+          status?: string
+          tempo_garantia?: string | null
+          updated_at?: string
+          validade?: string | null
+          valor_final?: number
+          valor_venda?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      politicas_comerciais: {
+        Row: {
+          created_at: string
+          formas_pagamento: string | null
+          garantia: string | null
+          id: string
+          nome_politica: string
+          tempo_garantia: string | null
+          updated_at: string
+          validade_dias: number
+        }
+        Insert: {
+          created_at?: string
+          formas_pagamento?: string | null
+          garantia?: string | null
+          id?: string
+          nome_politica: string
+          tempo_garantia?: string | null
+          updated_at?: string
+          validade_dias?: number
+        }
+        Update: {
+          created_at?: string
+          formas_pagamento?: string | null
+          garantia?: string | null
+          id?: string
+          nome_politica?: string
+          tempo_garantia?: string | null
+          updated_at?: string
+          validade_dias?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
