@@ -208,9 +208,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
             cliente={cliente}
             empresa={empresa}
             className="flex-1 min-w-[140px] bg-[hsl(30,100%,49%)] hover:bg-[hsl(30,100%,42%)] text-white"
-          >
-            Gerar Proposta
-          </PDFDownloadButton>
+          />
 
           {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
             <OSDownloadButton
@@ -218,9 +216,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               cliente={cliente}
               empresa={empresa}
               className="flex-1 min-w-[140px]"
-            >
-              Gerar OS
-            </OSDownloadButton>
+            />
           )}
 
           <Button
