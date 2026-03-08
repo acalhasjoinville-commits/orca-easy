@@ -6,6 +6,7 @@ interface OrdemServicoPDFProps {
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
+  termoRecebimento?: string | null;
 }
 
 const fmtDate = (d: string) => {
@@ -18,7 +19,7 @@ const dificuldadeLabel: Record<string, string> = {
   dificil: 'Difícil',
 };
 
-export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64 }: OrdemServicoPDFProps) {
+export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
   const corPrimaria = empresa?.corPrimaria || '#0B1B32';
   const corDestaque = empresa?.corDestaque || '#F57C00';
   const nomeEmpresa = empresa?.nomeFantasia || 'Minha Empresa';
@@ -149,11 +150,11 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64 }: Ord
           </>
         ) : null}
 
-        {/* TERMO DE RECEBIMENTO */}
-        <Text style={s.sectionTitle}>Termo de Recebimento</Text>
+        {/* CANHOTO DE ENTREGA */}
+        <Text style={s.sectionTitle}>Canhoto de Entrega (Assinar somente após a execução)</Text>
         <View style={s.termoBox}>
           <Text style={s.termoText}>
-            Declaro que os serviços acima descritos foram executados e entregues conforme o solicitado, em perfeitas condições.
+            {termoRecebimento || 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.'}
           </Text>
         </View>
 

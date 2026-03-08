@@ -108,6 +108,7 @@ export interface PoliticaComercial {
   formasPagamento: string;
   garantia: string;
   tempoGarantia: string;
+  termoRecebimentoOs: string;
 }
 
 export interface MinhaEmpresa {

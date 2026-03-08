@@ -1,0 +1,1 @@
+ALTER TABLE public.politicas_comerciais ADD COLUMN termo_recebimento_os text DEFAULT 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.';

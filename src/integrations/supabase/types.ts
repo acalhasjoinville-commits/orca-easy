@@ -285,6 +285,7 @@ export type Database = {
           id: string
           nome_politica: string
           tempo_garantia: string | null
+          termo_recebimento_os: string | null
           updated_at: string
           validade_dias: number
         }
@@ -295,6 +296,7 @@ export type Database = {
           id?: string
           nome_politica: string
           tempo_garantia?: string | null
+          termo_recebimento_os?: string | null
           updated_at?: string
           validade_dias?: number
         }
@@ -305,6 +307,7 @@ export type Database = {
           id?: string
           nome_politica?: string
           tempo_garantia?: string | null
+          termo_recebimento_os?: string | null
           updated_at?: string
           validade_dias?: number
         }
