@@ -59,10 +59,12 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const endParts = [empresa?.endereco, empresa?.numero, empresa?.cidade, empresa?.estado].filter(Boolean);
   if (endParts.length) { doc.text(endParts.join(', '), rightX, hy, { align: 'right' }); hy += 4.5; }
   if (empresa?.cnpjCpf) { doc.text(`CNPJ: ${empresa.cnpjCpf}`, rightX, hy, { align: 'right' }); hy += 4.5; }
-  doc.setTextColor(...rgbD);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.text('A solução está no nome', rightX, hy, { align: 'right' });
+  if (empresa?.slogan) {
+    doc.setTextColor(...rgbD);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(empresa.slogan, rightX, hy, { align: 'right' });
+  }
 
   y = 34;
 

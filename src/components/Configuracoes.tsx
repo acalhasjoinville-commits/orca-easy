@@ -119,6 +119,11 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
+          <div>
+            <Label className="text-xs">Slogan</Label>
+            <Input value={form.slogan} onChange={e => set('slogan', e.target.value)} placeholder="Ex: A solução está no nome" className="h-9" />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">CNPJ / CPF</Label>

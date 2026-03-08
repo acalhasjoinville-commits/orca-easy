@@ -124,6 +124,7 @@ export interface MinhaEmpresa {
   estado: string;
   corPrimaria: string;
   corDestaque: string;
+  slogan: string;
 }
 
 export interface Orcamento {

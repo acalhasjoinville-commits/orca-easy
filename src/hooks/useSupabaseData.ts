@@ -69,6 +69,7 @@ function empresaToDb(e: MinhaEmpresa) {
     cor_primaria: e.corPrimaria,
     cor_destaque: e.corDestaque,
     logo_url: e.logoUrl,
+    slogan: e.slogan,
   };
 }
 
