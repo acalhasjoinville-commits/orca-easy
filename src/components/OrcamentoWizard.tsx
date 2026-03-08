@@ -13,6 +13,7 @@ import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, 
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
+import { PDFDownloadButton } from './PDFDownloadButton';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -474,6 +475,28 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   <><Check className="mr-2 h-5 w-5" /> Salvar ({itens.length})</>
                 )}
               </Button>
+              {isEditing && editingOrcamento && (
+                <PDFDownloadButton
+                  orcamento={{
+                    ...editingOrcamento,
+                    itensServico: itens,
+                    custoTotalObra: totalCusto,
+                    valorVenda: totalVenda,
+                    desconto: descontoNum,
+                    valorFinal,
+                    status,
+                    validade,
+                    descricaoGeral,
+                    formasPagamento,
+                    garantia,
+                    tempoGarantia,
+                  }}
+                  cliente={selectedCliente}
+                  empresa={empresa}
+                  size="default"
+                  className="h-11"
+                />
+              )}
             </div>
           </div>
         </div>
