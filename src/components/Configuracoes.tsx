@@ -281,6 +281,7 @@ export function Configuracoes() {
           formasPagamento: form.formasPagamento || '',
           garantia: form.garantia || '',
           tempoGarantia: form.tempoGarantia || '1 ano',
+          termoRecebimentoOs: form.termoRecebimentoOs || '',
         };
         if (editItem) await updatePolitica.mutateAsync(entry);
         else await addPolitica.mutateAsync(entry);
