@@ -10,7 +10,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Printer, Loader2 } from 'lucide-react';
-import { generatePdf, openPrintWindow } from '@/lib/generatePdf';
+import { generatePdfFromHtml } from '@/lib/generatePdf';
+import { buildProposalHtml, imageToDataUrl } from '@/lib/printTemplate';
+import { printViaIframe } from '@/lib/printViaIframe';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -480,54 +482,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   try {
                     const orcToSave = await saveAndGetOrcamento();
                     if (!orcToSave) return;
+
                     const cli = clientes.find(c => c.id === selectedCliente.id);
-                    const { buildProposalHtml, imageToDataUrl } = await import('@/lib/printTemplate');
                     const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
-                    const html = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
+                    const templateHtml = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
 
-                    // Use hidden iframe to print — avoids popup blockers & about:blank on iOS
-                    let iframe = document.getElementById('print-iframe') as HTMLIFrameElement | null;
-                    if (iframe) iframe.remove();
-                    iframe = document.createElement('iframe');
-                    iframe.id = 'print-iframe';
-                    // iOS needs real dimensions to print iframe content instead of parent page
-                    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;opacity:0;pointer-events:none;';
-                    document.body.appendChild(iframe);
-
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                    if (!iframeDoc) {
-                      toast.error('Não foi possível imprimir. Use "Baixar PDF".');
-                      iframe.remove();
-                      return;
-                    }
-                    iframeDoc.open();
-                    iframeDoc.write(html);
-                    iframeDoc.close();
-
-                    let printed = false;
-                    const triggerPrint = () => {
-                      if (printed) return;
-                      printed = true;
-                      try {
-                        iframe!.contentWindow?.focus();
-                        iframe!.contentWindow?.print();
-                      } catch {
-                        toast.error('Erro ao imprimir. Use "Baixar PDF".');
-                      }
-                      // Clean up after print dialog closes
-                      setTimeout(() => iframe?.remove(), 3000);
-                    };
-
-                    // Wait for content to render
-                    if (iframe.contentWindow) {
-                      iframe.contentWindow.onload = () => setTimeout(triggerPrint, 500);
-                    }
-                    // Fallback timeout for iOS
-                    setTimeout(triggerPrint, 1500);
-
+                    printViaIframe(templateHtml);
                     toast.success('Orçamento salvo!');
                   } catch {
-                    toast.error('Erro ao salvar/imprimir.');
+                    toast.error('Erro ao imprimir. Use "Baixar PDF".');
                   }
                 }}
                 variant="outline"
@@ -542,8 +505,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   try {
                     const orcToSave = await saveAndGetOrcamento();
                     if (!orcToSave) return;
+
                     const cli = clientes.find(c => c.id === selectedCliente.id);
-                    await generatePdf(orcToSave, cli, empresa);
+                    const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
+                    const templateHtml = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
+
+                    await generatePdfFromHtml(templateHtml, orcToSave.numeroOrcamento);
                     toast.success('PDF gerado e orçamento salvo!');
                   } catch {
                     toast.error('Erro ao salvar/gerar PDF.');
