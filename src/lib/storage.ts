@@ -61,4 +61,22 @@ export const storage = {
     const list = storage.getOrcamentos().filter(o => o.id !== id);
     save(KEYS.orcamentos, list);
   },
+
+  getClientes: (): Cliente[] => {
+    const stored = localStorage.getItem(KEYS.clientes);
+    return stored ? JSON.parse(stored) : [];
+  },
+  addCliente: (c: Cliente) => {
+    const list = storage.getClientes();
+    list.unshift(c);
+    save(KEYS.clientes, list);
+  },
+  updateCliente: (updated: Cliente) => {
+    const list = storage.getClientes().map(c => c.id === updated.id ? updated : c);
+    save(KEYS.clientes, list);
+  },
+  deleteCliente: (id: string) => {
+    const list = storage.getClientes().filter(c => c.id !== id);
+    save(KEYS.clientes, list);
+  },
 };
