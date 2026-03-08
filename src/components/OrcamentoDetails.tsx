@@ -1,7 +1,6 @@
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,7 +48,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
 
   return (
-    <div className="px-4 pb-36 pt-4 max-w-3xl mx-auto">
+    <div className="px-4 pt-4 pb-44 lg:pb-8 max-w-3xl mx-auto">
       {/* Back button */}
       <button
         onClick={onBack}
@@ -173,7 +172,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
       {/* Condições */}
       {(orcamento.formasPagamento || orcamento.garantia || orcamento.descricaoGeral) && (
-        <Card className="mb-6">
+        <Card className="mb-4 lg:mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Condições</CardTitle>
           </CardHeader>
@@ -200,14 +199,67 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         </Card>
       )}
 
-      {/* Action Bar */}
-      <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-40 border-t bg-card p-3 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:mt-2">
-        <div className="flex items-center gap-2 max-w-3xl mx-auto flex-wrap">
+      {/* Desktop Action Bar — inline in the flow */}
+      <div className="hidden lg:flex items-center gap-2 mt-2">
+        <PDFDownloadButton
+          orcamento={orcamento}
+          cliente={cliente}
+          empresa={empresa}
+          className="flex-1 min-w-[140px] bg-accent hover:bg-accent/90 text-accent-foreground"
+        />
+
+        {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
+          <OSDownloadButton
+            orcamento={orcamento}
+            cliente={cliente}
+            empresa={empresa}
+            className="flex-1 min-w-[140px]"
+          />
+        )}
+
+        <Button
+          variant="outline"
+          onClick={() => onEdit(orcamento)}
+          className="flex-1 min-w-[100px]"
+        >
+          <Pencil className="mr-1.5 h-4 w-4" />
+          Editar
+        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="text-destructive hover:text-destructive border-destructive/30">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDelete(orcamento.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
+      {/* Mobile Action Bar — fixed above bottom nav */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card p-3 lg:hidden">
+        <div className="flex items-center gap-2 max-w-3xl mx-auto">
           <PDFDownloadButton
             orcamento={orcamento}
             cliente={cliente}
             empresa={empresa}
-            className="flex-1 min-w-[140px] bg-[hsl(30,100%,49%)] hover:bg-[hsl(30,100%,42%)] text-white"
+            className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
           />
 
           {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
@@ -215,14 +267,15 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               orcamento={orcamento}
               cliente={cliente}
               empresa={empresa}
-              className="flex-1 min-w-[140px]"
+              className="flex-1"
             />
           )}
 
           <Button
             variant="outline"
+            size="default"
             onClick={() => onEdit(orcamento)}
-            className="flex-1 min-w-[100px]"
+            className="flex-1"
           >
             <Pencil className="mr-1.5 h-4 w-4" />
             Editar
@@ -230,7 +283,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="text-destructive hover:text-destructive border-destructive/30">
+              <Button variant="outline" size="icon" className="shrink-0 text-destructive hover:text-destructive border-destructive/30">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>

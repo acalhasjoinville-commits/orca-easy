@@ -95,12 +95,12 @@ const Index = () => {
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background pb-20">
-        <header className="h-12 flex items-center border-b bg-card px-4 sticky top-0 z-40">
+      <div className="min-h-screen bg-background">
+        <header className="h-12 flex items-center border-b bg-card px-4 sticky top-0 z-50">
           <span className="text-base font-bold text-primary">OrçaCalhas</span>
           <span className="ml-3 text-sm text-muted-foreground">{getHeaderLabel()}</span>
         </header>
-        <main className="overflow-auto">{content}</main>
+        <main className="pb-16">{content}</main>
         <MobileBottomNav active={tab} onNavigate={setTab} onNewOrcamento={goToNew} />
       </div>
     );
