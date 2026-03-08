@@ -80,17 +80,16 @@ function printViaIframe(html: string) {
   doc.write(html);
   doc.close();
 
-  iframe.onload = () => {
-    setTimeout(() => {
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } catch {
-        printViaNewTab(html);
-      }
-      setTimeout(() => iframe.remove(), 3000);
-    }, 300);
-  };
+  // doc.write doesn't reliably trigger onload — use timeout instead
+  setTimeout(() => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      printViaNewTab(html);
+    }
+    setTimeout(() => iframe.remove(), 5000);
+  }, 500);
 }
 
 function printViaNewTab(html: string) {
