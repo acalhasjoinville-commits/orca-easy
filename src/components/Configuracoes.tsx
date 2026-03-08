@@ -44,8 +44,12 @@ function MinhaEmpresaForm() {
     setUploading(true);
     try {
       const { supabase } = await import('@/integrations/supabase/client');
+      // Get empresa_id for path segregation
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await (supabase as any).from('profiles').select('empresa_id').eq('id', user?.id).maybeSingle();
+      const empresaPrefix = profile?.empresa_id || 'default';
       const ext = file.name.split('.').pop() || 'png';
-      const path = `logo-${Date.now()}.${ext}`;
+      const path = `${empresaPrefix}/logo-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('logos').upload(path, file, { upsert: true });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path);

@@ -30,6 +30,10 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
     items.push({ title: 'Financeiro', tab: 'financeiro', icon: DollarSign });
   }
 
+  if (canManageUsers) {
+    items.push({ title: 'Usuários', tab: 'usuarios', icon: Users });
+  }
+
   if (canManageSettings) {
     items.push({ title: 'Config', tab: 'config', icon: Settings });
   }
