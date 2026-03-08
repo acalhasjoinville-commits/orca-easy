@@ -54,7 +54,7 @@ export async function generatePdf(orcamento: Orcamento, cliente: Cliente | undef
   document.body.appendChild(container);
 
   try {
-    await html2pdf().set({
+    await (html2pdf() as any).set({
       margin: 0,
       filename: `Proposta_${String(orcamento.numeroOrcamento).padStart(4, '0')}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
