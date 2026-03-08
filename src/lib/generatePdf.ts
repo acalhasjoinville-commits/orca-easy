@@ -53,15 +53,26 @@ export async function generatePdf(orcamento: Orcamento, cliente: Cliente | undef
   container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;'; // 210mm ≈ 794px at 96dpi
   document.body.appendChild(container);
 
+  const filename = `Proposta_${String(orcamento.numeroOrcamento).padStart(4, '0')}.pdf`;
+
   try {
-    await (html2pdf() as any).set({
+    const pdfBlob = await (html2pdf() as any).set({
       margin: 0,
-      filename: `Proposta_${String(orcamento.numeroOrcamento).padStart(4, '0')}.pdf`,
+      filename,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, width: 794, scrollY: 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    }).from(container).save();
+    }).from(container).outputPdf('blob');
+
+    const url = URL.createObjectURL(pdfBlob);
+    const w = window.open(url, '_blank');
+    if (!w) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }
   } finally {
     container.remove();
   }
