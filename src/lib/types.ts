@@ -15,7 +15,8 @@ export interface Motor2Entry {
 
 export interface InsumoEntry {
   id: string;
-  nome: string;
+  nomeEmbalagemCompra: string;
+  nomeUnidadeConsumo: string;
   precoEmbalagem: number;
   qtdEmbalagem: number;
 }

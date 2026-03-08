@@ -28,7 +28,7 @@ export function calcInsumosDinamicos(
     const custoUnitario = getCustoUnitario(insumo);
     return {
       insumoId: insumo.id,
-      nomeInsumo: insumo.nome,
+      nomeInsumo: insumo.nomeUnidadeConsumo,
       quantidade,
       custoUnitario,
       custoTotal: quantidade * custoUnitario,

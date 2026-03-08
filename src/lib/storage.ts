@@ -34,8 +34,8 @@ export const storage = {
   getMotor2: (): Motor2Entry[] => getOrSeed(KEYS.motor2, seedMotor2),
   setMotor2: (d: Motor2Entry[]) => save(KEYS.motor2, d),
 
-  getInsumos: (): InsumoEntry[] => getOrSeed(KEYS.insumos, seedInsumos, 2),
-  setInsumos: (d: InsumoEntry[]) => { save(KEYS.insumos, d); localStorage.setItem(KEYS.insumos + '_v', '2'); },
+  getInsumos: (): InsumoEntry[] => getOrSeed(KEYS.insumos, seedInsumos, 3),
+  setInsumos: (d: InsumoEntry[]) => { save(KEYS.insumos, d); localStorage.setItem(KEYS.insumos + '_v', '3'); },
 
   getRegras: (): RegraCalculo[] => getOrSeed(KEYS.regras, seedRegras, 2),
   setRegras: (d: RegraCalculo[]) => { save(KEYS.regras, d); localStorage.setItem(KEYS.regras + '_v', '2'); },

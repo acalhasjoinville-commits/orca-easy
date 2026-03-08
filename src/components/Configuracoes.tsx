@@ -57,7 +57,7 @@ export function Configuracoes() {
       const updated = editItem ? motor2.map(e => e.id === id ? entry : e) : [...motor2, entry];
       setMotor2(updated); storage.setMotor2(updated);
     } else if (tab === 'insumos') {
-      const entry: InsumoEntry = { id, nome: form.nome || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
+      const entry: InsumoEntry = { id, nomeEmbalagemCompra: form.nomeEmbalagemCompra || '', nomeUnidadeConsumo: form.nomeUnidadeConsumo || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
       const updated = editItem ? insumos.map(e => e.id === id ? entry : e) : [...insumos, entry];
       setInsumos(updated); storage.setInsumos(updated);
     } else if (tab === 'regras') {
@@ -99,7 +99,7 @@ export function Configuracoes() {
     <Card key={item.id} className="mb-2">
       <CardContent className="flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate">{item.material || item.nome || item.nomeRegra || item.nomeServico}</p>
+          <p className="text-sm font-medium truncate">{item.material || item.nomeEmbalagemCompra || item.nomeRegra || item.nomeServico}</p>
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
         <div className="flex gap-1 shrink-0">
@@ -150,16 +150,16 @@ export function Configuracoes() {
                   <SelectValue placeholder="Insumo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nome}</SelectItem>)}
+                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeUnidadeConsumo}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
-                <SelectTrigger className="h-8 text-xs w-24">
+               <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
+                <SelectTrigger className="h-8 text-xs w-28">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="multiplicar">× Mult.</SelectItem>
-                  <SelectItem value="dividir">÷ Div.</SelectItem>
+                  <SelectItem value="multiplicar">Qtd por metro:</SelectItem>
+                  <SelectItem value="dividir">A cada (m):</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -253,7 +253,8 @@ export function Configuracoes() {
       { label: 'Preço/Metro (R$)', key: 'precoMetroLinear', type: 'number' },
     ],
     insumos: [
-      { label: 'Nome', key: 'nome' },
+      { label: 'Nome da Embalagem', key: 'nomeEmbalagemCompra' },
+      { label: 'Nome da Unidade de Consumo', key: 'nomeUnidadeConsumo' },
       { label: 'Preço da Embalagem (R$)', key: 'precoEmbalagem', type: 'number' },
       { label: 'Qtd na Embalagem', key: 'qtdEmbalagem', type: 'number' },
     ],

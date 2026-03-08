@@ -15,9 +15,9 @@ export const seedMotor2: Motor2Entry[] = [
 ];
 
 export const seedInsumos: InsumoEntry[] = [
-  { id: '1', nome: 'Tubo PU 930g', precoEmbalagem: 29.00, qtdEmbalagem: 1 },
-  { id: '2', nome: 'Caixa Rebite 306', precoEmbalagem: 45.00, qtdEmbalagem: 1000 },
-  { id: '3', nome: 'Suporte Normal', precoEmbalagem: 4.50, qtdEmbalagem: 1 },
+  { id: '1', nomeEmbalagemCompra: 'Tubo PU 930g', nomeUnidadeConsumo: 'Tubo de PU', precoEmbalagem: 29.00, qtdEmbalagem: 1 },
+  { id: '2', nomeEmbalagemCompra: 'Caixa Rebite 306 c/ 1000', nomeUnidadeConsumo: 'Rebite 306 un.', precoEmbalagem: 45.00, qtdEmbalagem: 1000 },
+  { id: '3', nomeEmbalagemCompra: 'Suporte Normal un.', nomeUnidadeConsumo: 'Suporte Normal', precoEmbalagem: 4.50, qtdEmbalagem: 1 },
 ];
 
 export const seedRegras: RegraCalculo[] = [
