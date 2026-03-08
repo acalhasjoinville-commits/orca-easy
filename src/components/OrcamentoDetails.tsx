@@ -48,7 +48,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
 
   return (
-    <div className="px-4 pt-4 pb-44 lg:pb-8 max-w-3xl mx-auto">
+    <div className="px-4 pt-4 pb-8 max-w-3xl mx-auto">
       {/* Back button */}
       <button
         onClick={onBack}
@@ -199,13 +199,13 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         </Card>
       )}
 
-      {/* Desktop Action Bar — inline in the flow */}
-      <div className="hidden lg:flex items-center gap-3 mt-6">
+      {/* Action Bar — inline, responsive */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-6 mb-4">
         <PDFDownloadButton
           orcamento={orcamento}
           cliente={cliente}
           empresa={empresa}
-          className="h-10 px-5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold"
+          className="h-10 px-4 sm:px-5 bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-xs sm:text-sm"
         />
 
         {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
@@ -213,14 +213,14 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
             orcamento={orcamento}
             cliente={cliente}
             empresa={empresa}
-            className="h-10 px-5"
+            className="h-10 px-4 sm:px-5 text-xs sm:text-sm"
           />
         )}
 
         <Button
           variant="outline"
           onClick={() => onEdit(orcamento)}
-          className="h-10 px-5"
+          className="h-10 px-4 sm:px-5 text-xs sm:text-sm"
         >
           <Pencil className="mr-1.5 h-4 w-4" />
           Editar
@@ -250,65 +250,6 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-
-      {/* Mobile Action Bar — fixed above bottom nav */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card p-3 lg:hidden">
-        <div className="grid grid-cols-[1fr_auto] gap-2 max-w-3xl mx-auto">
-          <PDFDownloadButton
-            orcamento={orcamento}
-            cliente={cliente}
-            empresa={empresa}
-            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xs"
-          />
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 text-destructive hover:text-destructive border-destructive/30">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(orcamento.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
-            <OSDownloadButton
-              orcamento={orcamento}
-              cliente={cliente}
-              empresa={empresa}
-              className="w-full text-xs"
-            />
-          )}
-
-          <Button
-            variant="outline"
-            size="default"
-            onClick={() => onEdit(orcamento)}
-            className={cn(
-              "w-full text-xs",
-              !(orcamento.status === 'aprovado' || orcamento.status === 'executado') && "col-span-1"
-            )}
-          >
-            <Pencil className="mr-1.5 h-4 w-4" />
-            Editar
-          </Button>
-        </div>
       </div>
     </div>
   );
