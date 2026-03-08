@@ -283,7 +283,11 @@ export function Configuracoes() {
           {motor2.map(e => renderItem(e, `${e.espessura}mm · ${e.corte}mm · ${fmt(e.precoMetroLinear)}/m`))}
         </TabsContent>
         <TabsContent value="insumos">
-          {insumos.map(e => renderItem(e, `${fmt(e.precoEmbalagem)} / ${e.qtdEmbalagem} un = ${fmt(getCustoUnitario(e))}/un`))}
+          {insumos.map(e => {
+            const preco = e.precoEmbalagem ?? 0;
+            const qtd = e.qtdEmbalagem ?? 1;
+            return renderItem(e, `${fmt(preco)} / ${qtd} un = ${fmt(getCustoUnitario(e))}/un`);
+          })}
         </TabsContent>
         <TabsContent value="regras">
           {regras.map(e => renderItem(e, `${e.itensRegra.length} insumo(s) vinculado(s)`))}

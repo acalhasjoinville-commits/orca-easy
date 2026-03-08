@@ -1,10 +1,16 @@
 import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento } from './types';
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from './seedData';
 
-function getOrSeed<T>(key: string, seed: T[]): T[] {
-  const stored = localStorage.getItem(key);
-  if (stored) return JSON.parse(stored);
+function getOrSeed<T>(key: string, seed: T[], version?: number): T[] {
+  const versionKey = key + '_v';
+  const currentVersion = version ?? 1;
+  const storedVersion = localStorage.getItem(versionKey);
+  if (storedVersion && parseInt(storedVersion) >= currentVersion) {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  }
   localStorage.setItem(key, JSON.stringify(seed));
+  localStorage.setItem(versionKey, String(currentVersion));
   return seed;
 }
 
