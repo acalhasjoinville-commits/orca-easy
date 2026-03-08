@@ -207,8 +207,5 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   doc.setFont('helvetica', 'italic');
   doc.text('Orçamento gerado via OrçaCalhas — A solução está no nome', pageW / 2, y, { align: 'center' });
 
-  // Open in new tab
-  const pdfBlob = doc.output('blob');
-  const url = URL.createObjectURL(pdfBlob);
-  window.open(url, '_blank');
+  doc.save(`proposta-${orcamento.numeroOrcamento}.pdf`);
 }
