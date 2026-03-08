@@ -330,7 +330,23 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   }
 
   // ═══════════════════════════════════════════
-  // OUTPUT — direct download
+  // OUTPUT — blob URL for max compatibility
   // ═══════════════════════════════════════════
-  doc.save(`proposta-${orcamento.numeroOrcamento}.pdf`);
+  const blob = doc.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+
+  // Try opening in new tab (works on iOS Safari + desktop)
+  const newWindow = window.open(blobUrl, '_blank');
+  if (!newWindow) {
+    // Fallback: force download via anchor
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `proposta-${orcamento.numeroOrcamento}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Clean up blob URL after a delay
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 }
