@@ -1,10 +1,16 @@
 import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento } from './types';
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from './seedData';
 
-function getOrSeed<T>(key: string, seed: T[]): T[] {
-  const stored = localStorage.getItem(key);
-  if (stored) return JSON.parse(stored);
+function getOrSeed<T>(key: string, seed: T[], version?: number): T[] {
+  const versionKey = key + '_v';
+  const currentVersion = version ?? 1;
+  const storedVersion = localStorage.getItem(versionKey);
+  if (storedVersion && parseInt(storedVersion) >= currentVersion) {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  }
   localStorage.setItem(key, JSON.stringify(seed));
+  localStorage.setItem(versionKey, String(currentVersion));
   return seed;
 }
 
@@ -28,11 +34,11 @@ export const storage = {
   getMotor2: (): Motor2Entry[] => getOrSeed(KEYS.motor2, seedMotor2),
   setMotor2: (d: Motor2Entry[]) => save(KEYS.motor2, d),
 
-  getInsumos: (): InsumoEntry[] => getOrSeed(KEYS.insumos, seedInsumos),
-  setInsumos: (d: InsumoEntry[]) => save(KEYS.insumos, d),
+  getInsumos: (): InsumoEntry[] => getOrSeed(KEYS.insumos, seedInsumos, 2),
+  setInsumos: (d: InsumoEntry[]) => { save(KEYS.insumos, d); localStorage.setItem(KEYS.insumos + '_v', '2'); },
 
-  getRegras: (): RegraCalculo[] => getOrSeed(KEYS.regras, seedRegras),
-  setRegras: (d: RegraCalculo[]) => save(KEYS.regras, d),
+  getRegras: (): RegraCalculo[] => getOrSeed(KEYS.regras, seedRegras, 2),
+  setRegras: (d: RegraCalculo[]) => { save(KEYS.regras, d); localStorage.setItem(KEYS.regras + '_v', '2'); },
 
   getServicos: (): ServicoTemplate[] => getOrSeed(KEYS.servicos, seedServicos),
   setServicos: (d: ServicoTemplate[]) => save(KEYS.servicos, d),
