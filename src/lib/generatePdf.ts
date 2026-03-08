@@ -215,9 +215,9 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const colW = CW / 3;
   const gridH = 13;
   const gridItems = [
-    { label: '📅 Emissão', value: dataFormatada },
-    { label: '📅 Validade', value: orcamento.validade || '—' },
-    { label: '✅ Garantia', value: orcamento.tempoGarantia || '—' },
+    { label: 'Emissao', value: dataFormatada },
+    { label: 'Validade', value: orcamento.validade || '—' },
+    { label: 'Garantia', value: orcamento.tempoGarantia || '—' },
   ];
 
   gridItems.forEach((item, i) => {
