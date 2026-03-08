@@ -320,7 +320,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     .print-btn:hover { opacity: 0.9; }
   }
 
-  /* Mobile responsive */
+  /* Mobile responsive - ONLY for screen viewing, not print */
   @media screen and (max-width: 640px) {
     body { margin: 0; padding: 0; background: #fff; font-size: 9pt; }
     .page-wrap { padding: 12px; box-shadow: none; min-height: auto; padding-bottom: 100px; }
@@ -352,6 +352,72 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
       padding: 10px 20px;
       font-size: 12pt;
     }
+  }
+
+  /* Print styles - reset mobile overrides and enforce A4 layout */
+  @media print {
+    body { 
+      margin: 0 !important; 
+      padding: 0 !important; 
+      background: #fff !important;
+      font-size: 10pt !important;
+      width: 210mm !important;
+    }
+    .page-wrap { 
+      padding: 0 !important; 
+      box-shadow: none !important; 
+      min-height: auto !important;
+      padding-bottom: 0 !important;
+    }
+    .header { 
+      flex-direction: row !important; 
+      gap: 12px !important; 
+      align-items: flex-start !important;
+      justify-content: space-between !important;
+    }
+    .header-left { gap: 12px !important; }
+    .header-logo img { max-height: 50px !important; max-width: 80px !important; }
+    .header-company-name { font-size: 16pt !important; }
+    .header-right { text-align: right !important; }
+    .header-right .number { font-size: 18pt !important; }
+    .client-row { flex-direction: row !important; gap: 24px !important; }
+    .meta-grid { font-size: 10pt !important; }
+    .meta-cell { padding: 6px 10px !important; }
+    .meta-cell .meta-value { font-size: 10pt !important; }
+    table.services { font-size: 9pt !important; }
+    table.services thead th { padding: 8px 6px !important; font-size: 8.5pt !important; }
+    table.services tbody td { padding: 7px 6px !important; }
+    .total-bar { 
+      flex-direction: row !important; 
+      gap: 0 !important; 
+      text-align: right !important; 
+      padding: 8px 14px !important;
+      justify-content: space-between !important;
+    }
+    .total-bar .total-label { font-size: 12pt !important; }
+    .total-bar .total-value { font-size: 14pt !important; }
+    .signatures { 
+      flex-direction: row !important; 
+      gap: 0 !important; 
+      align-items: stretch !important; 
+      margin-top: 40px !important;
+      justify-content: space-between !important;
+    }
+    .sig-block { width: 42% !important; }
+    .footer { 
+      position: fixed !important; 
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      flex-direction: row !important; 
+      gap: 10px !important; 
+      text-align: left !important; 
+      padding: 8px 15mm !important;
+      justify-content: space-between !important;
+    }
+    .footer-right { justify-content: flex-end !important; }
+    .print-btn { display: none !important; }
+    .no-print { display: none !important; }
   }
 </style>
 </head>
