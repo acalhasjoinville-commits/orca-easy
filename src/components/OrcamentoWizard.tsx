@@ -115,6 +115,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     toast.success('Item atualizado!');
   };
 
+  const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
+
   const loadPolitica = (politicaId: string) => {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
@@ -122,6 +124,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setDescricaoGeral(pol.descricaoGeral);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
+    setTempoGarantia(pol.tempoGarantia || '');
     toast.success(`Política "${pol.nomePolitica}" carregada!`);
   };
 
