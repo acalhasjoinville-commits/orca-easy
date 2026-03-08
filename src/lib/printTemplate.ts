@@ -86,7 +86,7 @@ export function buildProposalHtml(params: TemplateParams): string {
     margin: 10mm 10mm 12mm 10mm;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
 
   html, body {
     width: 210mm;
