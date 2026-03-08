@@ -23,6 +23,8 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 
 export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
   const { orcamentos, isLoading, getNextNumero, addOrcamento, deleteOrcamento } = useOrcamentos();
+  const { clientes } = useClientes();
+  const { empresa } = useEmpresa();
   const [search, setSearch] = useState('');
 
   const handleDelete = async (id: string) => {
