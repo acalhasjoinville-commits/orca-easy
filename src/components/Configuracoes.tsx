@@ -97,8 +97,9 @@ function MinhaEmpresaForm() {
                 </div>
               )}
               <div>
-                <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-                  <Upload className="mr-1 h-3 w-3" /> Upload Logo
+                <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Upload className="mr-1 h-3 w-3" />}
+                  {uploading ? 'Enviando...' : 'Upload Logo'}
                 </Button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                 <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, máx 2MB</p>
