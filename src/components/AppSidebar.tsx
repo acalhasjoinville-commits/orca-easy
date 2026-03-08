@@ -36,7 +36,7 @@ function isOrcamentoTab(tab: Tab) {
 export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { canManageClientes, canViewFinanceiro, canManageSettings } = useAuth();
+  const { canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
 
   const permissionMap: Record<string, boolean> = {
     all: true,
