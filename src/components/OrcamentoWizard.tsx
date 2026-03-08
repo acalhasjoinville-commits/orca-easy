@@ -477,13 +477,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Button
                 onClick={async () => {
                   if (itens.length === 0 || !selectedCliente) return;
+                  // Open window SYNCHRONOUSLY on user click to avoid popup blocker
+                  const w = window.open('', '_blank');
+                  if (!w) {
+                    toast.error('Popup bloqueado. Permita popups ou use "Baixar PDF".');
+                    return;
+                  }
+                  w.document.write('<!DOCTYPE html><html><head><title>Gerando impressão...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><p>Gerando impressão…</p></body></html>');
+                  w.document.close();
                   try {
                     const orcToSave = await saveAndGetOrcamento();
-                    if (!orcToSave) return;
+                    if (!orcToSave) { w.close(); return; }
                     const cli = clientes.find(c => c.id === selectedCliente.id);
-                    await openPrintWindow(orcToSave, cli, empresa);
+                    const { buildProposalHtml, imageToDataUrl } = await import('@/lib/printTemplate');
+                    const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
+                    const html = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
+                    w.document.open();
+                    w.document.write(html);
+                    w.document.close();
+                    w.onload = () => { setTimeout(() => { w.focus(); w.print(); }, 400); };
+                    setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 1500);
                     toast.success('Orçamento salvo!');
                   } catch {
+                    w.close();
                     toast.error('Erro ao salvar/imprimir.');
                   }
                 }}
