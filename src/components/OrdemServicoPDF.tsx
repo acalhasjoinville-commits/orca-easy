@@ -88,6 +88,8 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
             <Text style={s.contactLine}>
               {[telefone, email].filter(Boolean).join(' · ')}
             </Text>
+            {enderecoEmpresa ? <Text style={s.contactLine}>{enderecoEmpresa}</Text> : null}
+            </Text>
           </View>
         </View>
 
