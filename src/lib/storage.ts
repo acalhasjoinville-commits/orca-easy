@@ -1,4 +1,4 @@
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento } from './types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento, Cliente } from './types';
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from './seedData';
 
 function getOrSeed<T>(key: string, seed: T[], version?: number): T[] {
