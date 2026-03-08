@@ -337,7 +337,8 @@ export function buildProposalHtml(params: TemplateParams): string {
     <div class="total-label">TOTAL</div>
     <div class="total-details">
       ${orcamento.desconto > 0 ? `
-        <div class="total-sub">Subtotal: ${fmt(orcamento.valorVenda)}  |  Desconto: -${fmt(orcamento.desconto)}</div>
+        <div class="total-sub">Subtotal: ${fmt(orcamento.valorVenda)}</div>
+        <div class="total-sub">Desconto: -${fmt(orcamento.desconto)}</div>
       ` : ''}
       <div class="total-value">${fmt(orcamento.valorFinal)}</div>
     </div>
