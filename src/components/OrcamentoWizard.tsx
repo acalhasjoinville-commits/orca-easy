@@ -399,7 +399,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
       {itens.length > 0 && (() => {
         const empresa = storage.getMinhaEmpresa();
-        const corDestaque = empresa?.corDestaque || '#16A34A';
+        const corDestaque = empresa?.corDestaque || '#F57C00';
         return (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
