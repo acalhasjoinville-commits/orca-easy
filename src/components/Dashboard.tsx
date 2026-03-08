@@ -44,7 +44,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
   }
 
   return (
-    <div className="px-4 pb-24 pt-4">
+    <div className="px-4 pb-24 lg:pb-8 pt-4">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-primary">Orçamentos</h1>
         <p className="text-sm text-muted-foreground">Gerencie seus orçamentos de calhas e rufos</p>
