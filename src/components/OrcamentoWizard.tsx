@@ -486,7 +486,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                       await addOrcamento.mutateAsync(orcToSave);
                     }
                     const cli = clientes.find(c => c.id === selectedCliente.id);
-                    generatePdf(orcToSave, cli, empresa);
+                    await generatePdf(orcToSave, cli, empresa);
                     toast.success('PDF gerado e orçamento salvo!');
                   } catch {
                     toast.error('Erro ao salvar/gerar PDF.');
