@@ -64,9 +64,11 @@ export function buildProposalHtml(params: TemplateParams): string {
 
   const serviceRows = orcamento.itensServico.map((item, idx) => {
     const unitPrice = item.metragem > 0 ? item.valorVenda / item.metragem : 0;
+    const unidade = 'm';
     return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
       <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
       <td class="svc-name">${item.nomeServico}</td>
+      <td class="no-break" style="text-align:center;">${unidade}</td>
       <td class="no-break" style="text-align:center;">${item.metragem}</td>
       <td class="no-break" style="text-align:right;">${fmt(unitPrice)}</td>
       <td class="no-break" style="text-align:right;font-weight:bold;">${fmt(item.valorVenda)}</td>
