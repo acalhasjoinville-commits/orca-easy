@@ -122,7 +122,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
     setValidade(`${pol.validadeDias} dias`);
-    setDescricaoGeral(pol.descricaoGeral);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
     setTempoGarantia(pol.tempoGarantia || '');
@@ -364,9 +363,9 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
 
             <div>
-              <Label className="text-xs">Descrição Geral</Label>
+              <Label className="text-xs font-semibold">📋 Escopo do Serviço</Label>
               <Textarea value={descricaoGeral} onChange={e => setDescricaoGeral(e.target.value)}
-                placeholder="Descreva o escopo do serviço..." rows={2} className="text-sm" />
+                placeholder="Ex: Instalação de calhas no beiral frontal e rufos na platibanda lateral..." rows={3} className="text-sm" />
             </div>
             <div>
               <Label className="text-xs">Formas de Pagamento</Label>

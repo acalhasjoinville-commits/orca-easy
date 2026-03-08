@@ -87,6 +87,21 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
 
   y += 4;
 
+  // === ESCOPO DO SERVIÇO ===
+  if (orcamento.descricaoGeral) {
+    doc.setTextColor(...rgbPrimaria);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ESCOPO DO SERVIÇO', margin, y);
+    y += 5;
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const escopoLines = doc.splitTextToSize(orcamento.descricaoGeral, contentW);
+    doc.text(escopoLines, margin, y);
+    y += escopoLines.length * 4 + 4;
+  }
+
   // === TABLE ===
   const tableHead = [['#', 'Descrição do Serviço', 'Qtd/Medida', 'Preço Unit.', 'Total']];
   const tableBody = orcamento.itensServico.map((item, i) => [
@@ -173,7 +188,6 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const conditions: { label: string; value: string; highlight?: boolean }[] = [];
   if (orcamento.validade) conditions.push({ label: 'Validade', value: orcamento.validade });
   if (orcamento.formasPagamento) conditions.push({ label: 'Formas de Pagamento', value: orcamento.formasPagamento });
-  if (orcamento.descricaoGeral) conditions.push({ label: 'Descrição', value: orcamento.descricaoGeral });
   if (orcamento.tempoGarantia) conditions.push({ label: 'Garantia', value: orcamento.tempoGarantia, highlight: true });
   if (orcamento.garantia) conditions.push({ label: 'Detalhes da Garantia', value: orcamento.garantia });
 

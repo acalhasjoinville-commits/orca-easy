@@ -228,7 +228,6 @@ export function Configuracoes() {
         id,
         nomePolitica: form.nomePolitica || '',
         validadeDias: parseInt(form.validadeDias) || 15,
-        descricaoGeral: form.descricaoGeral || '',
         formasPagamento: form.formasPagamento || '',
         garantia: form.garantia || '',
         tempoGarantia: form.tempoGarantia || '1 ano',
@@ -419,11 +418,6 @@ export function Configuracoes() {
             {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
           </SelectContent>
         </Select>
-      </div>
-      <div>
-        <Label className="text-xs">Descrição Geral</Label>
-        <Textarea value={form.descricaoGeral || ''} onChange={e => setField('descricaoGeral', e.target.value)}
-          placeholder="Descreva o escopo padrão do serviço..." rows={2} className="text-sm" />
       </div>
       <div>
         <Label className="text-xs">Formas de Pagamento</Label>
