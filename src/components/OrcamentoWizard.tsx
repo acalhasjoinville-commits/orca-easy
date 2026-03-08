@@ -485,38 +485,45 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
                     const html = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
 
-                    // Use hidden iframe to print — avoids popup blockers & about:blank issues on iOS
+                    // Use hidden iframe to print — avoids popup blockers & about:blank on iOS
                     let iframe = document.getElementById('print-iframe') as HTMLIFrameElement | null;
                     if (iframe) iframe.remove();
                     iframe = document.createElement('iframe');
                     iframe.id = 'print-iframe';
-                    iframe.style.cssText = 'position:fixed;width:0;height:0;border:none;left:-9999px;top:-9999px;';
+                    // iOS needs real dimensions to print iframe content instead of parent page
+                    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;opacity:0;pointer-events:none;';
                     document.body.appendChild(iframe);
 
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
                     if (!iframeDoc) {
                       toast.error('Não foi possível imprimir. Use "Baixar PDF".');
+                      iframe.remove();
                       return;
                     }
                     iframeDoc.open();
                     iframeDoc.write(html);
                     iframeDoc.close();
 
+                    let printed = false;
                     const triggerPrint = () => {
+                      if (printed) return;
+                      printed = true;
                       try {
                         iframe!.contentWindow?.focus();
                         iframe!.contentWindow?.print();
                       } catch {
                         toast.error('Erro ao imprimir. Use "Baixar PDF".');
                       }
+                      // Clean up after print dialog closes
+                      setTimeout(() => iframe?.remove(), 3000);
                     };
 
                     // Wait for content to render
                     if (iframe.contentWindow) {
-                      iframe.contentWindow.onload = () => setTimeout(triggerPrint, 300);
+                      iframe.contentWindow.onload = () => setTimeout(triggerPrint, 500);
                     }
-                    // Fallback timeout
-                    setTimeout(triggerPrint, 1200);
+                    // Fallback timeout for iOS
+                    setTimeout(triggerPrint, 1500);
 
                     toast.success('Orçamento salvo!');
                   } catch {
