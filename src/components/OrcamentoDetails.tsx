@@ -201,7 +201,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
       )}
 
       {/* Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card p-3 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:mt-2">
+      <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-40 border-t bg-card p-3 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:mt-2">
         <div className="flex items-center gap-2 max-w-3xl mx-auto flex-wrap">
           <PDFDownloadButton
             orcamento={orcamento}
