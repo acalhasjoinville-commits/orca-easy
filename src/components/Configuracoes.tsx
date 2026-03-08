@@ -21,28 +21,42 @@ function MinhaEmpresaForm() {
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
     bairro: '', cidade: '', estado: '', corPrimaria: '#0B1B32', corDestaque: '#F57C00',
   });
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Sync from DB once loaded
-  if (!initialized && !isLoading && existing) {
-    setForm(existing);
-    setInitialized(true);
-  }
-  if (!initialized && !isLoading && !existing) {
-    setInitialized(true);
-  }
+  // Sync from DB once loaded via useEffect
+  useEffect(() => {
+    if (!initialized && !isLoading) {
+      if (existing) setForm(existing);
+      setInitialized(true);
+    }
+  }, [isLoading, existing, initialized]);
 
   const set = (k: keyof MinhaEmpresa, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const url = ev.target?.result as string;
-      set('logoUrl', url);
-    };
-    reader.readAsDataURL(file);
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo 2MB.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `logo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('logos').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path);
+      set('logoUrl', urlData.publicUrl);
+      toast.success('Logo enviada!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao enviar logo.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
