@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react';
 import { storage } from '@/lib/storage';
-import { ItemServico, Orcamento, Dificuldade } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, Cliente } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -20,12 +19,21 @@ interface Props {
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
   const [phase, setPhase] = useState<'cliente' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
-  const [nomeCliente, setNomeCliente] = useState(editingOrcamento?.nomeCliente ?? '');
+  const [selectedClienteId, setSelectedClienteId] = useState(editingOrcamento?.clienteId ?? '');
+  const [clienteSearch, setClienteSearch] = useState('');
   const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editMetragem, setEditMetragem] = useState('');
   const [editDificuldade, setEditDificuldade] = useState<Dificuldade>('facil');
+
+  const clientes = useMemo(() => storage.getClientes(), []);
+  const selectedCliente = clientes.find(c => c.id === selectedClienteId);
+
+  const filteredClientes = clientes.filter(c =>
+    c.nomeRazaoSocial.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+    c.documento.includes(clienteSearch)
+  );
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -48,24 +56,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setEditDificuldade(item.dificuldade);
   };
 
-  const cancelEditItem = () => {
-    setEditingItemId(null);
-  };
+  const cancelEditItem = () => { setEditingItemId(null); };
 
   const saveEditItem = (item: ItemServico) => {
     const m = parseFloat(editMetragem);
     if (isNaN(m) || m <= 0) return;
-
     const servicosList = storage.getServicos();
     const regrasList = storage.getRegras();
     const motor1List = storage.getMotor1();
     const motor2List = storage.getMotor2();
     const insumosList = storage.getInsumos();
-
     const servico = servicosList.find(s => s.id === item.servicoTemplateId);
     const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
     if (!servico || !regra) return;
-
     let custoMetroLinear: number;
     if (servico.motorPadrao === 'motor1') {
       const motor1 = motor1List.find(e => e.material === servico.materialPadrao);
@@ -76,25 +79,16 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       if (resultado === null) return;
       custoMetroLinear = resultado;
     }
-
     const custoTotalMaterial = custoMetroLinear * m;
     const insumosCalc = calcInsumosDinamicos(m, regra, insumosList);
     const fator = getFatorDificuldade(servico, editDificuldade);
     const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
     const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
     const valorVenda = custoTotalObra * fator;
-
     setItens(prev => prev.map(i => i.id !== item.id ? i : {
-      ...i,
-      metragem: m,
-      dificuldade: editDificuldade,
-      fatorDificuldade: fator,
-      custoMetroLinear,
-      custoTotalMaterial,
-      insumosCalculados: insumosCalc,
-      custoTotalInsumos,
-      custoTotalObra,
-      valorVenda,
+      ...i, metragem: m, dificuldade: editDificuldade, fatorDificuldade: fator,
+      custoMetroLinear, custoTotalMaterial, insumosCalculados: insumosCalc,
+      custoTotalInsumos, custoTotalObra, valorVenda,
     }));
     setEditingItemId(null);
     toast.success('Item atualizado!');
@@ -105,11 +99,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleSave = () => {
-    if (itens.length === 0) return;
+    if (itens.length === 0 || !selectedCliente) return;
     if (isEditing && editingOrcamento) {
       const updated: Orcamento = {
         ...editingOrcamento,
-        nomeCliente,
+        clienteId: selectedCliente.id,
+        nomeCliente: selectedCliente.nomeRazaoSocial,
         itensServico: itens,
         custoTotalObra: totalCusto,
         valorVenda: totalVenda,
@@ -119,7 +114,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     } else {
       const orcamento: Orcamento = {
         id: crypto.randomUUID(),
-        nomeCliente,
+        clienteId: selectedCliente.id,
+        nomeCliente: selectedCliente.nomeRazaoSocial,
         itensServico: itens,
         custoTotalObra: totalCusto,
         valorVenda: totalVenda,
@@ -131,25 +127,52 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     onDone();
   };
 
-  // Phase 1: Client name
+  // Phase 1: Client selection
   if (phase === 'cliente') {
     return (
       <div className="px-4 pb-24 pt-4">
-        <h1 className="text-lg font-bold text-primary mb-6">Novo Orçamento</h1>
+        <h1 className="text-lg font-bold text-primary mb-4">Novo Orçamento</h1>
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <Label>Nome do Cliente</Label>
-            <Input
-              placeholder="Ex: João da Silva"
-              value={nomeCliente}
-              onChange={e => setNomeCliente(e.target.value)}
-              autoFocus
-            />
-            <Button
-              onClick={() => setPhase('carrinho')}
-              disabled={!nomeCliente.trim()}
-              className="w-full bg-primary text-primary-foreground h-12"
-            >
+            <Label>Selecionar Cliente</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar cliente..." value={clienteSearch}
+                onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {filteredClientes.length === 0 ? (
+                <div className="text-center py-6">
+                  <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">
+                    {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
+                  </p>
+                  {clientes.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">Cadastre clientes na aba "Clientes".</p>
+                  )}
+                </div>
+              ) : (
+                filteredClientes.map(c => (
+                  <button key={c.id} onClick={() => setSelectedClienteId(c.id)}
+                    className={cn(
+                      'w-full text-left rounded-lg border p-3 transition-all',
+                      selectedClienteId === c.id
+                        ? 'border-accent bg-accent/10'
+                        : 'border-border hover:border-primary/30'
+                    )}>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{c.tipo}</span>
+                      <p className="text-sm font-medium truncate">{c.nomeRazaoSocial}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{c.documento} · {c.whatsapp}</p>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <Button onClick={() => setPhase('carrinho')} disabled={!selectedClienteId}
+              className="w-full bg-primary text-primary-foreground h-12">
               Continuar
             </Button>
           </CardContent>
@@ -169,19 +192,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
           <h1 className="text-lg font-bold text-primary">
             {isEditing ? 'Editar Orçamento' : 'Detalhes do Orçamento'}
           </h1>
-          <p className="text-xs text-muted-foreground">Cliente: {nomeCliente}</p>
+          <p className="text-xs text-muted-foreground">Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}</p>
         </div>
       </div>
 
-      {/* Add service button */}
-      <Button
-        onClick={() => setModalOpen(true)}
-        className="w-full mb-4 bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base"
-      >
+      <Button onClick={() => setModalOpen(true)}
+        className="w-full mb-4 bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base">
         <Plus className="mr-2 h-5 w-5" /> Adicionar Serviço
       </Button>
 
-      {/* Items list */}
       {itens.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <ShoppingCart className="mb-4 h-12 w-12 text-muted-foreground/40" />
@@ -194,33 +213,20 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             <Card key={item.id} className="overflow-hidden">
               <CardContent className="p-4">
                 {editingItemId === item.id ? (
-                  /* Inline edit mode */
                   <div className="space-y-3">
                     <p className="text-sm font-semibold">{item.nomeServico}</p>
                     <div>
                       <Label className="text-xs">Metragem (m)</Label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        value={editMetragem}
-                        onChange={e => setEditMetragem(e.target.value)}
-                        className="h-9"
-                      />
+                      <Input type="number" inputMode="decimal" value={editMetragem}
+                        onChange={e => setEditMetragem(e.target.value)} className="h-9" />
                     </div>
                     <div>
                       <Label className="text-xs">Dificuldade</Label>
                       <div className="grid grid-cols-3 gap-1.5 mt-1">
                         {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => (
-                          <button
-                            key={d}
-                            onClick={() => setEditDificuldade(d)}
-                            className={cn(
-                              'rounded-md border px-2 py-1.5 text-xs font-medium transition-all',
-                              editDificuldade === d
-                                ? 'border-accent bg-accent/10 text-accent'
-                                : 'border-border text-muted-foreground'
-                            )}
-                          >
+                          <button key={d} onClick={() => setEditDificuldade(d)}
+                            className={cn('rounded-md border px-2 py-1.5 text-xs font-medium transition-all',
+                              editDificuldade === d ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground')}>
                             {dificuldadeLabel[d]}
                           </button>
                         ))}
@@ -236,7 +242,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     </div>
                   </div>
                 ) : (
-                  /* View mode */
                   <>
                     <div className="flex items-start justify-between mb-2">
                       <div>
@@ -266,7 +271,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
       )}
 
-      {/* Fixed bottom total panel */}
       {itens.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
