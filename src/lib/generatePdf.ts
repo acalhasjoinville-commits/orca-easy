@@ -2,6 +2,14 @@ import { Orcamento, MinhaEmpresa, Cliente } from './types';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+function detectBrowser() {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  const isDesktop = !isIOS && !/Android/.test(ua);
+  return { isIOS, isSafari, isDesktop, useIframe: isSafari || isDesktop };
+}
+
 export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, empresa: MinhaEmpresa | null) {
   const corP = empresa?.corPrimaria || '#1B2A4A';
   const corD = empresa?.corDestaque || '#F57C00';
@@ -26,7 +34,6 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const addrParts = [empresa?.endereco, empresa?.numero ? `nº ${empresa.numero}` : null, empresa?.bairro, empresa?.cidade, empresa?.estado].filter(Boolean);
   const addressLine = addrParts.join(', ');
 
-  // Build services table rows
   const serviceRows = orcamento.itensServico.map((item, idx) => {
     const unitPrice = item.metragem > 0 ? item.valorVenda / item.metragem : 0;
     return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
@@ -38,38 +45,121 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     </tr>`;
   }).join('');
 
-  // Payment lines
   const paymentLines = orcamento.formasPagamento
     ? orcamento.formasPagamento.split(/[.\n]/).filter(l => l.trim()).map(l => `<div class="pay-line">– ${l.trim()}</div>`).join('')
     : '';
 
-  const html = `<!DOCTYPE html>
+  const html = buildHtml({
+    corP, corD, dataFormatada, clienteName, clienteDoc, clienteTel, clienteEnd, clienteCep,
+    nomeEmpresa, slogan, logoUrl, contactLine, addressLine, serviceRows, paymentLines, orcamento
+  });
+
+  const { useIframe } = detectBrowser();
+
+  if (useIframe) {
+    printViaIframe(html);
+  } else {
+    printViaNewTab(html);
+  }
+}
+
+function printViaIframe(html: string) {
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!doc) {
+    // Fallback to new tab
+    printViaNewTab(html);
+    iframe.remove();
+    return;
+  }
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        printViaNewTab(html);
+      }
+      setTimeout(() => iframe.remove(), 3000);
+    }, 300);
+  };
+}
+
+function printViaNewTab(html: string) {
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if (!w) {
+    window.location.href = url;
+  }
+}
+
+interface HtmlParams {
+  corP: string; corD: string; dataFormatada: string;
+  clienteName: string; clienteDoc: string; clienteTel: string;
+  clienteEnd: string; clienteCep: string;
+  nomeEmpresa: string; slogan: string; logoUrl: string;
+  contactLine: string; addressLine: string;
+  serviceRows: string; paymentLines: string;
+  orcamento: Orcamento;
+}
+
+function buildHtml(p: HtmlParams): string {
+  return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proposta #${String(orcamento.numeroOrcamento).padStart(4, '0')}</title>
+<meta name="viewport" content="width=210mm, initial-scale=1.0">
+<title>Proposta #${String(p.orcamento.numeroOrcamento).padStart(4, '0')}</title>
 <style>
+  /* ===== A4 BASE: Fixed dimensions for ALL scenarios ===== */
   @page {
-    size: A4;
-    margin: 12mm 15mm 35mm 15mm;
+    size: A4 portrait;
+    margin: 8mm 10mm 12mm 10mm;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    width: 210mm;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
+    width: 190mm;
+    margin: 0 auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     color: #333;
     font-size: 10pt;
     line-height: 1.4;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  .page-wrap {
+    width: 190mm;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  /* ===== HEADER ===== */
   .header {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
     padding-bottom: 10px;
-    border-bottom: 2px solid ${corP};
+    border-bottom: 2px solid ${p.corP};
   }
   .header-left {
     display: flex;
@@ -84,7 +174,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   .header-company-name {
     font-size: 16pt;
     font-weight: bold;
-    color: ${corP};
+    color: ${p.corP};
   }
   .header-slogan {
     font-size: 8pt;
@@ -101,13 +191,14 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   .header-right .number {
     font-size: 18pt;
     font-weight: bold;
-    color: ${corD};
+    color: ${p.corD};
   }
   .header-right .date {
     font-size: 8pt;
     color: #888;
   }
 
+  /* ===== CLIENT BOX ===== */
   .client-box {
     background: #f5f5f8;
     border-radius: 4px;
@@ -117,17 +208,20 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   .client-box .section-title {
     font-size: 9pt;
     font-weight: bold;
-    color: ${corP};
+    color: ${p.corP};
     margin-bottom: 6px;
   }
   .client-row {
     display: flex;
-    gap: 24px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
     font-size: 8.5pt;
     margin-bottom: 3px;
   }
-  .client-row b { color: ${corP}; }
+  .client-row b { color: ${p.corP}; }
 
+  /* ===== META GRID ===== */
   .meta-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -139,16 +233,10 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     border-right: 1px solid #d2d2d2;
   }
   .meta-cell:last-child { border-right: none; }
-  .meta-cell .meta-label {
-    font-size: 7pt;
-    color: #888;
-  }
-  .meta-cell .meta-value {
-    font-size: 10pt;
-    font-weight: bold;
-    color: #333;
-  }
+  .meta-cell .meta-label { font-size: 7pt; color: #888; }
+  .meta-cell .meta-value { font-size: 10pt; font-weight: bold; color: #333; }
 
+  /* ===== SECTIONS ===== */
   .section-header {
     display: flex;
     align-items: center;
@@ -159,16 +247,15 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   .section-bar {
     width: 3px;
     height: 16px;
-    background: ${corP};
+    background: ${p.corP};
     border-radius: 2px;
   }
   .section-header h2 {
     font-size: 11pt;
     font-weight: bold;
-    color: ${corP};
+    color: ${p.corP};
     margin: 0;
   }
-
   .desc-text {
     font-size: 9pt;
     color: #555;
@@ -177,6 +264,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     border-bottom: 1px solid #ddd;
   }
 
+  /* ===== TABLE ===== */
   table.services {
     width: 100%;
     border-collapse: collapse;
@@ -184,7 +272,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     font-size: 9pt;
   }
   table.services thead th {
-    background: ${corP};
+    background: ${p.corP};
     color: #fff;
     font-weight: bold;
     padding: 8px 6px;
@@ -199,57 +287,41 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     background: #f8f8f8;
   }
 
+  /* ===== TOTAL BAR ===== */
   .total-bar {
-    background: ${corD};
+    background: ${p.corD};
     color: #fff;
     padding: 8px 14px;
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 18px;
     border-radius: 0 0 4px 4px;
   }
-  .total-bar .total-label {
-    font-size: 12pt;
-    font-weight: bold;
-  }
-  .total-bar .total-details {
-    text-align: right;
-  }
-  .total-bar .total-sub {
-    font-size: 7pt;
-  }
-  .total-bar .total-value {
-    font-size: 14pt;
-    font-weight: bold;
-  }
+  .total-bar .total-label { font-size: 12pt; font-weight: bold; }
+  .total-bar .total-details { text-align: right; }
+  .total-bar .total-sub { font-size: 7pt; }
+  .total-bar .total-value { font-size: 14pt; font-weight: bold; }
 
+  /* ===== PAYMENT ===== */
   .pay-line {
     font-size: 9pt;
     color: #555;
     margin-bottom: 3px;
     padding-left: 8px;
   }
-  .pay-line::first-letter {
-    color: ${corD};
-    font-weight: bold;
-  }
+  .guarantee-text { font-size: 9pt; color: #555; }
 
-  .guarantee-text {
-    font-size: 9pt;
-    color: #555;
-  }
-
+  /* ===== SIGNATURES ===== */
   .signatures {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     margin-top: 40px;
     padding-top: 10px;
   }
-  .sig-block {
-    width: 42%;
-    text-align: center;
-  }
+  .sig-block { width: 42%; text-align: center; }
   .sig-line {
     border-top: 1px solid #555;
     padding-top: 6px;
@@ -257,127 +329,109 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     color: #555;
   }
 
+  /* ===== FOOTER ===== */
   .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: ${corP};
+    background: ${p.corP};
     color: #fff;
-    padding: 8px 15mm;
+    padding: 8px 14px;
     font-size: 7pt;
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    margin-top: 20px;
   }
-  .footer-left {}
-  .footer-slogan {
-    font-size: 10pt;
-    font-weight: bold;
-    margin-bottom: 2px;
-  }
-  .footer-contact {
-    color: #bec8dc;
-    font-size: 7pt;
-  }
-  .footer-address {
-    color: #aab4c8;
-    font-size: 6.5pt;
-  }
-  .footer-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .footer-right img {
-    max-height: 28px;
-    max-width: 40px;
-    object-fit: contain;
+  .footer-slogan { font-size: 10pt; font-weight: bold; margin-bottom: 2px; }
+  .footer-contact { color: #bec8dc; font-size: 7pt; }
+  .footer-address { color: #aab4c8; font-size: 6.5pt; }
+  .footer-right { display: flex; align-items: center; gap: 10px; }
+  .footer-right img { max-height: 28px; max-width: 40px; object-fit: contain; }
+
+  /* ===== PRINT BUTTON (screen only) ===== */
+  .print-btn {
+    display: none;
   }
 
-  .no-print { display: none; }
-
+  /* ===== SCREEN PREVIEW ===== */
   @media screen {
-    body { max-width: 210mm; margin: 20px auto; padding: 20mm 15mm; background: #eee; }
-    .page-wrap { background: #fff; padding: 15mm; box-shadow: 0 2px 20px rgba(0,0,0,0.1); min-height: 297mm; position: relative; }
-    .footer { position: absolute; }
+    body {
+      background: #e8e8e8;
+      padding: 10mm 0;
+    }
+    .page-wrap {
+      background: #fff;
+      padding: 12mm;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+      min-height: 297mm;
+    }
     .print-btn {
       display: block !important;
       position: fixed;
-      top: 20px;
+      bottom: 20px;
       right: 20px;
-      background: ${corD};
+      background: ${p.corD};
       color: #fff;
       border: none;
-      padding: 12px 24px;
-      font-size: 14pt;
-      border-radius: 8px;
+      padding: 14px 28px;
+      font-size: 13pt;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
       z-index: 999;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      -webkit-tap-highlight-color: transparent;
     }
-    .print-btn:hover { opacity: 0.9; }
+    .print-btn:active { transform: scale(0.96); }
   }
 
-  /* Mobile responsive - ONLY for screen viewing, not print */
-  @media screen and (max-width: 640px) {
-    body { margin: 0; padding: 0; background: #fff; font-size: 9pt; }
-    .page-wrap { padding: 12px; box-shadow: none; min-height: auto; padding-bottom: 100px; }
-    .header { flex-direction: column; gap: 8px; align-items: flex-start; }
-    .header-left { gap: 8px; }
-    .header-logo img { max-height: 40px; max-width: 60px; }
-    .header-company-name { font-size: 13pt; }
-    .header-right { text-align: left; }
-    .header-right .number { font-size: 14pt; }
-    .client-row { flex-direction: column; gap: 4px; }
-    .meta-grid { grid-template-columns: 1fr 1fr 1fr; font-size: 8pt; }
-    .meta-cell { padding: 4px 6px; }
-    .meta-cell .meta-value { font-size: 9pt; }
-    table.services { font-size: 8pt; }
-    table.services thead th { padding: 6px 4px; font-size: 7.5pt; }
-    table.services tbody td { padding: 5px 4px; }
-    .total-bar { flex-direction: column; gap: 4px; text-align: center; padding: 10px; }
-    .total-bar .total-label { font-size: 10pt; }
-    .total-bar .total-value { font-size: 12pt; }
-    .signatures { flex-direction: column; gap: 24px; align-items: center; margin-top: 24px; }
-    .sig-block { width: 70%; }
-    .footer { position: relative; flex-direction: column; gap: 6px; text-align: center; padding: 10px 12px; }
-    .footer-right { justify-content: center; }
-    .print-btn {
-      position: fixed;
-      top: auto !important;
-      bottom: 16px !important;
-      right: 16px !important;
-      padding: 10px 20px;
-      font-size: 12pt;
-    }
-  }
-
-  /* A4 lock for print engines (mobile-safe) */
+  /* ===== PRINT: enforce A4 strictly ===== */
   @media print {
-    @page {
-      size: A4 portrait;
-      margin: 12mm 15mm 15mm 15mm;
+    html {
+      width: 210mm !important;
     }
-
     body {
-      margin: 0 !important;
+      width: 190mm !important;
+      margin: 0 auto !important;
       padding: 0 !important;
       background: #fff !important;
-      width: auto !important;
-      max-width: none !important;
       font-size: 10pt !important;
     }
-
     .page-wrap {
-      width: 180mm !important;
+      width: 190mm !important;
       margin: 0 auto !important;
       padding: 0 !important;
       box-shadow: none !important;
       min-height: auto !important;
       background: #fff !important;
     }
+    .header {
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: flex-start !important;
+    }
+    .header-right { text-align: right !important; }
+    .client-row {
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      gap: 12px !important;
+    }
+    .total-bar {
+      flex-direction: row !important;
+      justify-content: space-between !important;
+    }
+    .signatures {
+      flex-direction: row !important;
+      justify-content: space-between !important;
+    }
+    .sig-block { width: 42% !important; }
+    .footer {
+      position: static !important;
+      width: 190mm !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+    .print-btn { display: none !important; }
 
     .services tr,
     .client-box,
@@ -388,84 +442,26 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
       break-inside: avoid;
       page-break-inside: avoid;
     }
-
-    .header { flex-direction: row !important; align-items: flex-start !important; justify-content: space-between !important; }
-    .header-right { text-align: right !important; }
-    .client-row { flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important; }
-    .meta-cell { padding: 6px 10px !important; }
-    table.services { font-size: 9pt !important; }
-    table.services thead th { padding: 8px 6px !important; font-size: 8.5pt !important; }
-    table.services tbody td { padding: 7px 6px !important; }
-    .total-bar { flex-direction: row !important; justify-content: space-between !important; }
-    .signatures { flex-direction: row !important; justify-content: space-between !important; gap: 0 !important; }
-    .sig-block { width: 42% !important; }
-
-    .footer {
-      position: static !important;
-      width: 180mm !important;
-      margin: 10mm auto 0 !important;
-      padding: 8px 12px !important;
-      display: flex !important;
-      flex-direction: row !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-    }
-
-    .print-btn,
-    .no-print {
-      display: none !important;
-    }
   }
-
-  /* Fallback for mobile browsers that ignore @media print details */
-  body.a4-export {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    font-size: 10pt !important;
-  }
-  body.a4-export .page-wrap {
-    width: 180mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    min-height: auto !important;
-  }
-  body.a4-export .header { flex-direction: row !important; justify-content: space-between !important; align-items: flex-start !important; }
-  body.a4-export .header-right { text-align: right !important; }
-  body.a4-export .client-row { flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important; }
-  body.a4-export .total-bar { flex-direction: row !important; justify-content: space-between !important; }
-  body.a4-export .signatures { flex-direction: row !important; gap: 0 !important; justify-content: space-between !important; }
-  body.a4-export .sig-block { width: 42% !important; }
-  body.a4-export .footer {
-    position: static !important;
-    width: 180mm !important;
-    margin: 10mm auto 0 !important;
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-  }
-
 </style>
 </head>
 <body>
-<button class="print-btn no-print" style="display:none;" onclick="preparePrintA4()">Imprimir / Salvar PDF</button>
+<button class="print-btn" onclick="doPrint()">📄 Imprimir / Salvar PDF</button>
 <div class="page-wrap">
 
   <!-- HEADER -->
   <div class="header">
     <div class="header-left">
-      ${logoUrl ? `<div class="header-logo"><img src="${logoUrl}" alt="Logo"></div>` : ''}
+      ${p.logoUrl ? `<div class="header-logo"><img src="${p.logoUrl}" alt="Logo"></div>` : ''}
       <div>
-        <div class="header-company-name">${nomeEmpresa}</div>
-        ${slogan ? `<div class="header-slogan">${slogan}</div>` : ''}
+        <div class="header-company-name">${p.nomeEmpresa}</div>
+        ${p.slogan ? `<div class="header-slogan">${p.slogan}</div>` : ''}
       </div>
     </div>
     <div class="header-right">
       <div class="label">Proposta nº</div>
-      <div class="number">#${String(orcamento.numeroOrcamento).padStart(4, '0')}</div>
-      <div class="date">${dataFormatada}</div>
+      <div class="number">#${String(p.orcamento.numeroOrcamento).padStart(4, '0')}</div>
+      <div class="date">${p.dataFormatada}</div>
     </div>
   </div>
 
@@ -473,12 +469,12 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   <div class="client-box">
     <div class="section-title">DADOS DO CLIENTE</div>
     <div class="client-row">
-      <span><b>Nome:</b> ${clienteName}</span>
-      ${clienteDoc ? `<span><b>CPF/CNPJ:</b> ${clienteDoc}</span>` : ''}
-      ${clienteTel ? `<span><b>Tel:</b> ${clienteTel}</span>` : ''}
+      <span><b>Nome:</b> ${p.clienteName}</span>
+      ${p.clienteDoc ? `<span><b>CPF/CNPJ:</b> ${p.clienteDoc}</span>` : ''}
+      ${p.clienteTel ? `<span><b>Tel:</b> ${p.clienteTel}</span>` : ''}
     </div>
-    ${clienteEnd || clienteCep ? `<div class="client-row">
-      <span><b>Endereço:</b> ${clienteEnd}${clienteCep ? ` — CEP: ${clienteCep}` : ''}</span>
+    ${p.clienteEnd || p.clienteCep ? `<div class="client-row">
+      <span><b>Endereço:</b> ${p.clienteEnd}${p.clienteCep ? ` — CEP: ${p.clienteCep}` : ''}</span>
     </div>` : ''}
   </div>
 
@@ -486,25 +482,25 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   <div class="meta-grid">
     <div class="meta-cell">
       <div class="meta-label">Emissão</div>
-      <div class="meta-value">${dataFormatada}</div>
+      <div class="meta-value">${p.dataFormatada}</div>
     </div>
     <div class="meta-cell">
       <div class="meta-label">Validade</div>
-      <div class="meta-value">${orcamento.validade || '—'}</div>
+      <div class="meta-value">${p.orcamento.validade || '—'}</div>
     </div>
     <div class="meta-cell">
       <div class="meta-label">Garantia</div>
-      <div class="meta-value">${orcamento.tempoGarantia || '—'}</div>
+      <div class="meta-value">${p.orcamento.tempoGarantia || '—'}</div>
     </div>
   </div>
 
   <!-- DESCRIÇÃO -->
-  ${orcamento.descricaoGeral ? `
+  ${p.orcamento.descricaoGeral ? `
   <div class="section-header">
     <div class="section-bar"></div>
     <h2>Descrição do Serviço</h2>
   </div>
-  <div class="desc-text">${orcamento.descricaoGeral}</div>
+  <div class="desc-text">${p.orcamento.descricaoGeral}</div>
   ` : ''}
 
   <!-- SERVIÇOS -->
@@ -523,7 +519,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
       </tr>
     </thead>
     <tbody>
-      ${serviceRows}
+      ${p.serviceRows}
     </tbody>
   </table>
 
@@ -531,28 +527,28 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   <div class="total-bar">
     <div class="total-label">TOTAL</div>
     <div class="total-details">
-      ${orcamento.desconto > 0 ? `
-        <div class="total-sub">Subtotal: ${fmt(orcamento.valorVenda)}  |  Desconto: -${fmt(orcamento.desconto)}</div>
+      ${p.orcamento.desconto > 0 ? `
+        <div class="total-sub">Subtotal: ${fmt(p.orcamento.valorVenda)}  |  Desconto: -${fmt(p.orcamento.desconto)}</div>
       ` : ''}
-      <div class="total-value">${fmt(orcamento.valorFinal)}</div>
+      <div class="total-value">${fmt(p.orcamento.valorFinal)}</div>
     </div>
   </div>
 
   <!-- PAGAMENTO & GARANTIA -->
-  ${orcamento.formasPagamento ? `
+  ${p.orcamento.formasPagamento ? `
   <div class="section-header">
     <div class="section-bar"></div>
     <h2>Formas de Pagamento</h2>
   </div>
-  ${paymentLines}
+  ${p.paymentLines}
   ` : ''}
 
-  ${orcamento.garantia ? `
+  ${p.orcamento.garantia ? `
   <div class="section-header" style="margin-top:12px;">
     <div class="section-bar"></div>
     <h2>Garantia</h2>
   </div>
-  <div class="guarantee-text">${orcamento.garantia}</div>
+  <div class="guarantee-text">${p.orcamento.garantia}</div>
   ` : ''}
 
   <!-- ASSINATURAS -->
@@ -570,39 +566,21 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
 <!-- FOOTER -->
 <div class="footer">
   <div class="footer-left">
-    ${slogan ? `<div class="footer-slogan">${slogan}</div>` : `<div class="footer-slogan">${nomeEmpresa}</div>`}
-    ${contactLine ? `<div class="footer-contact">${contactLine}</div>` : ''}
-    ${addressLine ? `<div class="footer-address">${addressLine}</div>` : ''}
+    ${p.slogan ? `<div class="footer-slogan">${p.slogan}</div>` : `<div class="footer-slogan">${p.nomeEmpresa}</div>`}
+    ${p.contactLine ? `<div class="footer-contact">${p.contactLine}</div>` : ''}
+    ${p.addressLine ? `<div class="footer-address">${p.addressLine}</div>` : ''}
   </div>
   <div class="footer-right">
-    ${logoUrl ? `<img src="${logoUrl}" alt="Logo">` : ''}
+    ${p.logoUrl ? `<img src="${p.logoUrl}" alt="Logo">` : ''}
   </div>
 </div>
 
 <script>
-  function preparePrintA4() {
-    document.body.classList.add('a4-export');
-    setTimeout(() => {
-      window.print();
-    }, 120);
+  function doPrint() {
+    window.print();
   }
-
-  window.addEventListener('beforeprint', () => {
-    document.body.classList.add('a4-export');
-  });
-
-  window.addEventListener('afterprint', () => {
-    document.body.classList.remove('a4-export');
-  });
 </script>
 
 </body>
 </html>`;
-
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const w = window.open(url, '_blank');
-  if (!w) {
-    window.location.href = url;
-  }
 }
