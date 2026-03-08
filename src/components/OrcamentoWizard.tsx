@@ -95,13 +95,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const servico = servicosList.find(s => s.id === item.servicoTemplateId);
     const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
     if (!servico || !regra) return;
+
+    // Use item.motorType (the motor chosen at quote time), NOT servico fields
     let custoMetroLinear: number;
-    if (servico.motorPadrao === 'motor1') {
-      const motor1 = motor1List.find(e => e.material === servico.materialPadrao);
+    if (item.motorType === 'motor1') {
+      const motor1 = motor1List.find(e => e.material === item.materialId);
       if (!motor1) return;
-      custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
+      custoMetroLinear = calcCustoMetroMotor1(item.espessura, item.corte, motor1);
     } else {
-      const resultado = calcCustoMetroMotor2(servico.materialPadrao, servico.espessuraPadrao, servico.cortePadrao, motor2List);
+      const resultado = calcCustoMetroMotor2(item.materialId, item.espessura, item.corte, motor2List);
       if (resultado === null) return;
       custoMetroLinear = resultado;
     }
