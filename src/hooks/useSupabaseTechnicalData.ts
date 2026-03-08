@@ -4,6 +4,9 @@ import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, I
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from '@/lib/seedData';
 import { Json } from '@/integrations/supabase/types';
 
+// Cast to any to allow new tables not yet in generated types
+const db = supabase as any;
+
 // ─── MAPPERS ───
 
 function dbToMotor1(row: any): Motor1Entry {
