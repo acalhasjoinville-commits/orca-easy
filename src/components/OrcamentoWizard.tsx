@@ -332,14 +332,17 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   return (
     <div className="px-4 pb-36 pt-4">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => isEditing ? onDone() : setPhase('cliente')} className="text-primary">
+        <button onClick={() => isEditing ? onDone() : setPhase('motor')} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-primary">
             {isEditing ? `Orçamento Nº ${editingOrcamento?.numeroOrcamento}` : 'Detalhes do Orçamento'}
           </h1>
-          <p className="text-xs text-muted-foreground">Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}</p>
+          <p className="text-xs text-muted-foreground">
+            Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}
+            {' · '}{motorType === 'motor1' ? 'Motor 1 (Fabricar)' : 'Motor 2 (Comprar Dobrado)'}
+          </p>
         </div>
       </div>
 
