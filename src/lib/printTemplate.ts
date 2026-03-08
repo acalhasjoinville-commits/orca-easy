@@ -40,6 +40,9 @@ export function buildProposalHtml(params: TemplateParams): string {
   const corD = empresa?.corDestaque || '#F57C00';
   const dataFormatada = new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR');
 
+  const isPJ = cliente?.tipo === 'PJ';
+  const nameLabel = cliente ? (isPJ ? 'Razão Social' : 'Nome') : 'Nome/Razão Social';
+  const docLabel = cliente ? (isPJ ? 'CNPJ' : 'CPF') : 'CPF/CNPJ';
   const clienteName = cliente?.nomeRazaoSocial || orcamento.nomeCliente;
   const clienteDoc = cliente?.documento || '';
   const clienteTel = cliente?.whatsapp || '';
@@ -61,9 +64,11 @@ export function buildProposalHtml(params: TemplateParams): string {
 
   const serviceRows = orcamento.itensServico.map((item, idx) => {
     const unitPrice = item.metragem > 0 ? item.valorVenda / item.metragem : 0;
+    const unidade = 'm';
     return `<tr class="${idx % 2 === 1 ? 'alt' : ''}">
       <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
       <td class="svc-name">${item.nomeServico}</td>
+      <td class="no-break" style="text-align:center;">${unidade}</td>
       <td class="no-break" style="text-align:center;">${item.metragem}</td>
       <td class="no-break" style="text-align:right;">${fmt(unitPrice)}</td>
       <td class="no-break" style="text-align:right;font-weight:bold;">${fmt(item.valorVenda)}</td>
@@ -114,14 +119,8 @@ export function buildProposalHtml(params: TemplateParams): string {
     white-space: pre-wrap;
     word-break: break-word;
   }
-  .client-name-val {
-    display: inline-block;
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: bottom;
-  }
+  .client-line { font-size: 9pt; margin-bottom: 3px; }
+  .client-line b { color: ${corP}; }
 
   /* ===== HEADER ===== */
   .header {
@@ -150,7 +149,7 @@ export function buildProposalHtml(params: TemplateParams): string {
     page-break-inside: avoid;
   }
   .client-box .section-title { font-size: 9pt; font-weight: bold; color: ${corP}; margin-bottom: 6px; }
-  .client-row { display: flex; flex-wrap: wrap; gap: 16px; font-size: 9pt; margin-bottom: 3px; }
+  .client-row { font-size: 9pt; margin-bottom: 3px; }
   .client-row b { color: ${corP}; }
 
   /* ===== META GRID ===== */
@@ -232,6 +231,7 @@ export function buildProposalHtml(params: TemplateParams): string {
   }
   .sig-block { width: 42%; text-align: center; }
   .sig-line { border-top: 1px solid #555; padding-top: 6px; font-size: 8.5pt; color: #555; }
+  .sig-sub { font-size: 7pt; color: #999; margin-top: 2px; }
 
   /* ===== FOOTER ===== */
   .footer {
@@ -280,14 +280,10 @@ export function buildProposalHtml(params: TemplateParams): string {
   <!-- CLIENT -->
   <div class="client-box">
     <div class="section-title">DADOS DO CLIENTE</div>
-    <div class="client-row">
-      <span><b>Nome:</b> <span class="client-name-val">${clienteName}</span></span>
-      ${clienteDoc ? `<span><b>CPF/CNPJ:</b> <span class="no-break">${clienteDoc}</span></span>` : ''}
-      ${clienteTel ? `<span><b>Tel:</b> <span class="no-break">${clienteTel}</span></span>` : ''}
-    </div>
-    ${clienteEnd || clienteCep ? `<div class="client-row">
-      <span><b>Endereço:</b> ${clienteEnd}${clienteCep ? ` — CEP: <span class="no-break">${clienteCep}</span>` : ''}</span>
-    </div>` : ''}
+    <div class="client-line"><b>${nameLabel}:</b> ${clienteName}</div>
+    ${clienteDoc ? `<div class="client-line"><b>${docLabel}:</b> <span class="no-break">${clienteDoc}</span></div>` : ''}
+    ${clienteTel ? `<div class="client-line"><b>Telefone:</b> <span class="no-break">${clienteTel}</span></div>` : ''}
+    ${clienteEnd || clienteCep ? `<div class="client-line"><b>Endereço:</b> ${clienteEnd}${clienteCep ? ` — CEP: <span class="no-break">${clienteCep}</span>` : ''}</div>` : ''}
   </div>
 
   <!-- META GRID -->
@@ -323,10 +319,11 @@ export function buildProposalHtml(params: TemplateParams): string {
   <table class="services">
     <thead>
       <tr>
-        <th style="width:30px;text-align:center;">#</th>
-        <th>Descrição do Serviço</th>
-        <th style="width:80px;text-align:center;">Qtd/Metragem</th>
-        <th style="width:90px;text-align:right;">Preço Unit.</th>
+        <th style="width:28px;text-align:center;">#</th>
+        <th>Serviço / Descrição</th>
+        <th style="width:50px;text-align:center;">Unid.</th>
+        <th style="width:60px;text-align:center;">Qtd.</th>
+        <th style="width:90px;text-align:right;">Valor Unit.</th>
         <th style="width:90px;text-align:right;">Total</th>
       </tr>
     </thead>
@@ -340,7 +337,8 @@ export function buildProposalHtml(params: TemplateParams): string {
     <div class="total-label">TOTAL</div>
     <div class="total-details">
       ${orcamento.desconto > 0 ? `
-        <div class="total-sub">Subtotal: ${fmt(orcamento.valorVenda)}  |  Desconto: -${fmt(orcamento.desconto)}</div>
+        <div class="total-sub">Subtotal: ${fmt(orcamento.valorVenda)}</div>
+        <div class="total-sub">Desconto: -${fmt(orcamento.desconto)}</div>
       ` : ''}
       <div class="total-value">${fmt(orcamento.valorFinal)}</div>
     </div>
@@ -367,9 +365,11 @@ export function buildProposalHtml(params: TemplateParams): string {
   <div class="signatures">
     <div class="sig-block">
       <div class="sig-line">Assinatura do Cliente</div>
+      <div class="sig-sub">Nome / ${docLabel} / Data</div>
     </div>
     <div class="sig-block">
-      <div class="sig-line">Assinatura do Técnico</div>
+      <div class="sig-line">Assinatura do Técnico / Empresa</div>
+      <div class="sig-sub">Nome / Data</div>
     </div>
   </div>
 
