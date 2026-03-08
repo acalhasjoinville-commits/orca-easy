@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { storage } from '@/lib/storage';
+import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
@@ -51,6 +51,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const { politicas } = usePoliticas();
   const { getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { empresa } = useEmpresa();
+  const { servicos: servicosList } = useServicos();
+  const { regras: regrasList } = useRegras();
+  const { motor1: motor1List } = useMotor1();
+  const { motor2: motor2List } = useMotor2();
+  const { insumos: insumosList } = useInsumos();
 
   const selectedCliente = clientes.find(c => c.id === selectedClienteId);
 
@@ -87,11 +92,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const saveEditItem = (item: ItemServico) => {
     const m = parseFloat(editMetragem);
     if (isNaN(m) || m <= 0) return;
-    const servicosList = storage.getServicos();
-    const regrasList = storage.getRegras();
-    const motor1List = storage.getMotor1();
-    const motor2List = storage.getMotor2();
-    const insumosList = storage.getInsumos();
     const servico = servicosList.find(s => s.id === item.servicoTemplateId);
     const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
     if (!servico || !regra) return;

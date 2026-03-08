@@ -119,6 +119,93 @@ export type Database = {
         }
         Relationships: []
       }
+      insumos: {
+        Row: {
+          created_at: string
+          id: string
+          nome_embalagem_compra: string
+          nome_unidade_consumo: string
+          preco_embalagem: number
+          qtd_embalagem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_embalagem_compra: string
+          nome_unidade_consumo: string
+          preco_embalagem?: number
+          qtd_embalagem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_embalagem_compra?: string
+          nome_unidade_consumo?: string
+          preco_embalagem?: number
+          qtd_embalagem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motor1: {
+        Row: {
+          created_at: string
+          densidade: number
+          id: string
+          material: string
+          preco_quilo: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          densidade?: number
+          id?: string
+          material: string
+          preco_quilo?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          densidade?: number
+          id?: string
+          material?: string
+          preco_quilo?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motor2: {
+        Row: {
+          corte: number
+          created_at: string
+          espessura: number
+          id: string
+          material: string
+          preco_metro_linear: number
+          updated_at: string
+        }
+        Insert: {
+          corte?: number
+          created_at?: string
+          espessura?: number
+          id?: string
+          material: string
+          preco_metro_linear?: number
+          updated_at?: string
+        }
+        Update: {
+          corte?: number
+          created_at?: string
+          espessura?: number
+          id?: string
+          material?: string
+          preco_metro_linear?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orcamentos: {
         Row: {
           cliente_id: string | null
@@ -220,6 +307,75 @@ export type Database = {
           tempo_garantia?: string | null
           updated_at?: string
           validade_dias?: number
+        }
+        Relationships: []
+      }
+      regras_calculo: {
+        Row: {
+          created_at: string
+          id: string
+          itens_regra: Json
+          nome_regra: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          itens_regra?: Json
+          nome_regra: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          itens_regra?: Json
+          nome_regra?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      servicos_catalogo: {
+        Row: {
+          corte_padrao: number
+          created_at: string
+          dificuldade_dificil: number
+          dificuldade_facil: number
+          dificuldade_media: number
+          espessura_padrao: number
+          id: string
+          material_padrao: string
+          motor_padrao: string
+          nome_servico: string
+          regra_id: string
+          updated_at: string
+        }
+        Insert: {
+          corte_padrao?: number
+          created_at?: string
+          dificuldade_dificil?: number
+          dificuldade_facil?: number
+          dificuldade_media?: number
+          espessura_padrao?: number
+          id?: string
+          material_padrao?: string
+          motor_padrao?: string
+          nome_servico: string
+          regra_id?: string
+          updated_at?: string
+        }
+        Update: {
+          corte_padrao?: number
+          created_at?: string
+          dificuldade_dificil?: number
+          dificuldade_facil?: number
+          dificuldade_media?: number
+          espessura_padrao?: number
+          id?: string
+          material_padrao?: string
+          motor_padrao?: string
+          nome_servico?: string
+          regra_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
