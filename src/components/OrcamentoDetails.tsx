@@ -71,7 +71,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         <p className="text-lg font-medium text-foreground">{orcamento.nomeCliente}</p>
         <p className="text-sm text-muted-foreground">
           Criado em {new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR')}
-          {orcamento.validade && ` · Válido até ${new Date(orcamento.validade).toLocaleDateString('pt-BR')}`}
+          {orcamento.validade && !isNaN(new Date(orcamento.validade).getTime()) && ` · Válido até ${new Date(orcamento.validade).toLocaleDateString('pt-BR')}`}
         </p>
       </div>
 
