@@ -88,6 +88,7 @@ export const seedPoliticas: PoliticaComercial[] = [
     formasPagamento: '50% na aprovação + 50% na conclusão. PIX, transferência ou dinheiro.',
     garantia: '5 anos contra defeitos de fabricação e instalação, exceto mau uso.',
     tempoGarantia: '5 anos',
+    termoRecebimentoOs: 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.',
   },
   {
     id: '2',
