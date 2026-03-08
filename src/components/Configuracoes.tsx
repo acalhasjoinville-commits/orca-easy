@@ -238,6 +238,9 @@ export function Configuracoes() {
     Object.entries(item).forEach(([k, v]) => {
       if (k !== 'id' && k !== 'itensRegra') f[k] = String(v);
     });
+    // Ensure boolean fields are stored as strings for the form
+    if (item.permiteMotor1 !== undefined) f.permiteMotor1 = String(item.permiteMotor1);
+    if (item.permiteMotor2 !== undefined) f.permiteMotor2 = String(item.permiteMotor2);
     setForm(f);
     if (item.itensRegra) setRegraItens([...item.itensRegra]);
     setDialogOpen(true);
