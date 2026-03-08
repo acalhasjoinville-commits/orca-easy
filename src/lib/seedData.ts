@@ -1,4 +1,4 @@
-import { Motor1Entry, Motor2Entry, InsumoEntry, ReceitaServico } from './types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate } from './types';
 
 export const seedMotor1: Motor1Entry[] = [
   { id: '1', material: 'Alumínio', densidade: 2.7, precoQuilo: 37.50 },
@@ -20,25 +20,36 @@ export const seedInsumos: InsumoEntry[] = [
   { id: '3', nome: 'Suporte Normal', custoUnitario: 4.50 },
 ];
 
-export const seedReceitas: ReceitaServico[] = [
+export const seedRegras: RegraCalculo[] = [
+  { id: '1', nomeRegra: 'Beiral', divisorSuporte: 0.60, divisorPU: 30, multiplicadorRebite: 8 },
+  { id: '2', nomeRegra: 'Rufo Pingadeira', divisorSuporte: 0, divisorPU: 30, multiplicadorRebite: 6 },
+  { id: '3', nomeRegra: 'Rufo Encosto', divisorSuporte: 0, divisorPU: 25, multiplicadorRebite: 10 },
+  { id: '4', nomeRegra: 'Americana', divisorSuporte: 0.50, divisorPU: 25, multiplicadorRebite: 10 },
+];
+
+export const seedServicos: ServicoTemplate[] = [
   {
-    id: '1', nomeServico: 'Calha Beiral',
-    divisorSuporte: 0.60, divisorPU: 30, multiplicadorRebite: 8,
+    id: '1', nomeServico: 'Calha Beiral Alumínio 0.5mm',
+    regraId: '1', motorPadrao: 'motor1', materialPadrao: 'Alumínio',
+    espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.6, dificuldadeMedia: 3.5, dificuldadeDificil: 4.6,
   },
   {
-    id: '2', nomeServico: 'Rufo Pingadeira',
-    divisorSuporte: 0, divisorPU: 30, multiplicadorRebite: 6,
+    id: '2', nomeServico: 'Rufo Pingadeira Alumínio 0.5mm',
+    regraId: '2', motorPadrao: 'motor1', materialPadrao: 'Alumínio',
+    espessuraPadrao: 0.5, cortePadrao: 200,
     dificuldadeFacil: 2.4, dificuldadeMedia: 3.2, dificuldadeDificil: 4.2,
   },
   {
-    id: '3', nomeServico: 'Rufo de Encosto',
-    divisorSuporte: 0, divisorPU: 25, multiplicadorRebite: 10,
+    id: '3', nomeServico: 'Rufo Encosto Galvanizado 0.5mm',
+    regraId: '3', motorPadrao: 'motor2', materialPadrao: 'Aço Galvanizado',
+    espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.6, dificuldadeDificil: 4.8,
   },
   {
-    id: '4', nomeServico: 'Calha Americana',
-    divisorSuporte: 0.50, divisorPU: 25, multiplicadorRebite: 10,
+    id: '4', nomeServico: 'Calha Americana Alumínio 0.7mm',
+    regraId: '4', motorPadrao: 'motor1', materialPadrao: 'Alumínio',
+    espessuraPadrao: 0.7, cortePadrao: 500,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.8, dificuldadeDificil: 5.0,
   },
 ];
