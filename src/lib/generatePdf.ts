@@ -451,11 +451,6 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   </div>
 </div>
 
-<script>
-  window.onload = function() {
-    setTimeout(function() { window.print(); }, 500);
-  };
-</script>
 </body>
 </html>`;
 
