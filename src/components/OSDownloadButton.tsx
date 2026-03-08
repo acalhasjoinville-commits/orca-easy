@@ -3,6 +3,7 @@ import { pdf } from '@react-pdf/renderer';
 import { OrdemServicoPDF } from '@/components/OrdemServicoPDF';
 import { Orcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { fetchLogoBase64 } from '@/lib/fetchLogoBase64';
+import { usePoliticas } from '@/hooks/useSupabaseData';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -18,6 +19,10 @@ interface OSButtonProps {
 export function OSDownloadButton({ orcamento, cliente, empresa, size = 'default', className }: OSButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const { politicas } = usePoliticas();
+
+  // Get the first politica's termoRecebimentoOs as default
+  const termoRecebimento = politicas.length > 0 ? politicas[0].termoRecebimentoOs : '';
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +46,7 @@ export function OSDownloadButton({ orcamento, cliente, empresa, size = 'default'
           cliente={cliente}
           empresa={empresa}
           logoBase64={withLogo ? logoBase64 : null}
+          termoRecebimento={termoRecebimento}
         />
       ).toBlob();
     };
