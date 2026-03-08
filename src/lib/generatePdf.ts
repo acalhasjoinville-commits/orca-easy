@@ -20,7 +20,7 @@ function drawFooterBar(doc: jsPDF, empresa: MinhaEmpresa | null) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  const name = empresa?.nomeFantasia || 'OrçaCalhas';
+  const name = empresa?.nomeFantasia || '';
   const footerText = empresa?.slogan ? `${name} — ${empresa.slogan}` : name;
   doc.text(footerText, PAGE_W / 2, PAGE_H - 6, { align: 'center' });
 }
