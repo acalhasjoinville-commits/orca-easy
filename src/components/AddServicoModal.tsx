@@ -15,17 +15,23 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSave: (item: ItemServico) => void;
+  motorType: MotorType;
 }
 
-export function AddServicoModal({ open, onClose, onSave }: Props) {
-  const { servicos: servicosList, isLoading: loadingServicos } = useServicos();
+export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
+  const { servicos: allServicos, isLoading: loadingServicos } = useServicos();
   const { regras: regrasList } = useRegras();
   const { motor1: motor1List } = useMotor1();
   const { motor2: motor2List } = useMotor2();
   const { insumos: insumosList } = useInsumos();
 
+  // Filter services by the budget's motor
+  const servicosList = useMemo(
+    () => allServicos.filter(s => s.motorType === motorType),
+    [allServicos, motorType]
+  );
+
   const [servicoId, setServicoId] = useState('');
-  const [motorSelecionado, setMotorSelecionado] = useState<MotorType | ''>('');
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
@@ -33,26 +39,10 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
   const servico = servicosList.find(s => s.id === servicoId);
   const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
 
-  // Determine allowed motors and set motorSelecionado when servico changes
-  useEffect(() => {
-    if (!servico) { setMotorSelecionado(''); return; }
-    if (servico.permiteMotor1 && !servico.permiteMotor2) {
-      setMotorSelecionado('motor1');
-    } else if (!servico.permiteMotor1 && servico.permiteMotor2) {
-      setMotorSelecionado('motor2');
-    } else if (servico.permiteMotor1 && servico.permiteMotor2) {
-      setMotorSelecionado(servico.motorPreferencial);
-    } else {
-      setMotorSelecionado('');
-    }
-  }, [servico]);
-
-  const allowsBoth = servico ? servico.permiteMotor1 && servico.permiteMotor2 : false;
-
   // Validation for motor data availability
   const motorValidationError = useMemo(() => {
-    if (!servico || !motorSelecionado) return null;
-    if (motorSelecionado === 'motor1') {
+    if (!servico) return null;
+    if (motorType === 'motor1') {
       const found = motor1List.find(e => e.material === servico.materialPadrao);
       if (!found) return `Material "${servico.materialPadrao}" não encontrado na base do Motor 1.`;
     } else {
@@ -62,15 +52,15 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
       if (!found) return `Combinação ${servico.materialPadrao} ${servico.espessuraPadrao}mm ${servico.cortePadrao}mm não encontrada no Motor 2.`;
     }
     return null;
-  }, [servico, motorSelecionado, motor1List, motor2List]);
+  }, [servico, motorType, motor1List, motor2List]);
 
   const calc = useMemo(() => {
-    if (!servico || !regra || !metragem || !motorSelecionado || motorValidationError) return null;
+    if (!servico || !regra || !metragem || motorValidationError) return null;
     const m = parseFloat(metragem);
     if (isNaN(m) || m <= 0) return null;
 
     let custoMetroLinear: number;
-    if (motorSelecionado === 'motor1') {
+    if (motorType === 'motor1') {
       const motor1 = motor1List.find(e => e.material === servico.materialPadrao);
       if (!motor1) return null;
       custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
@@ -85,7 +75,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
     const fator = getFatorDificuldade(servico, dificuldade);
 
     return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
-  }, [servico, regra, metragem, dificuldade, motorSelecionado, motorValidationError, motor1List, motor2List, insumosList]);
+  }, [servico, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
 
   const finalCalc = useMemo(() => {
     if (!calc) return null;
@@ -109,15 +99,15 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
-  const canSave = !!finalCalc && !!servicoId && !!motorSelecionado && !motorValidationError;
+  const canSave = !!finalCalc && !!servicoId && !motorValidationError;
 
   const handleSave = () => {
-    if (!finalCalc || !servico || !motorSelecionado) return;
+    if (!finalCalc || !servico) return;
     const item: ItemServico = {
       id: crypto.randomUUID(),
       servicoTemplateId: servico.id,
       nomeServico: servico.nomeServico,
-      motorType: motorSelecionado,
+      motorType,
       materialId: servico.materialPadrao,
       espessura: servico.espessuraPadrao,
       corte: servico.cortePadrao,
@@ -137,7 +127,6 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
 
   const resetForm = () => {
     setServicoId('');
-    setMotorSelecionado('');
     setMetragem('');
     setDificuldade('facil');
     setEditQtds({});
@@ -148,6 +137,13 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
       <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-primary">Adicionar Serviço</DialogTitle>
+          <Badge variant="outline" className="w-fit text-[10px] mt-1">
+            {motorType === 'motor1' ? (
+              <><Factory className="mr-1 h-3 w-3" /> Motor 1 — Fabricar</>
+            ) : (
+              <><Truck className="mr-1 h-3 w-3" /> Motor 2 — Comprar Dobrado</>
+            )}
+          </Badge>
         </DialogHeader>
 
         {loadingServicos ? (
@@ -161,9 +157,15 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
               <Select value={servicoId} onValueChange={v => { setServicoId(v); setEditQtds({}); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione do catálogo" /></SelectTrigger>
                 <SelectContent>
-                  {servicosList.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
-                  ))}
+                  {servicosList.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-muted-foreground">
+                      Nenhum serviço cadastrado para {motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}.
+                    </div>
+                  ) : (
+                    servicosList.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -172,43 +174,6 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
               <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
                 <p><span className="font-medium text-foreground">Material:</span> {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm</p>
                 <p><span className="font-medium text-foreground">Regra:</span> {regra.nomeRegra}</p>
-                <p>
-                  <span className="font-medium text-foreground">Motores:</span>{' '}
-                  {servico.permiteMotor1 && 'Fabricar'}{servico.permiteMotor1 && servico.permiteMotor2 && ' · '}{servico.permiteMotor2 && 'Comprar Dobrado'}
-                </p>
-              </div>
-            )}
-
-            {/* Motor selector - only when both are allowed */}
-            {servico && allowsBoth && (
-              <div>
-                <Label>Motor do Item</Label>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  <button
-                    onClick={() => setMotorSelecionado('motor1')}
-                    className={cn(
-                      'flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all',
-                      motorSelecionado === 'motor1'
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/30'
-                    )}
-                  >
-                    <Factory className="h-5 w-5" />
-                    <span className="text-xs font-semibold">Fabricar (Motor 1)</span>
-                  </button>
-                  <button
-                    onClick={() => setMotorSelecionado('motor2')}
-                    className={cn(
-                      'flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all',
-                      motorSelecionado === 'motor2'
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/30'
-                    )}
-                  >
-                    <Truck className="h-5 w-5" />
-                    <span className="text-xs font-semibold">Comprar Dobrado (Motor 2)</span>
-                  </button>
-                </div>
               </div>
             )}
 
@@ -252,16 +217,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
 
             {finalCalc && (
               <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
-                  <Badge variant="outline" className="text-[10px]">
-                    {motorSelecionado === 'motor1' ? (
-                      <><Factory className="mr-1 h-3 w-3" /> Fabricado internamente</>
-                    ) : (
-                      <><Truck className="mr-1 h-3 w-3" /> Comprado dobrado</>
-                    )}
-                  </Badge>
-                </div>
+                <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
                 <div className="flex justify-between text-sm">
                   <span>Material ({metragem}m)</span>
                   <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>

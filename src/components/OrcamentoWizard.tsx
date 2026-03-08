@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
-import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
@@ -30,9 +30,10 @@ const statusOptions: { value: StatusOrcamento; label: string; color: string }[] 
 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
-  const [phase, setPhase] = useState<'cliente' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
+  const [phase, setPhase] = useState<'cliente' | 'motor' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
   const [selectedClienteId, setSelectedClienteId] = useState(editingOrcamento?.clienteId ?? '');
   const [clienteSearch, setClienteSearch] = useState('');
+  const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
   const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -143,6 +144,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
+      motorType,
       itensServico: itens,
       custoTotalObra: totalCusto,
       valorVenda: totalVenda,
@@ -177,6 +179,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
+      motorType,
       itensServico: itens,
       custoTotalObra: totalCusto,
       valorVenda: totalVenda,
@@ -260,7 +263,59 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             )}
 
-            <Button onClick={() => setPhase('carrinho')} disabled={!selectedClienteId}
+            <Button onClick={() => setPhase('motor')} disabled={!selectedClienteId}
+              className="w-full bg-primary text-primary-foreground h-12">
+              Continuar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Phase 1.5: Motor selection
+  if (phase === 'motor') {
+    return (
+      <div className="px-4 pb-24 pt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <button onClick={() => setPhase('cliente')} className="text-primary">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-lg font-bold text-primary">Tipo de Orçamento</h1>
+        </div>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <Label>Selecionar Motor do Orçamento</Label>
+            <p className="text-xs text-muted-foreground">Todos os serviços deste orçamento usarão o motor selecionado.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setMotorType('motor1')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  motorType === 'motor1'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                )}
+              >
+                <Factory className="h-8 w-8" />
+                <span className="text-sm font-semibold">Motor 1</span>
+                <span className="text-[10px]">Fabricar</span>
+              </button>
+              <button
+                onClick={() => setMotorType('motor2')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  motorType === 'motor2'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                )}
+              >
+                <Truck className="h-8 w-8" />
+                <span className="text-sm font-semibold">Motor 2</span>
+                <span className="text-[10px]">Comprar Dobrado</span>
+              </button>
+            </div>
+            <Button onClick={() => setPhase('carrinho')}
               className="w-full bg-primary text-primary-foreground h-12">
               Continuar
             </Button>
@@ -277,14 +332,17 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   return (
     <div className="px-4 pb-36 pt-4">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => isEditing ? onDone() : setPhase('cliente')} className="text-primary">
+        <button onClick={() => isEditing ? onDone() : setPhase('motor')} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
           <h1 className="text-lg font-bold text-primary">
             {isEditing ? `Orçamento Nº ${editingOrcamento?.numeroOrcamento}` : 'Detalhes do Orçamento'}
           </h1>
-          <p className="text-xs text-muted-foreground">Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}</p>
+          <p className="text-xs text-muted-foreground">
+            Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}
+            {' · '}{motorType === 'motor1' ? 'Motor 1 (Fabricar)' : 'Motor 2 (Comprar Dobrado)'}
+          </p>
         </div>
       </div>
 
@@ -504,7 +562,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
       )}
 
-      <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} />
+      <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} motorType={motorType} />
     </div>
   );
 }

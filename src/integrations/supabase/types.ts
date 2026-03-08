@@ -263,6 +263,7 @@ export type Database = {
           garantia: string | null
           id: string
           itens_servico: Json
+          motor_type: string | null
           nome_cliente: string
           numero_orcamento: number
           status: string
@@ -284,6 +285,7 @@ export type Database = {
           garantia?: string | null
           id?: string
           itens_servico?: Json
+          motor_type?: string | null
           nome_cliente: string
           numero_orcamento: number
           status?: string
@@ -305,6 +307,7 @@ export type Database = {
           garantia?: string | null
           id?: string
           itens_servico?: Json
+          motor_type?: string | null
           nome_cliente?: string
           numero_orcamento?: number
           status?: string
@@ -459,10 +462,8 @@ export type Database = {
           espessura_padrao: number
           id: string
           material_padrao: string
-          motor_preferencial: string
+          motor_type: string
           nome_servico: string
-          permite_motor1: boolean
-          permite_motor2: boolean
           regra_id: string
           updated_at: string
         }
@@ -476,10 +477,8 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
-          motor_preferencial?: string
+          motor_type?: string
           nome_servico: string
-          permite_motor1?: boolean
-          permite_motor2?: boolean
           regra_id?: string
           updated_at?: string
         }
@@ -493,10 +492,8 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
-          motor_preferencial?: string
+          motor_type?: string
           nome_servico?: string
-          permite_motor1?: boolean
-          permite_motor2?: boolean
           regra_id?: string
           updated_at?: string
         }

@@ -40,9 +40,7 @@ function regraToDb(e: RegraCalculo, empresaId: string) {
 function dbToServico(row: any): ServicoTemplate {
   return {
     id: row.id, nomeServico: row.nome_servico, regraId: row.regra_id,
-    permiteMotor1: row.permite_motor1 ?? true,
-    permiteMotor2: row.permite_motor2 ?? false,
-    motorPreferencial: (row.motor_preferencial || 'motor1') as MotorType,
+    motorType: (row.motor_type || 'motor1') as MotorType,
     materialPadrao: row.material_padrao,
     espessuraPadrao: Number(row.espessura_padrao), cortePadrao: Number(row.corte_padrao),
     dificuldadeFacil: Number(row.dificuldade_facil), dificuldadeMedia: Number(row.dificuldade_media),
@@ -52,8 +50,7 @@ function dbToServico(row: any): ServicoTemplate {
 function servicoToDb(e: ServicoTemplate, empresaId: string) {
   return {
     id: e.id, nome_servico: e.nomeServico, regra_id: e.regraId,
-    permite_motor1: e.permiteMotor1, permite_motor2: e.permiteMotor2,
-    motor_preferencial: e.motorPreferencial,
+    motor_type: e.motorType,
     material_padrao: e.materialPadrao,
     espessura_padrao: e.espessuraPadrao, corte_padrao: e.cortePadrao,
     dificuldade_facil: e.dificuldadeFacil, dificuldade_media: e.dificuldadeMedia,
