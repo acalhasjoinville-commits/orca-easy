@@ -432,8 +432,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               {isEditing && (
                 <Button
                   onClick={() => {
-                    const cliente = clientes.find(c => c.id === orcamento?.clienteId);
-                    generatePdf(orcamento!, cliente, empresa);
+                    const cli = clientes.find(c => c.id === editingOrcamento?.clienteId);
+                    generatePdf(editingOrcamento!, cli, empresa);
                   }}
                   variant="outline"
                   className="h-11 px-4 font-semibold"
