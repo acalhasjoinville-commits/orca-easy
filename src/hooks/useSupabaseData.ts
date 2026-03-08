@@ -182,7 +182,7 @@ export function useEmpresa() {
     queryFn: async () => {
       const { data, error } = await supabase.from('empresa').select('*').limit(1).maybeSingle();
       if (error) throw error;
-      return data ? { ...dbToEmpresa(data), _dbId: data.id } : null;
+      return data ? dbToEmpresa(data) : null;
     },
   });
 
