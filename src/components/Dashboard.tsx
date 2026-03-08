@@ -52,7 +52,11 @@ export function Dashboard({ onNewOrcamento }: DashboardProps) {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-base">{o.nomeCliente}</CardTitle>
-                    <p className="text-xs text-muted-foreground">{o.nomeServico} · {o.metragem}m</p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}
+                      {' · '}
+                      {o.itensServico.map(i => i.nomeServico).join(', ')}
+                    </p>
                   </div>
                   <button onClick={() => handleDelete(o.id)} className="text-muted-foreground hover:text-destructive p-1">
                     <Trash2 className="h-4 w-4" />

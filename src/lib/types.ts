@@ -33,9 +33,8 @@ export interface ReceitaServico {
 export type MotorType = 'motor1' | 'motor2';
 export type Dificuldade = 'facil' | 'medio' | 'dificil';
 
-export interface Orcamento {
+export interface ItemServico {
   id: string;
-  nomeCliente: string;
   receitaId: string;
   nomeServico: string;
   motorType: MotorType;
@@ -54,6 +53,14 @@ export interface Orcamento {
   custoPU: number;
   custoRebites: number;
   custoTotalInsumos: number;
+  custoTotalObra: number;
+  valorVenda: number;
+}
+
+export interface Orcamento {
+  id: string;
+  nomeCliente: string;
+  itensServico: ItemServico[];
   custoTotalObra: number;
   valorVenda: number;
   dataCriacao: string;
