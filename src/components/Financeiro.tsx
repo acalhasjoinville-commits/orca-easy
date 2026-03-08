@@ -16,7 +16,7 @@ type PeriodFilter = 'month' | '3months' | 'year';
 type StatusFilter = 'all' | 'aprovado' | 'executado';
 
 export function Financeiro() {
-  const { data: orcamentos = [] } = useOrcamentos();
+  const { orcamentos } = useOrcamentos();
   const [period, setPeriod] = useState<PeriodFilter>('year');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
