@@ -20,11 +20,12 @@ interface AppSidebarProps {
   onNavigate: (tab: Tab) => void;
 }
 
-const allItems: { title: string; tab: Tab; icon: React.ElementType; permission: 'all' | 'canManageClientes' | 'canViewFinanceiro' | 'canManageSettings' }[] = [
+const allItems: { title: string; tab: Tab; icon: React.ElementType; permission: 'all' | 'canManageClientes' | 'canViewFinanceiro' | 'canManageSettings' | 'canManageUsers' }[] = [
   { title: 'Dashboard', tab: 'dashboard', icon: LayoutDashboard, permission: 'all' },
   { title: 'Orçamentos', tab: 'orcamentos', icon: FileText, permission: 'all' },
   { title: 'Clientes', tab: 'clientes', icon: Users, permission: 'canManageClientes' },
   { title: 'Financeiro', tab: 'financeiro', icon: DollarSign, permission: 'canViewFinanceiro' },
+  { title: 'Usuários', tab: 'usuarios', icon: Users, permission: 'canManageUsers' },
   { title: 'Configurações', tab: 'config', icon: Settings, permission: 'canManageSettings' },
 ];
 
