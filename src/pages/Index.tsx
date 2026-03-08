@@ -8,6 +8,7 @@ import { OrcamentoDetails } from '@/components/OrcamentoDetails';
 import { Configuracoes } from '@/components/Configuracoes';
 import { Clientes } from '@/components/Clientes';
 import { Financeiro } from '@/components/Financeiro';
+import { Usuarios } from '@/components/Usuarios';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
