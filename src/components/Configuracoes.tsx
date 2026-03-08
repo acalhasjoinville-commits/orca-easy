@@ -412,18 +412,39 @@ export function Configuracoes() {
     const pm1 = form.permiteMotor1 === 'true';
     const pm2 = form.permiteMotor2 === 'true';
 
+    const syncPreferencial = (nextPm1: boolean, nextPm2: boolean) => {
+      const currentPref = form.motorPreferencial as MotorType | undefined;
+
+      if (!nextPm1 && !nextPm2) {
+        setField('motorPreferencial', '');
+        return;
+      }
+
+      if (nextPm1 && !nextPm2) {
+        setField('motorPreferencial', 'motor1');
+        return;
+      }
+
+      if (!nextPm1 && nextPm2) {
+        setField('motorPreferencial', 'motor2');
+        return;
+      }
+
+      if (currentPref !== 'motor1' && currentPref !== 'motor2') {
+        setField('motorPreferencial', '');
+      }
+    };
+
     const handleToggleMotor1 = () => {
-      const newVal = !pm1;
-      setField('permiteMotor1', String(newVal));
-      if (!newVal && pm2) setField('motorPreferencial', 'motor2');
-      if (newVal && !pm2) setField('motorPreferencial', 'motor1');
+      const newPm1 = !pm1;
+      setField('permiteMotor1', String(newPm1));
+      syncPreferencial(newPm1, pm2);
     };
 
     const handleToggleMotor2 = () => {
-      const newVal = !pm2;
-      setField('permiteMotor2', String(newVal));
-      if (!newVal && pm1) setField('motorPreferencial', 'motor1');
-      if (newVal && !pm1) setField('motorPreferencial', 'motor2');
+      const newPm2 = !pm2;
+      setField('permiteMotor2', String(newPm2));
+      syncPreferencial(pm1, newPm2);
     };
 
     const prefOptions: { value: string; label: string }[] = [];
