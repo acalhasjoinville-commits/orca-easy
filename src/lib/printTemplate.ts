@@ -149,7 +149,7 @@ export function buildProposalHtml(params: TemplateParams): string {
     page-break-inside: avoid;
   }
   .client-box .section-title { font-size: 9pt; font-weight: bold; color: ${corP}; margin-bottom: 6px; }
-  .client-row { display: flex; flex-wrap: wrap; gap: 16px; font-size: 9pt; margin-bottom: 3px; }
+  .client-row { font-size: 9pt; margin-bottom: 3px; }
   .client-row b { color: ${corP}; }
 
   /* ===== META GRID ===== */
