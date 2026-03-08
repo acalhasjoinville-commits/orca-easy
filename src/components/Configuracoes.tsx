@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { storage } from '@/lib/storage';
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, MotorType } from '@/lib/types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,12 +24,24 @@ export function Configuracoes() {
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  const openAdd = () => { setEditItem(null); setForm({}); setDialogOpen(true); };
+  // For dynamic rule items
+  const [regraItens, setRegraItens] = useState<ItemRegra[]>([]);
+
+  const openAdd = () => {
+    setEditItem(null);
+    setForm({});
+    setRegraItens([]);
+    setDialogOpen(true);
+  };
+
   const openEdit = (item: any) => {
     setEditItem(item);
     const f: Record<string, string> = {};
-    Object.entries(item).forEach(([k, v]) => { if (k !== 'id') f[k] = String(v); });
+    Object.entries(item).forEach(([k, v]) => {
+      if (k !== 'id' && k !== 'itensRegra') f[k] = String(v);
+    });
     setForm(f);
+    if (item.itensRegra) setRegraItens([...item.itensRegra]);
     setDialogOpen(true);
   };
 
@@ -45,16 +57,11 @@ export function Configuracoes() {
       const updated = editItem ? motor2.map(e => e.id === id ? entry : e) : [...motor2, entry];
       setMotor2(updated); storage.setMotor2(updated);
     } else if (tab === 'insumos') {
-      const entry: InsumoEntry = { id, nome: form.nome || '', custoUnitario: parseFloat(form.custoUnitario) || 0 };
+      const entry: InsumoEntry = { id, nome: form.nome || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
       const updated = editItem ? insumos.map(e => e.id === id ? entry : e) : [...insumos, entry];
       setInsumos(updated); storage.setInsumos(updated);
     } else if (tab === 'regras') {
-      const entry: RegraCalculo = {
-        id, nomeRegra: form.nomeRegra || '',
-        divisorSuporte: parseFloat(form.divisorSuporte) || 0,
-        divisorPU: parseFloat(form.divisorPU) || 0,
-        multiplicadorRebite: parseFloat(form.multiplicadorRebite) || 0,
-      };
+      const entry: RegraCalculo = { id, nomeRegra: form.nomeRegra || '', itensRegra: regraItens };
       const updated = editItem ? regras.map(e => e.id === id ? entry : e) : [...regras, entry];
       setRegras(updated); storage.setRegras(updated);
     } else if (tab === 'catalogo') {
@@ -105,6 +112,72 @@ export function Configuracoes() {
 
   const materiaisUnicos = [...new Set([...motor1.map(m => m.material), ...motor2.map(m => m.material)])];
   const regraName = (id: string) => regras.find(r => r.id === id)?.nomeRegra || '—';
+
+  // -- Dynamic rule item management --
+  const addRegraItem = () => {
+    setRegraItens(prev => [...prev, { id: crypto.randomUUID(), insumoId: '', metodoCalculo: 'dividir', fator: 1 }]);
+  };
+
+  const updateRegraItem = (idx: number, field: keyof ItemRegra, value: string | number) => {
+    setRegraItens(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item));
+  };
+
+  const removeRegraItem = (idx: number) => {
+    setRegraItens(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const renderRegraForm = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Nome da Regra</Label>
+        <Input value={form.nomeRegra || ''} onChange={e => setField('nomeRegra', e.target.value)} />
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-xs font-semibold">Insumos da Regra</Label>
+          <Button type="button" size="sm" variant="outline" onClick={addRegraItem} className="h-7 text-xs">
+            <Plus className="mr-1 h-3 w-3" /> Adicionar Insumo
+          </Button>
+        </div>
+        {regraItens.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-4">Nenhum insumo adicionado. Clique em "+ Adicionar Insumo".</p>
+        )}
+        <div className="space-y-2">
+          {regraItens.map((item, idx) => (
+            <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-muted/20 p-2">
+              <Select value={item.insumoId} onValueChange={v => updateRegraItem(idx, 'insumoId', v)}>
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectValue placeholder="Insumo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
+                <SelectTrigger className="h-8 text-xs w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="multiplicar">× Mult.</SelectItem>
+                  <SelectItem value="dividir">÷ Div.</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                inputMode="decimal"
+                className="h-8 w-16 text-xs text-center"
+                value={item.fator}
+                onChange={e => updateRegraItem(idx, 'fator', parseFloat(e.target.value) || 0)}
+              />
+              <button onClick={() => removeRegraItem(idx)} className="p-1 text-muted-foreground hover:text-destructive shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   const renderCatalogoForm = () => (
     <div className="space-y-3">
@@ -181,13 +254,8 @@ export function Configuracoes() {
     ],
     insumos: [
       { label: 'Nome', key: 'nome' },
-      { label: 'Custo Unitário (R$)', key: 'custoUnitario', type: 'number' },
-    ],
-    regras: [
-      { label: 'Nome da Regra', key: 'nomeRegra' },
-      { label: 'Divisor Suporte (m)', key: 'divisorSuporte', type: 'number' },
-      { label: 'Divisor PU (m)', key: 'divisorPU', type: 'number' },
-      { label: 'Mult. Rebite', key: 'multiplicadorRebite', type: 'number' },
+      { label: 'Preço da Embalagem (R$)', key: 'precoEmbalagem', type: 'number' },
+      { label: 'Qtd na Embalagem', key: 'qtdEmbalagem', type: 'number' },
     ],
   };
 
@@ -215,10 +283,10 @@ export function Configuracoes() {
           {motor2.map(e => renderItem(e, `${e.espessura}mm · ${e.corte}mm · ${fmt(e.precoMetroLinear)}/m`))}
         </TabsContent>
         <TabsContent value="insumos">
-          {insumos.map(e => renderItem(e, fmt(e.custoUnitario)))}
+          {insumos.map(e => renderItem(e, `${fmt(e.precoEmbalagem)} / ${e.qtdEmbalagem} un = ${fmt(getCustoUnitario(e))}/un`))}
         </TabsContent>
         <TabsContent value="regras">
-          {regras.map(e => renderItem(e, `Sup: ${e.divisorSuporte}m · PU: ${e.divisorPU}m · Reb: ×${e.multiplicadorRebite}`))}
+          {regras.map(e => renderItem(e, `${e.itensRegra.length} insumo(s) vinculado(s)`))}
         </TabsContent>
         <TabsContent value="catalogo">
           {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
@@ -230,7 +298,7 @@ export function Configuracoes() {
           <DialogHeader>
             <DialogTitle>{editItem ? 'Editar' : 'Adicionar'}</DialogTitle>
           </DialogHeader>
-          {tab === 'catalogo' ? renderCatalogoForm() : (
+          {tab === 'catalogo' ? renderCatalogoForm() : tab === 'regras' ? renderRegraForm() : (
             <div className="space-y-3">
               {simpleFields[tab]?.map(f => (
                 <div key={f.key}>

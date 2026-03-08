@@ -1,4 +1,4 @@
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Dificuldade } from './types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Dificuldade, InsumoCalculado, getCustoUnitario } from './types';
 
 export function calcCustoMetroMotor1(espessura: number, corte: number, motor1: Motor1Entry): number {
   const pesoMetro = (espessura * corte * 100 * motor1.densidade) / 100000;
@@ -14,20 +14,26 @@ export function calcCustoMetroMotor2(
   return entry ? entry.precoMetroLinear : null;
 }
 
-export function calcInsumos(metragem: number, regra: RegraCalculo, insumos: InsumoEntry[]) {
-  const suporteInsumo = insumos.find(i => i.nome.toLowerCase().includes('suporte'));
-  const puInsumo = insumos.find(i => i.nome.toLowerCase().includes('pu'));
-  const rebiteInsumo = insumos.find(i => i.nome.toLowerCase().includes('rebite'));
+export function calcInsumosDinamicos(
+  metragem: number, regra: RegraCalculo, insumosList: InsumoEntry[]
+): InsumoCalculado[] {
+  return regra.itensRegra.map(itemRegra => {
+    const insumo = insumosList.find(i => i.id === itemRegra.insumoId);
+    if (!insumo) return { insumoId: itemRegra.insumoId, nomeInsumo: '?', quantidade: 0, custoUnitario: 0, custoTotal: 0 };
 
-  const qtdSuportes = regra.divisorSuporte > 0 ? Math.ceil(metragem / regra.divisorSuporte) : 0;
-  const qtdPU = regra.divisorPU > 0 ? Math.ceil(metragem / regra.divisorPU) : 0;
-  const qtdRebites = Math.ceil(metragem * regra.multiplicadorRebite);
+    const quantidade = itemRegra.metodoCalculo === 'multiplicar'
+      ? Math.ceil(metragem * itemRegra.fator)
+      : Math.ceil(metragem / itemRegra.fator);
 
-  const custoSuportes = qtdSuportes * (suporteInsumo?.custoUnitario ?? 0);
-  const custoPU = qtdPU * (puInsumo?.custoUnitario ?? 0);
-  const custoRebites = qtdRebites * (rebiteInsumo?.custoUnitario ?? 0);
-
-  return { qtdSuportes, qtdPU, qtdRebites, custoSuportes, custoPU, custoRebites, custoTotalInsumos: custoSuportes + custoPU + custoRebites };
+    const custoUnitario = getCustoUnitario(insumo);
+    return {
+      insumoId: insumo.id,
+      nomeInsumo: insumo.nome,
+      quantidade,
+      custoUnitario,
+      custoTotal: quantidade * custoUnitario,
+    };
+  });
 }
 
 export function getFatorDificuldade(servico: ServicoTemplate, dificuldade: Dificuldade): number {

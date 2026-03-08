@@ -15,16 +15,42 @@ export const seedMotor2: Motor2Entry[] = [
 ];
 
 export const seedInsumos: InsumoEntry[] = [
-  { id: '1', nome: 'PU Sachê 930g', custoUnitario: 29.00 },
-  { id: '2', nome: 'Rebite 306', custoUnitario: 0.045 },
-  { id: '3', nome: 'Suporte Normal', custoUnitario: 4.50 },
+  { id: '1', nome: 'Tubo PU 930g', precoEmbalagem: 29.00, qtdEmbalagem: 1 },
+  { id: '2', nome: 'Caixa Rebite 306', precoEmbalagem: 45.00, qtdEmbalagem: 1000 },
+  { id: '3', nome: 'Suporte Normal', precoEmbalagem: 4.50, qtdEmbalagem: 1 },
 ];
 
 export const seedRegras: RegraCalculo[] = [
-  { id: '1', nomeRegra: 'Beiral', divisorSuporte: 0.60, divisorPU: 30, multiplicadorRebite: 8 },
-  { id: '2', nomeRegra: 'Rufo Pingadeira', divisorSuporte: 0, divisorPU: 30, multiplicadorRebite: 6 },
-  { id: '3', nomeRegra: 'Rufo Encosto', divisorSuporte: 0, divisorPU: 25, multiplicadorRebite: 10 },
-  { id: '4', nomeRegra: 'Americana', divisorSuporte: 0.50, divisorPU: 25, multiplicadorRebite: 10 },
+  {
+    id: '1', nomeRegra: 'Beiral',
+    itensRegra: [
+      { id: 'r1i1', insumoId: '3', metodoCalculo: 'dividir', fator: 0.60 },
+      { id: 'r1i2', insumoId: '1', metodoCalculo: 'dividir', fator: 30 },
+      { id: 'r1i3', insumoId: '2', metodoCalculo: 'multiplicar', fator: 8 },
+    ],
+  },
+  {
+    id: '2', nomeRegra: 'Rufo Pingadeira',
+    itensRegra: [
+      { id: 'r2i1', insumoId: '1', metodoCalculo: 'dividir', fator: 30 },
+      { id: 'r2i2', insumoId: '2', metodoCalculo: 'multiplicar', fator: 6 },
+    ],
+  },
+  {
+    id: '3', nomeRegra: 'Rufo Encosto',
+    itensRegra: [
+      { id: 'r3i1', insumoId: '1', metodoCalculo: 'dividir', fator: 25 },
+      { id: 'r3i2', insumoId: '2', metodoCalculo: 'multiplicar', fator: 10 },
+    ],
+  },
+  {
+    id: '4', nomeRegra: 'Americana',
+    itensRegra: [
+      { id: 'r4i1', insumoId: '3', metodoCalculo: 'dividir', fator: 0.50 },
+      { id: 'r4i2', insumoId: '1', metodoCalculo: 'dividir', fator: 25 },
+      { id: 'r4i3', insumoId: '2', metodoCalculo: 'multiplicar', fator: 10 },
+    ],
+  },
 ];
 
 export const seedServicos: ServicoTemplate[] = [
