@@ -520,16 +520,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               >
                 <FileDown className="h-5 w-5" />
               </Button>
-                  } catch {
-                    toast.error('Erro ao salvar/gerar PDF.');
-                  }
-                }}
-                variant="outline"
-                className="h-11 px-3 font-semibold"
-                style={{ borderColor: corDestaque, color: corDestaque }}
-              >
-                <FileDown className="h-5 w-5" />
-              </Button>
             </div>
           </div>
         </div>
