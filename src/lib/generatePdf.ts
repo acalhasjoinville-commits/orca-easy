@@ -142,30 +142,7 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   doc.setFont('helvetica', 'normal');
   doc.text(dataFormatada, PAGE_W - M, y + 17, { align: 'right' });
 
-  y = 32;
-
-  // ═══════════════════════════════════════════
-  // CONTACT BAR — thin primary-color strip
-  // ═══════════════════════════════════════════
-  const barH = 8;
-  doc.setFillColor(...rgbP);
-  doc.rect(0, y, PAGE_W, barH, 'F');
-
-  const contactParts: string[] = [];
-  if (empresa?.telefoneWhatsApp) contactParts.push(`📞 ${empresa.telefoneWhatsApp}`);
-  if (empresa?.emailContato) contactParts.push(`✉ ${empresa.emailContato}`);
-  if (empresa?.cnpjCpf) contactParts.push(`CNPJ: ${empresa.cnpjCpf}`);
-  const addrShort = [empresa?.endereco, empresa?.numero, empresa?.bairro, empresa?.cidade, empresa?.estado].filter(Boolean).join(', ');
-  if (addrShort) contactParts.push(`📍 ${addrShort}`);
-
-  if (contactParts.length) {
-    doc.setTextColor(220, 230, 245);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.text(contactParts.join('     |     '), M, y + 5.5);
-  }
-
-  y += barH + 6;
+  y = 34;
 
   // ═══════════════════════════════════════════
   // CLIENT SECTION — light gray background
