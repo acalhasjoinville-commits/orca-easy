@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { storage } from '@/lib/storage';
+import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
