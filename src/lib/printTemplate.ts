@@ -280,14 +280,10 @@ export function buildProposalHtml(params: TemplateParams): string {
   <!-- CLIENT -->
   <div class="client-box">
     <div class="section-title">DADOS DO CLIENTE</div>
-    <div class="client-row">
-      <span><b>Nome:</b> <span class="client-name-val">${clienteName}</span></span>
-      ${clienteDoc ? `<span><b>CPF/CNPJ:</b> <span class="no-break">${clienteDoc}</span></span>` : ''}
-      ${clienteTel ? `<span><b>Tel:</b> <span class="no-break">${clienteTel}</span></span>` : ''}
-    </div>
-    ${clienteEnd || clienteCep ? `<div class="client-row">
-      <span><b>Endereço:</b> ${clienteEnd}${clienteCep ? ` — CEP: <span class="no-break">${clienteCep}</span>` : ''}</span>
-    </div>` : ''}
+    <div class="client-line"><b>${nameLabel}:</b> ${clienteName}</div>
+    ${clienteDoc ? `<div class="client-line"><b>${docLabel}:</b> <span class="no-break">${clienteDoc}</span></div>` : ''}
+    ${clienteTel ? `<div class="client-line"><b>Telefone:</b> <span class="no-break">${clienteTel}</span></div>` : ''}
+    ${clienteEnd || clienteCep ? `<div class="client-line"><b>Endereço:</b> ${clienteEnd}${clienteCep ? ` — CEP: <span class="no-break">${clienteCep}</span>` : ''}</div>` : ''}
   </div>
 
   <!-- META GRID -->
