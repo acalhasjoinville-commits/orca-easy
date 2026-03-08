@@ -135,6 +135,7 @@ const Index = () => {
       case 'orcamento-novo': return editingOrcamento ? 'Editar Orçamento' : 'Novo Orçamento';
       case 'clientes': return 'Clientes';
       case 'financeiro': return 'Financeiro';
+      case 'usuarios': return 'Usuários';
       case 'config': return 'Configurações';
       default: return '';
     }
