@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown } from 'lucide-react';
+import { generatePdf } from '@/lib/generatePdf';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -398,7 +399,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
       {itens.length > 0 && (() => {
         const empresa = storage.getMinhaEmpresa();
-        const corDestaque = empresa?.corDestaque || '#16A34A';
+        const corDestaque = empresa?.corDestaque || '#F57C00';
         return (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
@@ -423,11 +424,24 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             <div className="flex gap-2">
               <Button onClick={handleSave} className="flex-1 h-11" style={{ backgroundColor: corDestaque, color: '#fff' }}>
                 {isEditing ? (
-                  <><Save className="mr-2 h-5 w-5" /> Salvar Alterações</>
+                  <><Save className="mr-2 h-5 w-5" /> Salvar</>
                 ) : (
-                  <><Check className="mr-2 h-5 w-5" /> Gerar Proposta ({itens.length} {itens.length === 1 ? 'item' : 'itens'})</>
+                  <><Check className="mr-2 h-5 w-5" /> Salvar ({itens.length})</>
                 )}
               </Button>
+              {isEditing && (
+                <Button
+                  onClick={() => {
+                    const cli = clientes.find(c => c.id === editingOrcamento?.clienteId);
+                    generatePdf(editingOrcamento!, cli, empresa);
+                  }}
+                  variant="outline"
+                  className="h-11 px-4 font-semibold"
+                  style={{ borderColor: corDestaque, color: corDestaque }}
+                >
+                  <FileDown className="mr-1 h-5 w-5" /> PDF
+                </Button>
+              )}
             </div>
           </div>
         </div>
