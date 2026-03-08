@@ -188,9 +188,11 @@ export function useEmpresa() {
 
   const saveEmpresa = useMutation({
     mutationFn: async (e: MinhaEmpresa) => {
-      const existing = query.data;
-      if (existing && (existing as any)._dbId) {
-        const { error } = await supabase.from('empresa').update(empresaToDb(e)).eq('id', (existing as any)._dbId);
+      // Check if a row exists directly in the mutation to avoid stale closures
+      const { data: rows } = await supabase.from('empresa').select('id').limit(1);
+      const existingId = rows && rows.length > 0 ? rows[0].id : null;
+      if (existingId) {
+        const { error } = await supabase.from('empresa').update(empresaToDb(e)).eq('id', existingId);
         if (error) throw error;
       } else {
         const { error } = await supabase.from('empresa').insert(empresaToDb(e));

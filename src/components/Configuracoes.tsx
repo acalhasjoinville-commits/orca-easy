@@ -195,7 +195,7 @@ function MinhaEmpresaForm() {
 }
 
 export function Configuracoes() {
-  const [tab, setTab] = useState('motor1');
+  const [tab, setTab] = useState('empresa');
   const [motor1, setMotor1] = useState(storage.getMotor1());
   const [motor2, setMotor2] = useState(storage.getMotor2());
   const [insumos, setInsumos] = useState(storage.getInsumos());
