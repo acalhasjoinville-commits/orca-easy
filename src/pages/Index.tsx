@@ -79,6 +79,10 @@ const Index = () => {
       toast.error('Sem permissão para criar/editar orçamentos.');
       return;
     }
+    if (newTab === 'usuarios' && !canManageUsers) {
+      toast.error('Sem permissão para gerenciar usuários.');
+      return;
+    }
     setTab(newTab);
   };
 
