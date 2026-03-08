@@ -83,13 +83,10 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
     conditionValue: { fontSize: 9, color: '#333' },
     conditionHighlight: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corDestaque },
     // Signatures - improved
-    signaturesRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30, paddingTop: 10 },
+    signaturesRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 50, paddingTop: 10 },
     signatureBlock: { alignItems: 'center' as const, width: 210 },
     signatureLine: { width: 190, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5 },
-    signatureName: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#333' },
-    signatureRole: { fontSize: 7, color: '#666' },
-    signatureField: { fontSize: 7, color: '#888', marginTop: 6 },
-    signatureFieldLine: { width: 190, borderBottomWidth: 0.5, borderBottomColor: '#999', marginTop: 10, marginBottom: 3 },
+    signatureName: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#333', textAlign: 'center' as const },
     // Footer
     footer: { position: 'absolute' as const, bottom: 20, left: 30, right: 30, borderTopWidth: 1, borderTopColor: corPrimaria, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     footerLogo: { width: 24, height: 24, marginRight: 6, objectFit: 'contain' as const },
@@ -237,21 +234,11 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
         <View style={s.signaturesRow}>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
-            <Text style={s.signatureName}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
-            <Text style={s.signatureRole}>Cliente</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>Nome:</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>CPF/RG:</Text>
+            <Text style={s.signatureName}>Assinatura do Cliente</Text>
           </View>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
-            <Text style={s.signatureName}>{nomeEmpresa}</Text>
-            <Text style={s.signatureRole}>Prestador</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>Nome:</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>CPF/RG:</Text>
+            <Text style={s.signatureName}>Responsável Técnica - {nomeEmpresa}</Text>
           </View>
         </View>
 
