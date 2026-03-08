@@ -147,6 +147,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       descricaoGeral,
       formasPagamento,
       garantia,
+      tempoGarantia,
     };
     if (isEditing && editingOrcamento) {
       storage.updateOrcamento({ ...editingOrcamento, ...base });
