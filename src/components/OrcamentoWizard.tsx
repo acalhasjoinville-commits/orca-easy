@@ -114,6 +114,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     } else {
       const orcamento: Orcamento = {
         id: crypto.randomUUID(),
+        numeroOrcamento: storage.getNextNumeroOrcamento(),
         clienteId: selectedCliente.id,
         nomeCliente: selectedCliente.nomeRazaoSocial,
         itensServico: itens,
