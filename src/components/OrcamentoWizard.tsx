@@ -477,29 +477,49 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Button
                 onClick={async () => {
                   if (itens.length === 0 || !selectedCliente) return;
-                  // Open window SYNCHRONOUSLY on user click to avoid popup blocker
-                  const w = window.open('', '_blank');
-                  if (!w) {
-                    toast.error('Popup bloqueado. Permita popups ou use "Baixar PDF".');
-                    return;
-                  }
-                  w.document.write('<!DOCTYPE html><html><head><title>Gerando impressão...</title></head><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#555;"><p>Gerando impressão…</p></body></html>');
-                  w.document.close();
                   try {
                     const orcToSave = await saveAndGetOrcamento();
-                    if (!orcToSave) { w.close(); return; }
+                    if (!orcToSave) return;
                     const cli = clientes.find(c => c.id === selectedCliente.id);
                     const { buildProposalHtml, imageToDataUrl } = await import('@/lib/printTemplate');
                     const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
                     const html = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
-                    w.document.open();
-                    w.document.write(html);
-                    w.document.close();
-                    w.onload = () => { setTimeout(() => { w.focus(); w.print(); }, 400); };
-                    setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 1500);
+
+                    // Use hidden iframe to print — avoids popup blockers & about:blank issues on iOS
+                    let iframe = document.getElementById('print-iframe') as HTMLIFrameElement | null;
+                    if (iframe) iframe.remove();
+                    iframe = document.createElement('iframe');
+                    iframe.id = 'print-iframe';
+                    iframe.style.cssText = 'position:fixed;width:0;height:0;border:none;left:-9999px;top:-9999px;';
+                    document.body.appendChild(iframe);
+
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (!iframeDoc) {
+                      toast.error('Não foi possível imprimir. Use "Baixar PDF".');
+                      return;
+                    }
+                    iframeDoc.open();
+                    iframeDoc.write(html);
+                    iframeDoc.close();
+
+                    const triggerPrint = () => {
+                      try {
+                        iframe!.contentWindow?.focus();
+                        iframe!.contentWindow?.print();
+                      } catch {
+                        toast.error('Erro ao imprimir. Use "Baixar PDF".');
+                      }
+                    };
+
+                    // Wait for content to render
+                    if (iframe.contentWindow) {
+                      iframe.contentWindow.onload = () => setTimeout(triggerPrint, 300);
+                    }
+                    // Fallback timeout
+                    setTimeout(triggerPrint, 1200);
+
                     toast.success('Orçamento salvo!');
                   } catch {
-                    w.close();
                     toast.error('Erro ao salvar/imprimir.');
                   }
                 }}
