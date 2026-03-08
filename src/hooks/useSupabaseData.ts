@@ -202,11 +202,7 @@ export function useEmpresa() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['empresa'] }),
   });
 
-  const empresa: MinhaEmpresa | null = query.data ? { ...query.data } : null;
-  // remove internal field
-  if (empresa) delete (empresa as any)._dbId;
-
-  return { empresa, isLoading: query.isLoading, saveEmpresa };
+  return { empresa: query.data || null, isLoading: query.isLoading, saveEmpresa };
 }
 
 export function useOrcamentos() {
