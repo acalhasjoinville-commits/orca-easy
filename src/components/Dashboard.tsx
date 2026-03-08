@@ -57,11 +57,13 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
           <FileText className="mb-4 h-16 w-16 text-muted-foreground/40" />
           <h2 className="mb-2 text-lg font-semibold text-muted-foreground">Nenhum orçamento ainda</h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
-            Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.
+            {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
           </p>
-          <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
-          </Button>
+          {canCreateEditBudget && (
+            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
