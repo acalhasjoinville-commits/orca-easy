@@ -263,7 +263,59 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             )}
 
-            <Button onClick={() => setPhase('carrinho')} disabled={!selectedClienteId}
+            <Button onClick={() => setPhase('motor')} disabled={!selectedClienteId}
+              className="w-full bg-primary text-primary-foreground h-12">
+              Continuar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Phase 1.5: Motor selection
+  if (phase === 'motor') {
+    return (
+      <div className="px-4 pb-24 pt-4">
+        <div className="mb-4 flex items-center gap-3">
+          <button onClick={() => setPhase('cliente')} className="text-primary">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-lg font-bold text-primary">Tipo de Orçamento</h1>
+        </div>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <Label>Selecionar Motor do Orçamento</Label>
+            <p className="text-xs text-muted-foreground">Todos os serviços deste orçamento usarão o motor selecionado.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setMotorType('motor1')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  motorType === 'motor1'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                )}
+              >
+                <Factory className="h-8 w-8" />
+                <span className="text-sm font-semibold">Motor 1</span>
+                <span className="text-[10px]">Fabricar</span>
+              </button>
+              <button
+                onClick={() => setMotorType('motor2')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  motorType === 'motor2'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                )}
+              >
+                <Truck className="h-8 w-8" />
+                <span className="text-sm font-semibold">Motor 2</span>
+                <span className="text-[10px]">Comprar Dobrado</span>
+              </button>
+            </div>
+            <Button onClick={() => setPhase('carrinho')}
               className="w-full bg-primary text-primary-foreground h-12">
               Continuar
             </Button>
