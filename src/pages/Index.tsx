@@ -172,6 +172,9 @@ const Index = () => {
       {tab === 'financeiro' && (
         canViewFinanceiro ? <Financeiro /> : <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
       )}
+      {tab === 'usuarios' && (
+        canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />
+      )}
       {tab === 'config' && (
         canManageSettings ? <Configuracoes /> : <AccessDenied message="Você não tem permissão para acessar Configurações." />
       )}
