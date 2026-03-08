@@ -142,4 +142,5 @@ export interface Orcamento {
   descricaoGeral: string;
   formasPagamento: string;
   garantia: string;
+  tempoGarantia: string;
 }
