@@ -17,7 +17,7 @@ function MinhaEmpresaForm() {
   const [form, setForm] = useState<MinhaEmpresa>(existing ?? {
     logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
-    bairro: '', cidade: '', estado: '', corPrimaria: '#0044CC', corDestaque: '#16A34A',
+    bairro: '', cidade: '', estado: '', corPrimaria: '#0B1B32', corDestaque: '#F57C00',
   });
   const fileRef = useRef<HTMLInputElement>(null);
 
