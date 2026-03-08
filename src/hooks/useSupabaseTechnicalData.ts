@@ -4,7 +4,7 @@ import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, I
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from '@/lib/seedData';
 import { Json } from '@/integrations/supabase/types';
 
-// Cast to any to allow new tables not yet in generated types
+// Cast to any – these tables exist in DB but aren't in the auto-generated types yet
 const db = supabase as any;
 
 // ─── MAPPERS ───
@@ -59,10 +59,10 @@ function servicoToDb(e: ServicoTemplate) {
 // ─── SEED HELPER ───
 
 async function seedIfEmpty(table: string, seedData: any[], mapper: (row: any) => any) {
-  const { count } = await (supabase as any).from(table).select('id', { count: 'exact', head: true });
+  const { count } = await db.from(table).select('id', { count: 'exact', head: true });
   if ((count ?? 0) === 0 && seedData.length > 0) {
     const rows = seedData.map(mapper);
-    await (supabase as any).from(table).insert(rows);
+    await db.from(table).insert(rows);
   }
 }
 
@@ -74,7 +74,7 @@ export function useMotor1() {
     queryKey: ['motor1'],
     queryFn: async () => {
       await seedIfEmpty('motor1', seedMotor1, motor1ToDb);
-      const { data, error } = await supabase.from('motor1').select('*').order('created_at');
+      const { data, error } = await db.from('motor1').select('*').order('created_at');
       if (error) throw error;
       return (data || []).map(dbToMotor1);
     },
@@ -82,7 +82,7 @@ export function useMotor1() {
 
   const addMotor1 = useMutation({
     mutationFn: async (e: Motor1Entry) => {
-      const { error } = await supabase.from('motor1').insert(motor1ToDb(e));
+      const { error } = await db.from('motor1').insert(motor1ToDb(e));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor1'] }),
@@ -90,7 +90,7 @@ export function useMotor1() {
 
   const updateMotor1 = useMutation({
     mutationFn: async (e: Motor1Entry) => {
-      const { error } = await supabase.from('motor1').update(motor1ToDb(e)).eq('id', e.id);
+      const { error } = await db.from('motor1').update(motor1ToDb(e)).eq('id', e.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor1'] }),
@@ -98,7 +98,7 @@ export function useMotor1() {
 
   const deleteMotor1 = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('motor1').delete().eq('id', id);
+      const { error } = await db.from('motor1').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor1'] }),
@@ -113,7 +113,7 @@ export function useMotor2() {
     queryKey: ['motor2'],
     queryFn: async () => {
       await seedIfEmpty('motor2', seedMotor2, motor2ToDb);
-      const { data, error } = await supabase.from('motor2').select('*').order('created_at');
+      const { data, error } = await db.from('motor2').select('*').order('created_at');
       if (error) throw error;
       return (data || []).map(dbToMotor2);
     },
@@ -121,7 +121,7 @@ export function useMotor2() {
 
   const addMotor2 = useMutation({
     mutationFn: async (e: Motor2Entry) => {
-      const { error } = await supabase.from('motor2').insert(motor2ToDb(e));
+      const { error } = await db.from('motor2').insert(motor2ToDb(e));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor2'] }),
@@ -129,7 +129,7 @@ export function useMotor2() {
 
   const updateMotor2 = useMutation({
     mutationFn: async (e: Motor2Entry) => {
-      const { error } = await supabase.from('motor2').update(motor2ToDb(e)).eq('id', e.id);
+      const { error } = await db.from('motor2').update(motor2ToDb(e)).eq('id', e.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor2'] }),
@@ -137,7 +137,7 @@ export function useMotor2() {
 
   const deleteMotor2 = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('motor2').delete().eq('id', id);
+      const { error } = await db.from('motor2').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['motor2'] }),
@@ -152,7 +152,7 @@ export function useInsumos() {
     queryKey: ['insumos'],
     queryFn: async () => {
       await seedIfEmpty('insumos', seedInsumos, insumoToDb);
-      const { data, error } = await supabase.from('insumos').select('*').order('created_at');
+      const { data, error } = await db.from('insumos').select('*').order('created_at');
       if (error) throw error;
       return (data || []).map(dbToInsumo);
     },
@@ -160,7 +160,7 @@ export function useInsumos() {
 
   const addInsumo = useMutation({
     mutationFn: async (e: InsumoEntry) => {
-      const { error } = await supabase.from('insumos').insert(insumoToDb(e));
+      const { error } = await db.from('insumos').insert(insumoToDb(e));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['insumos'] }),
@@ -168,7 +168,7 @@ export function useInsumos() {
 
   const updateInsumo = useMutation({
     mutationFn: async (e: InsumoEntry) => {
-      const { error } = await supabase.from('insumos').update(insumoToDb(e)).eq('id', e.id);
+      const { error } = await db.from('insumos').update(insumoToDb(e)).eq('id', e.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['insumos'] }),
@@ -176,7 +176,7 @@ export function useInsumos() {
 
   const deleteInsumo = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('insumos').delete().eq('id', id);
+      const { error } = await db.from('insumos').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['insumos'] }),
@@ -191,7 +191,7 @@ export function useRegras() {
     queryKey: ['regras'],
     queryFn: async () => {
       await seedIfEmpty('regras_calculo', seedRegras, regraToDb);
-      const { data, error } = await supabase.from('regras_calculo').select('*').order('created_at');
+      const { data, error } = await db.from('regras_calculo').select('*').order('created_at');
       if (error) throw error;
       return (data || []).map(dbToRegra);
     },
@@ -199,7 +199,7 @@ export function useRegras() {
 
   const addRegra = useMutation({
     mutationFn: async (e: RegraCalculo) => {
-      const { error } = await supabase.from('regras_calculo').insert(regraToDb(e));
+      const { error } = await db.from('regras_calculo').insert(regraToDb(e));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['regras'] }),
@@ -207,7 +207,7 @@ export function useRegras() {
 
   const updateRegra = useMutation({
     mutationFn: async (e: RegraCalculo) => {
-      const { error } = await supabase.from('regras_calculo').update(regraToDb(e)).eq('id', e.id);
+      const { error } = await db.from('regras_calculo').update(regraToDb(e)).eq('id', e.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['regras'] }),
@@ -215,7 +215,7 @@ export function useRegras() {
 
   const deleteRegra = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('regras_calculo').delete().eq('id', id);
+      const { error } = await db.from('regras_calculo').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['regras'] }),
@@ -230,7 +230,7 @@ export function useServicos() {
     queryKey: ['servicos'],
     queryFn: async () => {
       await seedIfEmpty('servicos_catalogo', seedServicos, servicoToDb);
-      const { data, error } = await supabase.from('servicos_catalogo').select('*').order('created_at');
+      const { data, error } = await db.from('servicos_catalogo').select('*').order('created_at');
       if (error) throw error;
       return (data || []).map(dbToServico);
     },
@@ -238,7 +238,7 @@ export function useServicos() {
 
   const addServico = useMutation({
     mutationFn: async (e: ServicoTemplate) => {
-      const { error } = await supabase.from('servicos_catalogo').insert(servicoToDb(e));
+      const { error } = await db.from('servicos_catalogo').insert(servicoToDb(e));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['servicos'] }),
@@ -246,7 +246,7 @@ export function useServicos() {
 
   const updateServico = useMutation({
     mutationFn: async (e: ServicoTemplate) => {
-      const { error } = await supabase.from('servicos_catalogo').update(servicoToDb(e)).eq('id', e.id);
+      const { error } = await db.from('servicos_catalogo').update(servicoToDb(e)).eq('id', e.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['servicos'] }),
@@ -254,7 +254,7 @@ export function useServicos() {
 
   const deleteServico = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('servicos_catalogo').delete().eq('id', id);
+      const { error } = await db.from('servicos_catalogo').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['servicos'] }),
