@@ -2,14 +2,6 @@ import { Orcamento, MinhaEmpresa, Cliente } from './types';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-function detectBrowser() {
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-  const isDesktop = !isIOS && !/Android/.test(ua);
-  return { isIOS, isSafari, isDesktop, useIframe: isSafari || isDesktop };
-}
-
 export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, empresa: MinhaEmpresa | null) {
   const corP = empresa?.corPrimaria || '#1B2A4A';
   const corD = empresa?.corDestaque || '#F57C00';
@@ -54,45 +46,6 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     nomeEmpresa, slogan, logoUrl, contactLine, addressLine, serviceRows, paymentLines, orcamento
   });
 
-  const { useIframe } = detectBrowser();
-
-  if (useIframe) {
-    printViaIframe(html);
-  } else {
-    printViaNewTab(html);
-  }
-}
-
-function printViaIframe(html: string) {
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;';
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (!doc) {
-    // Fallback to new tab
-    printViaNewTab(html);
-    iframe.remove();
-    return;
-  }
-
-  doc.open();
-  doc.write(html);
-  doc.close();
-
-  // doc.write doesn't reliably trigger onload — use timeout instead
-  setTimeout(() => {
-    try {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-    } catch {
-      printViaNewTab(html);
-    }
-    setTimeout(() => iframe.remove(), 5000);
-  }, 500);
-}
-
-function printViaNewTab(html: string) {
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const w = window.open(url, '_blank');
