@@ -3,7 +3,7 @@ import { pdf } from '@react-pdf/renderer';
 import { OrcamentoPDF } from '@/components/OrcamentoPDF';
 import { Orcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { fetchLogoBase64 } from '@/lib/fetchLogoBase64';
-import { FileDown, Loader2 } from 'lucide-react';
+import { Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
@@ -30,11 +30,9 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
     return () => { cancelled = true; };
   }, [empresa?.logoUrl]);
 
-  const handleDownload = async () => {
+  const handleShare = async () => {
     if (generating) return;
     setGenerating(true);
-
-    // Yield to UI thread so spinner renders before heavy PDF work
     await new Promise((r) => setTimeout(r, 50));
 
     const buildBlob = async (withLogo: boolean) => {
@@ -50,7 +48,6 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
 
     try {
       let blob: Blob;
-
       try {
         blob = await buildBlob(Boolean(logoBase64));
       } catch (firstError) {
@@ -59,27 +56,27 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
         blob = await buildBlob(false);
       }
 
-      const url = URL.createObjectURL(blob);
       const fileName = `orcamento-${orcamento.numeroOrcamento || 'novo'}.pdf`;
+      const file = new File([blob], fileName, { type: 'application/pdf' });
 
-      // Use a hidden <a> tag for all platforms — avoids popup blockers entirely
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      // On iOS Safari, setting download may force a save dialog; 
-      // on Android/desktop it triggers download. Both work without popups.
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (!isIOS) {
-        a.download = fileName;
+      // Try Web Share API (mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Orçamento OrçaCalhas',
+          text: 'Segue o orçamento solicitado.',
+        });
+      } else {
+        // Fallback: open in new tab (desktop)
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
       }
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 30000);
-    } catch (err) {
-      console.error('Erro ao gerar PDF:', err);
-      toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente. Se persistir, gere sem logo.', variant: 'destructive' });
+    } catch (err: any) {
+      // User cancelling share is not an error
+      if (err?.name === 'AbortError') return;
+      console.error('Erro ao gerar/enviar PDF:', err);
+      toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente.', variant: 'destructive' });
     } finally {
       setGenerating(false);
     }
@@ -91,7 +88,7 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
       className={className}
       style={{ backgroundColor: corDestaque, color: '#fff' }}
       disabled={generating}
-      onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+      onClick={(e) => { e.stopPropagation(); handleShare(); }}
     >
       {generating ? (
         <>
@@ -100,8 +97,8 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
         </>
       ) : (
         <>
-          <FileDown className="h-4 w-4" />
-          {size !== 'icon' && <span className="ml-2">Baixar PDF</span>}
+          <Share2 className="h-4 w-4" />
+          {size !== 'icon' && <span className="ml-2">Enviar Orçamento</span>}
         </>
       )}
     </Button>
