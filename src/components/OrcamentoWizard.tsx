@@ -9,9 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Printer, Loader2 } from 'lucide-react';
-import { generatePdfFromHtml } from '@/lib/generatePdf';
-import { buildProposalHtml, imageToDataUrl } from '@/lib/printTemplate';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2 } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
@@ -475,54 +473,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 ) : (
                   <><Check className="mr-2 h-5 w-5" /> Salvar ({itens.length})</>
                 )}
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (itens.length === 0 || !selectedCliente) return;
-                  try {
-                    const orcToSave = await saveAndGetOrcamento();
-                    if (!orcToSave) return;
-
-                    const cli = clientes.find(c => c.id === selectedCliente.id);
-                    const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
-                    const templateHtml = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
-
-                    sessionStorage.setItem('printHtml', templateHtml);
-                    sessionStorage.setItem('printNumero', String(orcToSave.numeroOrcamento));
-                    toast.success('Orçamento salvo!');
-                    window.location.href = '/imprimir';
-                  } catch {
-                    toast.error('Erro ao imprimir. Use "Baixar PDF".');
-                  }
-                }}
-                variant="outline"
-                className="h-11 px-3 font-semibold"
-                style={{ borderColor: corDestaque, color: corDestaque }}
-              >
-                <Printer className="h-5 w-5" />
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (itens.length === 0 || !selectedCliente) return;
-                  try {
-                    const orcToSave = await saveAndGetOrcamento();
-                    if (!orcToSave) return;
-
-                    const cli = clientes.find(c => c.id === selectedCliente.id);
-                    const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
-                    const templateHtml = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
-
-                    await generatePdfFromHtml(templateHtml, orcToSave.numeroOrcamento);
-                    toast.success('PDF gerado e orçamento salvo!');
-                  } catch {
-                    toast.error('Erro ao salvar/gerar PDF.');
-                  }
-                }}
-                variant="outline"
-                className="h-11 px-3 font-semibold"
-                style={{ borderColor: corDestaque, color: corDestaque }}
-              >
-                <FileDown className="h-5 w-5" />
               </Button>
             </div>
           </div>
