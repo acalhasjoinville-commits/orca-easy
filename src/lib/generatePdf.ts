@@ -354,75 +354,103 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     }
   }
 
-  /* Print styles - reset mobile overrides and enforce A4 layout */
+  /* A4 lock for print engines (mobile-safe) */
   @media print {
-    body { 
-      margin: 0 !important; 
-      padding: 0 !important; 
+    @page {
+      size: A4 portrait;
+      margin: 12mm 15mm 15mm 15mm;
+    }
+
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
       background: #fff !important;
+      width: auto !important;
+      max-width: none !important;
       font-size: 10pt !important;
-      width: 210mm !important;
     }
-    .page-wrap { 
-      padding: 0 !important; 
-      box-shadow: none !important; 
+
+    .page-wrap {
+      width: 180mm !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      box-shadow: none !important;
       min-height: auto !important;
-      padding-bottom: 0 !important;
+      background: #fff !important;
     }
-    .header { 
-      flex-direction: row !important; 
-      gap: 12px !important; 
-      align-items: flex-start !important;
-      justify-content: space-between !important;
+
+    .services tr,
+    .client-box,
+    .total-bar,
+    .section-header,
+    .signatures,
+    .footer {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .header-left { gap: 12px !important; }
-    .header-logo img { max-height: 50px !important; max-width: 80px !important; }
-    .header-company-name { font-size: 16pt !important; }
+
+    .header { flex-direction: row !important; align-items: flex-start !important; justify-content: space-between !important; }
     .header-right { text-align: right !important; }
-    .header-right .number { font-size: 18pt !important; }
-    .client-row { flex-direction: row !important; gap: 24px !important; }
-    .meta-grid { font-size: 10pt !important; }
+    .client-row { flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important; }
     .meta-cell { padding: 6px 10px !important; }
-    .meta-cell .meta-value { font-size: 10pt !important; }
     table.services { font-size: 9pt !important; }
     table.services thead th { padding: 8px 6px !important; font-size: 8.5pt !important; }
     table.services tbody td { padding: 7px 6px !important; }
-    .total-bar { 
-      flex-direction: row !important; 
-      gap: 0 !important; 
-      text-align: right !important; 
-      padding: 8px 14px !important;
-      justify-content: space-between !important;
-    }
-    .total-bar .total-label { font-size: 12pt !important; }
-    .total-bar .total-value { font-size: 14pt !important; }
-    .signatures { 
-      flex-direction: row !important; 
-      gap: 0 !important; 
-      align-items: stretch !important; 
-      margin-top: 40px !important;
-      justify-content: space-between !important;
-    }
+    .total-bar { flex-direction: row !important; justify-content: space-between !important; }
+    .signatures { flex-direction: row !important; justify-content: space-between !important; gap: 0 !important; }
     .sig-block { width: 42% !important; }
-    .footer { 
-      position: fixed !important; 
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      flex-direction: row !important; 
-      gap: 10px !important; 
-      text-align: left !important; 
-      padding: 8px 15mm !important;
+
+    .footer {
+      position: static !important;
+      width: 180mm !important;
+      margin: 10mm auto 0 !important;
+      padding: 8px 12px !important;
+      display: flex !important;
+      flex-direction: row !important;
       justify-content: space-between !important;
+      align-items: center !important;
     }
-    .footer-right { justify-content: flex-end !important; }
-    .print-btn { display: none !important; }
-    .no-print { display: none !important; }
+
+    .print-btn,
+    .no-print {
+      display: none !important;
+    }
   }
+
+  /* Fallback for mobile browsers that ignore @media print details */
+  body.a4-export {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    font-size: 10pt !important;
+  }
+  body.a4-export .page-wrap {
+    width: 180mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+  }
+  body.a4-export .header { flex-direction: row !important; justify-content: space-between !important; align-items: flex-start !important; }
+  body.a4-export .header-right { text-align: right !important; }
+  body.a4-export .client-row { flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important; }
+  body.a4-export .total-bar { flex-direction: row !important; justify-content: space-between !important; }
+  body.a4-export .signatures { flex-direction: row !important; gap: 0 !important; justify-content: space-between !important; }
+  body.a4-export .sig-block { width: 42% !important; }
+  body.a4-export .footer {
+    position: static !important;
+    width: 180mm !important;
+    margin: 10mm auto 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
 </style>
 </head>
 <body>
-<button class="print-btn no-print" style="display:none;" onclick="window.print()">Imprimir / Salvar PDF</button>
+<button class="print-btn no-print" style="display:none;" onclick="preparePrintA4()">Imprimir / Salvar PDF</button>
 <div class="page-wrap">
 
   <!-- HEADER -->
