@@ -330,8 +330,9 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </button>
               <button
                 onClick={() => handleMotorSelect('motor2')}
+                disabled={hasItems}
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all disabled:cursor-not-allowed disabled:opacity-70',
                   motorType === 'motor2'
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/30'
@@ -359,7 +360,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   return (
     <div className="px-4 pb-36 pt-4">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => isEditing ? onDone() : setPhase('motor')} className="text-primary">
+        <button onClick={handleBackFromCart} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
