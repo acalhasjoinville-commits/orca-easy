@@ -1,49 +1,61 @@
 import { useState } from 'react';
-import { storage } from '@/lib/storage';
+import { useClientes } from '@/hooks/useSupabaseData';
 import { Cliente } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Users, Pencil, Trash2, Phone } from 'lucide-react';
+import { Plus, Search, Users, Pencil, Trash2, Phone, Loader2 } from 'lucide-react';
 import { ClienteFormModal } from './ClienteFormModal';
 import { toast } from 'sonner';
 
 export function Clientes() {
-  const [clientes, setClientes] = useState<Cliente[]>(storage.getClientes());
+  const { clientes, isLoading, addCliente, updateCliente, deleteCliente } = useClientes();
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
-
-  const refresh = () => setClientes(storage.getClientes());
 
   const filtered = clientes.filter(c =>
     c.nomeRazaoSocial.toLowerCase().includes(search.toLowerCase()) ||
     c.documento.includes(search)
   );
 
-  const handleSave = (c: Cliente) => {
-    if (editing) {
-      storage.updateCliente(c);
-      toast.success('Cliente atualizado!');
-    } else {
-      storage.addCliente(c);
-      toast.success('Cliente cadastrado!');
+  const handleSave = async (c: Cliente) => {
+    try {
+      if (editing) {
+        await updateCliente.mutateAsync(c);
+        toast.success('Cliente atualizado!');
+      } else {
+        await addCliente.mutateAsync(c);
+        toast.success('Cliente cadastrado!');
+      }
+      setModalOpen(false);
+      setEditing(null);
+    } catch {
+      toast.error('Erro ao salvar cliente.');
     }
-    refresh();
-    setModalOpen(false);
-    setEditing(null);
   };
 
-  const handleDelete = (id: string) => {
-    storage.deleteCliente(id);
-    refresh();
-    toast.success('Cliente removido.');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCliente.mutateAsync(id);
+      toast.success('Cliente removido.');
+    } catch {
+      toast.error('Erro ao remover cliente.');
+    }
   };
 
   const handleEdit = (c: Cliente) => {
     setEditing(c);
     setModalOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pb-24 pt-4">
@@ -52,7 +64,6 @@ export function Clientes() {
         <p className="text-sm text-muted-foreground">Gerencie sua base de clientes</p>
       </div>
 
-      {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input value={search} onChange={e => setSearch(e.target.value)}
@@ -104,7 +115,6 @@ export function Clientes() {
         </div>
       )}
 
-      {/* FAB */}
       <button onClick={() => { setEditing(null); setModalOpen(true); }}
         className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 transition-colors">
         <Plus className="h-6 w-6" />

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { storage } from '@/lib/storage';
+import { useEmpresa, usePoliticas } from '@/hooks/useSupabaseData';
 import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario, MinhaEmpresa } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,17 +10,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Building2, Upload, Save } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 function MinhaEmpresaForm() {
-  const existing = storage.getMinhaEmpresa();
-  const [form, setForm] = useState<MinhaEmpresa>(existing ?? {
+  const { empresa: existing, isLoading, saveEmpresa } = useEmpresa();
+  const [initialized, setInitialized] = useState(false);
+  const [form, setForm] = useState<MinhaEmpresa>({
     logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
     bairro: '', cidade: '', estado: '', corPrimaria: '#0B1B32', corDestaque: '#F57C00',
   });
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sync from DB once loaded
+  if (!initialized && !isLoading && existing) {
+    setForm(existing);
+    setInitialized(true);
+  }
+  if (!initialized && !isLoading && !existing) {
+    setInitialized(true);
+  }
 
   const set = (k: keyof MinhaEmpresa, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
@@ -34,10 +45,22 @@ function MinhaEmpresaForm() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    storage.setMinhaEmpresa(form);
-    toast.success('Dados da empresa salvos!');
+  const handleSave = async () => {
+    try {
+      await saveEmpresa.mutateAsync(form);
+      toast.success('Dados da empresa salvos!');
+    } catch {
+      toast.error('Erro ao salvar dados da empresa.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -147,8 +170,9 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
-          <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground h-11">
-            <Save className="mr-2 h-4 w-4" /> Salvar Dados da Empresa
+          <Button onClick={handleSave} disabled={saveEmpresa.isPending} className="w-full bg-primary text-primary-foreground h-11">
+            {saveEmpresa.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Salvar Dados da Empresa
           </Button>
         </CardContent>
       </Card>
@@ -163,7 +187,10 @@ export function Configuracoes() {
   const [insumos, setInsumos] = useState(storage.getInsumos());
   const [regras, setRegras] = useState(storage.getRegras());
   const [servicos, setServicos] = useState(storage.getServicos());
-  const [politicas, setPoliticas] = useState(storage.getPoliticas());
+  
+  // Politicas from Supabase
+  const { politicas, addPolitica, updatePolitica, deletePolitica } = usePoliticas();
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
 
@@ -190,7 +217,7 @@ export function Configuracoes() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const id = editItem?.id || crypto.randomUUID();
 
     if (tab === 'motor1') {
@@ -232,21 +259,36 @@ export function Configuracoes() {
         garantia: form.garantia || '',
         tempoGarantia: form.tempoGarantia || '1 ano',
       };
-      const updated = editItem ? politicas.map(e => e.id === id ? entry : e) : [...politicas, entry];
-      setPoliticas(updated); storage.setPoliticas(updated);
+      try {
+        if (editItem) {
+          await updatePolitica.mutateAsync(entry);
+        } else {
+          await addPolitica.mutateAsync(entry);
+        }
+      } catch {
+        toast.error('Erro ao salvar política.');
+        return;
+      }
     }
 
     setDialogOpen(false);
     toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (tab === 'motor1') { const u = motor1.filter(e => e.id !== id); setMotor1(u); storage.setMotor1(u); }
     else if (tab === 'motor2') { const u = motor2.filter(e => e.id !== id); setMotor2(u); storage.setMotor2(u); }
     else if (tab === 'insumos') { const u = insumos.filter(e => e.id !== id); setInsumos(u); storage.setInsumos(u); }
     else if (tab === 'regras') { const u = regras.filter(e => e.id !== id); setRegras(u); storage.setRegras(u); }
     else if (tab === 'catalogo') { const u = servicos.filter(e => e.id !== id); setServicos(u); storage.setServicos(u); }
-    else if (tab === 'politicas') { const u = politicas.filter(e => e.id !== id); setPoliticas(u); storage.setPoliticas(u); }
+    else if (tab === 'politicas') {
+      try {
+        await deletePolitica.mutateAsync(id);
+      } catch {
+        toast.error('Erro ao remover política.');
+        return;
+      }
+    }
     toast.success('Removido!');
   };
 
