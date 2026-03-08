@@ -207,5 +207,20 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   doc.setFont('helvetica', 'italic');
   doc.text('Orçamento gerado via OrçaCalhas — A solução está no nome', pageW / 2, y, { align: 'center' });
 
-  doc.save(`proposta-${orcamento.numeroOrcamento}.pdf`);
+  // Use dataUrl approach for iOS/Safari compatibility
+  const pdfDataUri = doc.output('datauristring');
+  const newWindow = window.open();
+  if (newWindow) {
+    newWindow.document.write(
+      `<html><head><title>Proposta ${orcamento.numeroOrcamento}</title></head>` +
+      `<body style="margin:0"><iframe src="${pdfDataUri}" style="border:none;width:100%;height:100vh"></iframe></body></html>`
+    );
+    newWindow.document.close();
+  } else {
+    // Fallback: direct download
+    const link = document.createElement('a');
+    link.href = pdfDataUri;
+    link.download = `proposta-${orcamento.numeroOrcamento}.pdf`;
+    link.click();
+  }
 }
