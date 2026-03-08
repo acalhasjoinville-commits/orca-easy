@@ -49,7 +49,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
 
   return (
-    <div className="px-4 pb-28 pt-4 max-w-3xl mx-auto">
+    <div className="px-4 pb-36 pt-4 max-w-3xl mx-auto">
       {/* Back button */}
       <button
         onClick={onBack}
@@ -201,7 +201,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
       )}
 
       {/* Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card p-3 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:mt-2">
+      <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-40 border-t bg-card p-3 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:mt-2">
         <div className="flex items-center gap-2 max-w-3xl mx-auto flex-wrap">
           <PDFDownloadButton
             orcamento={orcamento}
