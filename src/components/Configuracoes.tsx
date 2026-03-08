@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { storage } from '@/lib/storage';
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario } from '@/lib/types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -18,13 +19,13 @@ export function Configuracoes() {
   const [insumos, setInsumos] = useState(storage.getInsumos());
   const [regras, setRegras] = useState(storage.getRegras());
   const [servicos, setServicos] = useState(storage.getServicos());
+  const [politicas, setPoliticas] = useState(storage.getPoliticas());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
 
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  // For dynamic rule items
   const [regraItens, setRegraItens] = useState<ItemRegra[]>([]);
 
   const openAdd = () => {
@@ -78,6 +79,17 @@ export function Configuracoes() {
       };
       const updated = editItem ? servicos.map(e => e.id === id ? entry : e) : [...servicos, entry];
       setServicos(updated); storage.setServicos(updated);
+    } else if (tab === 'politicas') {
+      const entry: PoliticaComercial = {
+        id,
+        nomePolitica: form.nomePolitica || '',
+        validadeDias: parseInt(form.validadeDias) || 15,
+        descricaoGeral: form.descricaoGeral || '',
+        formasPagamento: form.formasPagamento || '',
+        garantia: form.garantia || '',
+      };
+      const updated = editItem ? politicas.map(e => e.id === id ? entry : e) : [...politicas, entry];
+      setPoliticas(updated); storage.setPoliticas(updated);
     }
 
     setDialogOpen(false);
@@ -90,6 +102,7 @@ export function Configuracoes() {
     else if (tab === 'insumos') { const u = insumos.filter(e => e.id !== id); setInsumos(u); storage.setInsumos(u); }
     else if (tab === 'regras') { const u = regras.filter(e => e.id !== id); setRegras(u); storage.setRegras(u); }
     else if (tab === 'catalogo') { const u = servicos.filter(e => e.id !== id); setServicos(u); storage.setServicos(u); }
+    else if (tab === 'politicas') { const u = politicas.filter(e => e.id !== id); setPoliticas(u); storage.setPoliticas(u); }
     toast.success('Removido!');
   };
 
@@ -99,7 +112,7 @@ export function Configuracoes() {
     <Card key={item.id} className="mb-2">
       <CardContent className="flex items-center justify-between px-4 py-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium truncate">{item.material || item.nomeEmbalagemCompra || item.nomeRegra || item.nomeServico}</p>
+          <p className="text-sm font-medium truncate">{item.material || item.nomeEmbalagemCompra || item.nomeRegra || item.nomeServico || item.nomePolitica}</p>
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
         <div className="flex gap-1 shrink-0">
@@ -113,7 +126,6 @@ export function Configuracoes() {
   const materiaisUnicos = [...new Set([...motor1.map(m => m.material), ...motor2.map(m => m.material)])];
   const regraName = (id: string) => regras.find(r => r.id === id)?.nomeRegra || '—';
 
-  // -- Dynamic rule item management --
   const addRegraItem = () => {
     setRegraItens(prev => [...prev, { id: crypto.randomUUID(), insumoId: '', metodoCalculo: 'dividir', fator: 1 }]);
   };
@@ -240,6 +252,34 @@ export function Configuracoes() {
     </div>
   );
 
+  const renderPoliticaForm = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Nome da Política</Label>
+        <Input value={form.nomePolitica || ''} onChange={e => setField('nomePolitica', e.target.value)} placeholder="Ex: Padrão Residencial" />
+      </div>
+      <div>
+        <Label className="text-xs">Validade (dias)</Label>
+        <Input type="number" inputMode="numeric" value={form.validadeDias || ''} onChange={e => setField('validadeDias', e.target.value)} placeholder="15" />
+      </div>
+      <div>
+        <Label className="text-xs">Descrição Geral</Label>
+        <Textarea value={form.descricaoGeral || ''} onChange={e => setField('descricaoGeral', e.target.value)}
+          placeholder="Descreva o escopo padrão do serviço..." rows={2} className="text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs">Formas de Pagamento</Label>
+        <Textarea value={form.formasPagamento || ''} onChange={e => setField('formasPagamento', e.target.value)}
+          placeholder="Condições de pagamento padrão..." rows={2} className="text-sm" />
+      </div>
+      <div>
+        <Label className="text-xs">Garantia</Label>
+        <Textarea value={form.garantia || ''} onChange={e => setField('garantia', e.target.value)}
+          placeholder="Termos de garantia padrão..." rows={2} className="text-sm" />
+      </div>
+    </div>
+  );
+
   const simpleFields: Record<string, { label: string; key: string; type?: string }[]> = {
     motor1: [
       { label: 'Material', key: 'material' },
@@ -260,17 +300,39 @@ export function Configuracoes() {
     ],
   };
 
+  const renderFormContent = () => {
+    if (tab === 'catalogo') return renderCatalogoForm();
+    if (tab === 'regras') return renderRegraForm();
+    if (tab === 'politicas') return renderPoliticaForm();
+    return (
+      <div className="space-y-3">
+        {simpleFields[tab]?.map(f => (
+          <div key={f.key}>
+            <Label className="text-xs">{f.label}</Label>
+            <Input
+              type={f.type || 'text'}
+              inputMode={f.type === 'number' ? 'decimal' : 'text'}
+              value={form[f.key] || ''}
+              onChange={e => setField(f.key, e.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="px-4 pb-24 pt-4">
       <h1 className="mb-4 text-xl font-bold text-primary">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-5 mb-4">
-          <TabsTrigger value="motor1" className="text-xs">Motor 1</TabsTrigger>
-          <TabsTrigger value="motor2" className="text-xs">Motor 2</TabsTrigger>
-          <TabsTrigger value="insumos" className="text-xs">Insumos</TabsTrigger>
-          <TabsTrigger value="regras" className="text-xs">Regras</TabsTrigger>
-          <TabsTrigger value="catalogo" className="text-xs">Catálogo</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-6 mb-4">
+          <TabsTrigger value="motor1" className="text-[10px] px-1">Motor 1</TabsTrigger>
+          <TabsTrigger value="motor2" className="text-[10px] px-1">Motor 2</TabsTrigger>
+          <TabsTrigger value="insumos" className="text-[10px] px-1">Insumos</TabsTrigger>
+          <TabsTrigger value="regras" className="text-[10px] px-1">Regras</TabsTrigger>
+          <TabsTrigger value="catalogo" className="text-[10px] px-1">Catálogo</TabsTrigger>
+          <TabsTrigger value="politicas" className="text-[10px] px-1">Políticas</TabsTrigger>
         </TabsList>
 
         <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
@@ -296,6 +358,9 @@ export function Configuracoes() {
         <TabsContent value="catalogo">
           {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
         </TabsContent>
+        <TabsContent value="politicas">
+          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · ${e.formasPagamento.substring(0, 40)}...`))}
+        </TabsContent>
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -303,21 +368,7 @@ export function Configuracoes() {
           <DialogHeader>
             <DialogTitle>{editItem ? 'Editar' : 'Adicionar'}</DialogTitle>
           </DialogHeader>
-          {tab === 'catalogo' ? renderCatalogoForm() : tab === 'regras' ? renderRegraForm() : (
-            <div className="space-y-3">
-              {simpleFields[tab]?.map(f => (
-                <div key={f.key}>
-                  <Label className="text-xs">{f.label}</Label>
-                  <Input
-                    type={f.type || 'text'}
-                    inputMode={f.type === 'number' ? 'decimal' : 'text'}
-                    value={form[f.key] || ''}
-                    onChange={e => setField(f.key, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {renderFormContent()}
           <DialogFooter>
             <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
           </DialogFooter>
