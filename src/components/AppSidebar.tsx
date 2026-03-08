@@ -21,7 +21,7 @@ interface AppSidebarProps {
 
 const items: { title: string; tab: Tab; icon: React.ElementType }[] = [
   { title: 'Dashboard', tab: 'dashboard', icon: LayoutDashboard },
-  { title: 'Novo Orçamento', tab: 'orcamento', icon: Plus },
+  { title: 'Orçamento', tab: 'orcamento', icon: Plus },
   { title: 'Clientes', tab: 'clientes', icon: Users },
   { title: 'Financeiro', tab: 'financeiro', icon: DollarSign },
   { title: 'Configurações', tab: 'config', icon: Settings },

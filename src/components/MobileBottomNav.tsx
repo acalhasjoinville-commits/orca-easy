@@ -10,7 +10,7 @@ interface MobileBottomNavProps {
 const items: { title: string; tab: Tab; icon: React.ElementType; accent?: boolean }[] = [
   { title: 'Dashboard', tab: 'dashboard', icon: LayoutDashboard },
   { title: 'Clientes', tab: 'clientes', icon: Users },
-  { title: 'Novo', tab: 'orcamento', icon: Plus, accent: true },
+  { title: 'Orçamento', tab: 'orcamento', icon: Plus, accent: true },
   { title: 'Financeiro', tab: 'financeiro', icon: DollarSign },
   { title: 'Config', tab: 'config', icon: Settings },
 ];
