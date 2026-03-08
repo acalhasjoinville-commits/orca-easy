@@ -380,6 +380,8 @@ export function Configuracoes() {
         <TabsContent value="politicas">
           {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`))}
         </TabsContent>
+        </>
+        )}
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
