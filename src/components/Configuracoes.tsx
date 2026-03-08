@@ -17,7 +17,7 @@ function MinhaEmpresaForm() {
   const [form, setForm] = useState<MinhaEmpresa>(existing ?? {
     logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
     telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
-    bairro: '', cidade: '', estado: '', corTemaPdf: '#0044CC',
+    bairro: '', cidade: '', estado: '', corPrimaria: '#0044CC', corDestaque: '#16A34A',
   });
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -122,15 +122,28 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
-          {/* Color picker */}
-          <div>
-            <Label className="text-xs font-semibold">Cor Tema do PDF</Label>
-            <div className="flex items-center gap-3 mt-1">
-              <input type="color" value={form.corTemaPdf} onChange={e => set('corTemaPdf', e.target.value)}
-                className="h-10 w-14 rounded-md border cursor-pointer" />
-              <Input value={form.corTemaPdf} onChange={e => set('corTemaPdf', e.target.value)}
-                placeholder="#0044CC" className="h-9 w-28 font-mono text-sm" />
-              <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corTemaPdf }} />
+          {/* Color pickers */}
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold">Cores do App & PDF</Label>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">🎨 Cor Primária <span className="text-[10px]">(cabeçalhos, botões, navegação)</span></p>
+              <div className="flex items-center gap-3">
+                <input type="color" value={form.corPrimaria} onChange={e => set('corPrimaria', e.target.value)}
+                  className="h-10 w-14 rounded-md border cursor-pointer" />
+                <Input value={form.corPrimaria} onChange={e => set('corPrimaria', e.target.value)}
+                  placeholder="#0044CC" className="h-9 w-28 font-mono text-sm" />
+                <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corPrimaria }} />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">✨ Cor Destaque <span className="text-[10px]">(valor total, garantia, status aprovado)</span></p>
+              <div className="flex items-center gap-3">
+                <input type="color" value={form.corDestaque} onChange={e => set('corDestaque', e.target.value)}
+                  className="h-10 w-14 rounded-md border cursor-pointer" />
+                <Input value={form.corDestaque} onChange={e => set('corDestaque', e.target.value)}
+                  placeholder="#16A34A" className="h-9 w-28 font-mono text-sm" />
+                <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corDestaque }} />
+              </div>
             </div>
           </div>
 
