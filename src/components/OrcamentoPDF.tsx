@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { Orcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 
 interface OrcamentoPDFProps {
@@ -32,41 +32,43 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
   const isPJ = cliente?.tipo === 'PJ';
   const displayValue = (orcamento.desconto ?? 0) > 0 ? orcamento.valorFinal : orcamento.valorVenda;
 
+  // Build client address with CEP
+  const clienteEndereco = [cliente?.endereco, cliente?.numero, cliente?.bairro, cliente?.cidade]
+    .filter(Boolean).join(', ');
+  const clienteCep = cliente?.cep ? `CEP: ${cliente.cep}` : '';
+  const enderecoCompleto = [clienteEndereco, clienteCep].filter(Boolean).join(' — ');
+
   const s = StyleSheet.create({
     page: { paddingTop: 30, paddingBottom: 80, paddingHorizontal: 30, fontSize: 9, fontFamily: 'Helvetica', color: '#333' },
-    // Header
     header: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 2, borderBottomColor: corPrimaria, paddingBottom: 10 },
     logo: { width: 60, height: 60, marginRight: 12, objectFit: 'contain' },
     headerText: { flex: 1 },
     companyName: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: corPrimaria },
     slogan: { fontSize: 8, color: '#666', marginTop: 2 },
     contactLine: { fontSize: 7, color: '#666', marginTop: 3 },
-    // Title bar
     titleBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: corPrimaria, borderRadius: 4, padding: 10, marginBottom: 12 },
     titleText: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#fff' },
     titleNumber: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: corDestaque },
     titleDate: { fontSize: 9, color: '#ddd' },
-    // Section
     sectionTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corPrimaria, marginBottom: 6, marginTop: 14, textTransform: 'uppercase', borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 3 },
-    // Client
     clientBox: { backgroundColor: '#f8f8f8', borderRadius: 4, padding: 10, marginBottom: 4 },
     clientRow: { flexDirection: 'row', marginBottom: 3 },
     clientLabel: { width: 80, fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#555' },
     clientValue: { flex: 1, fontSize: 9, color: '#333' },
-    // Scope
     scopeBox: { backgroundColor: '#f8f8f8', borderRadius: 4, padding: 10, marginBottom: 4 },
     scopeText: { fontSize: 9, color: '#333', lineHeight: 1.5 },
-    // Table
+    // Table - updated columns
     tableHeader: { flexDirection: 'row', backgroundColor: corPrimaria, borderTopLeftRadius: 4, borderTopRightRadius: 4, paddingVertical: 6, paddingHorizontal: 8 },
     tableHeaderText: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#fff' },
     tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
     tableRowAlt: { backgroundColor: '#f9f9f9' },
     tableCell: { fontSize: 8, color: '#333' },
-    colNum: { width: 25 },
+    colNum: { width: 22 },
     colDesc: { flex: 1 },
-    colMedida: { width: 55, textAlign: 'center' as const },
-    colUnit: { width: 70, textAlign: 'right' as const },
-    colTotal: { width: 70, textAlign: 'right' as const },
+    colQtd: { width: 35, textAlign: 'center' as const },
+    colUnid: { width: 25, textAlign: 'center' as const },
+    colUnit: { width: 65, textAlign: 'right' as const },
+    colTotal: { width: 65, textAlign: 'right' as const },
     // Totals
     totalsBox: { marginTop: 8, alignItems: 'flex-end' as const, paddingRight: 8 },
     totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 3, gap: 12 },
@@ -80,12 +82,14 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
     conditionTitle: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#555', marginBottom: 3, textTransform: 'uppercase' as const },
     conditionValue: { fontSize: 9, color: '#333' },
     conditionHighlight: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corDestaque },
-    // Signatures
+    // Signatures - improved
     signaturesRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 30, paddingTop: 10 },
-    signatureBlock: { alignItems: 'center' as const, width: 200 },
-    signatureLine: { width: 180, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5 },
+    signatureBlock: { alignItems: 'center' as const, width: 210 },
+    signatureLine: { width: 190, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5 },
     signatureName: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#333' },
     signatureRole: { fontSize: 7, color: '#666' },
+    signatureField: { fontSize: 7, color: '#888', marginTop: 6 },
+    signatureFieldLine: { width: 190, borderBottomWidth: 0.5, borderBottomColor: '#999', marginTop: 10, marginBottom: 3 },
     // Footer
     footer: { position: 'absolute' as const, bottom: 20, left: 30, right: 30, borderTopWidth: 1, borderTopColor: corPrimaria, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     footerLogo: { width: 24, height: 24, marginRight: 6, objectFit: 'contain' as const },
@@ -141,12 +145,10 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
               <Text style={s.clientValue}>{cliente.whatsapp}</Text>
             </View>
           ) : null}
-          {cliente?.endereco ? (
+          {enderecoCompleto ? (
             <View style={s.clientRow}>
               <Text style={s.clientLabel}>Endereço</Text>
-              <Text style={s.clientValue}>
-                {[cliente.endereco, cliente.numero, cliente.bairro, cliente.cidade].filter(Boolean).join(', ')}
-              </Text>
+              <Text style={s.clientValue}>{enderecoCompleto}</Text>
             </View>
           ) : null}
         </View>
@@ -161,12 +163,13 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
           </>
         ) : null}
 
-        {/* TABLE */}
+        {/* TABLE - with separated Qtd and Unid columns */}
         <Text style={s.sectionTitle}>Serviços</Text>
         <View style={s.tableHeader}>
           <Text style={[s.tableHeaderText, s.colNum]}>#</Text>
           <Text style={[s.tableHeaderText, s.colDesc]}>Descrição</Text>
-          <Text style={[s.tableHeaderText, s.colMedida]}>Medida</Text>
+          <Text style={[s.tableHeaderText, s.colQtd]}>Qtd</Text>
+          <Text style={[s.tableHeaderText, s.colUnid]}>Unid</Text>
           <Text style={[s.tableHeaderText, s.colUnit]}>V. Unitário</Text>
           <Text style={[s.tableHeaderText, s.colTotal]}>Total</Text>
         </View>
@@ -176,7 +179,8 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
             <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
               <Text style={[s.tableCell, s.colNum]}>{idx + 1}</Text>
               <Text style={[s.tableCell, s.colDesc]}>{item.nomeServico}</Text>
-              <Text style={[s.tableCell, s.colMedida]}>{item.metragem}m</Text>
+              <Text style={[s.tableCell, s.colQtd]}>{item.metragem}</Text>
+              <Text style={[s.tableCell, s.colUnid]}>m</Text>
               <Text style={[s.tableCell, s.colUnit]}>{fmt(unitPrice)}</Text>
               <Text style={[s.tableCell, s.colTotal]}>{fmt(item.valorVenda)}</Text>
             </View>
@@ -229,21 +233,29 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
           </>
         )}
 
-        {/* SIGNATURES */}
+        {/* SIGNATURES - improved with Nome and CPF/RG fields */}
         <View style={s.signaturesRow}>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
             <Text style={s.signatureName}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
             <Text style={s.signatureRole}>Cliente</Text>
+            <View style={s.signatureFieldLine} />
+            <Text style={s.signatureField}>Nome:</Text>
+            <View style={s.signatureFieldLine} />
+            <Text style={s.signatureField}>CPF/RG:</Text>
           </View>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
             <Text style={s.signatureName}>{nomeEmpresa}</Text>
             <Text style={s.signatureRole}>Prestador</Text>
+            <View style={s.signatureFieldLine} />
+            <Text style={s.signatureField}>Nome:</Text>
+            <View style={s.signatureFieldLine} />
+            <Text style={s.signatureField}>CPF/RG:</Text>
           </View>
         </View>
 
-        {/* FOOTER (fixed on all pages) */}
+        {/* FOOTER */}
         <View style={s.footer} fixed>
           <View style={s.footerLeft}>
             {logoBase64 && <Image src={logoBase64} style={s.footerLogo} />}

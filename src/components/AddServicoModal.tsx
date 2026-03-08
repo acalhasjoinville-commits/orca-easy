@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { storage } from '@/lib/storage';
+import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Dificuldade, ItemServico, InsumoCalculado } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -16,11 +17,11 @@ interface Props {
 }
 
 export function AddServicoModal({ open, onClose, onSave }: Props) {
-  const servicosList = storage.getServicos();
-  const regrasList = storage.getRegras();
-  const motor1List = storage.getMotor1();
-  const motor2List = storage.getMotor2();
-  const insumosList = storage.getInsumos();
+  const { servicos: servicosList, isLoading: loadingServicos } = useServicos();
+  const { regras: regrasList } = useRegras();
+  const { motor1: motor1List } = useMotor1();
+  const { motor2: motor2List } = useMotor2();
+  const { insumos: insumosList } = useInsumos();
 
   const [servicoId, setServicoId] = useState('');
   const [metragem, setMetragem] = useState('');
@@ -115,90 +116,96 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
           <DialogTitle className="text-primary">Adicionar Serviço</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <Label>Serviço</Label>
-            <Select value={servicoId} onValueChange={setServicoId}>
-              <SelectTrigger><SelectValue placeholder="Selecione do catálogo" /></SelectTrigger>
-              <SelectContent>
-                {servicosList.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {loadingServicos ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-
-          {servico && regra && (
-            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
-              <p><span className="font-medium text-foreground">Motor:</span> {servico.motorPadrao === 'motor1' ? 'Fabricar (Motor 1)' : 'Comprar Dobrado (Motor 2)'}</p>
-              <p><span className="font-medium text-foreground">Material:</span> {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm</p>
-              <p><span className="font-medium text-foreground">Regra:</span> {regra.nomeRegra}</p>
-            </div>
-          )}
-
-          <div>
-            <Label>Metragem Total (m)</Label>
-            <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
-          </div>
-
-          {servico && (
+        ) : (
+          <div className="space-y-4">
             <div>
-              <Label>Dificuldade</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => {
-                  const fator = getFatorDificuldade(servico, d);
-                  return (
-                    <button
-                      key={d}
-                      onClick={() => setDificuldade(d)}
-                      className={cn(
-                        'flex flex-col items-center gap-1 rounded-lg border-2 p-3 transition-all',
-                        dificuldade === d
-                          ? 'border-accent bg-accent/10 text-accent'
-                          : 'border-border text-muted-foreground hover:border-primary/30'
-                      )}
-                    >
-                      <span className="text-sm font-semibold">{dificuldadeLabel[d]}</span>
-                      <span className="text-xs">×{fator}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <Label>Serviço</Label>
+              <Select value={servicoId} onValueChange={setServicoId}>
+                <SelectTrigger><SelectValue placeholder="Selecione do catálogo" /></SelectTrigger>
+                <SelectContent>
+                  {servicosList.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          {finalCalc && (
-            <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
-              <div className="flex justify-between text-sm">
-                <span>Material ({metragem}m)</span>
-                <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>
+            {servico && regra && (
+              <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+                <p><span className="font-medium text-foreground">Motor:</span> {servico.motorPadrao === 'motor1' ? 'Fabricar (Motor 1)' : 'Comprar Dobrado (Motor 2)'}</p>
+                <p><span className="font-medium text-foreground">Material:</span> {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm</p>
+                <p><span className="font-medium text-foreground">Regra:</span> {regra.nomeRegra}</p>
               </div>
+            )}
 
-              {finalCalc.insumosFinais.map(ic => (
-                <div key={ic.insumoId} className="flex items-center justify-between gap-2">
-                  <span className="text-xs flex-1 truncate">{ic.nomeInsumo}</span>
-                  <Input
-                    type="number"
-                    className="w-14 h-7 text-center text-xs"
-                    value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
-                    onChange={e => setEditQtds(prev => ({ ...prev, [ic.insumoId]: parseInt(e.target.value) || 0 }))}
-                  />
-                  <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
+            <div>
+              <Label>Metragem Total (m)</Label>
+              <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
+            </div>
+
+            {servico && (
+              <div>
+                <Label>Dificuldade</Label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => {
+                    const fator = getFatorDificuldade(servico, d);
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => setDificuldade(d)}
+                        className={cn(
+                          'flex flex-col items-center gap-1 rounded-lg border-2 p-3 transition-all',
+                          dificuldade === d
+                            ? 'border-accent bg-accent/10 text-accent'
+                            : 'border-border text-muted-foreground hover:border-primary/30'
+                        )}
+                      >
+                        <span className="text-sm font-semibold">{dificuldadeLabel[d]}</span>
+                        <span className="text-xs">×{fator}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
-
-              <div className="border-t pt-2 flex justify-between text-sm font-semibold">
-                <span>Valor de Venda</span>
-                <span className="text-accent">{fmt(finalCalc.valorVenda)}</span>
               </div>
-            </div>
-          )}
+            )}
 
-          <Button onClick={handleSave} disabled={!canSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
-            Salvar Serviço
-          </Button>
-        </div>
+            {finalCalc && (
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
+                <div className="flex justify-between text-sm">
+                  <span>Material ({metragem}m)</span>
+                  <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>
+                </div>
+
+                {finalCalc.insumosFinais.map(ic => (
+                  <div key={ic.insumoId} className="flex items-center justify-between gap-2">
+                    <span className="text-xs flex-1 truncate">{ic.nomeInsumo}</span>
+                    <Input
+                      type="number"
+                      className="w-14 h-7 text-center text-xs"
+                      value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
+                      onChange={e => setEditQtds(prev => ({ ...prev, [ic.insumoId]: parseInt(e.target.value) || 0 }))}
+                    />
+                    <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
+                  </div>
+                ))}
+
+                <div className="border-t pt-2 flex justify-between text-sm font-semibold">
+                  <span>Valor de Venda</span>
+                  <span className="text-accent">{fmt(finalCalc.valorVenda)}</span>
+                </div>
+              </div>
+            )}
+
+            <Button onClick={handleSave} disabled={!canSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
+              Salvar Serviço
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
