@@ -19,7 +19,7 @@ const dificuldadeLabel: Record<string, string> = {
   dificil: 'Difícil',
 };
 
-export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64 }: OrdemServicoPDFProps) {
+export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
   const corPrimaria = empresa?.corPrimaria || '#0B1B32';
   const corDestaque = empresa?.corDestaque || '#F57C00';
   const nomeEmpresa = empresa?.nomeFantasia || 'Minha Empresa';
