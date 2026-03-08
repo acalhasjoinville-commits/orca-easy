@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
 import {
@@ -44,6 +45,7 @@ const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDelete }: OrcamentoDetailsProps) {
+  const { canCreateEditBudget, canDeleteBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
 
@@ -217,39 +219,43 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
           />
         )}
 
-        <Button
-          variant="outline"
-          onClick={() => onEdit(orcamento)}
-          className="h-10 px-4 sm:px-5 text-xs sm:text-sm"
-        >
-          <Pencil className="mr-1.5 h-4 w-4" />
-          Editar
-        </Button>
+        {canCreateEditBudget && (
+          <Button
+            variant="outline"
+            onClick={() => onEdit(orcamento)}
+            className="h-10 px-4 sm:px-5 text-xs sm:text-sm"
+          >
+            <Pencil className="mr-1.5 h-4 w-4" />
+            Editar
+          </Button>
+        )}
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" size="icon" className="h-10 w-10 text-destructive hover:text-destructive border-destructive/30">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => onDelete(orcamento.id)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {canDeleteBudget && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="icon" className="h-10 w-10 text-destructive hover:text-destructive border-destructive/30">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(orcamento.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </div>
   );

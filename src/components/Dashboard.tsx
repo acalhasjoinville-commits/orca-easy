@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, FileText, Search, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
@@ -21,6 +22,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 
 export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
   const { orcamentos, isLoading } = useOrcamentos();
+  const { canCreateEditBudget } = useAuth();
   const [search, setSearch] = useState('');
 
   const formatCurrency = (v: number) =>
@@ -55,17 +57,21 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
           <FileText className="mb-4 h-16 w-16 text-muted-foreground/40" />
           <h2 className="mb-2 text-lg font-semibold text-muted-foreground">Nenhum orçamento ainda</h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
-            Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.
+            {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
           </p>
-          <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
-          </Button>
+          {canCreateEditBudget && (
+            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
-          <Button onClick={onNewOrcamento} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base">
-            <Plus className="mr-2 h-5 w-5" /> Novo Orçamento
-          </Button>
+          {canCreateEditBudget && (
+            <Button onClick={onNewOrcamento} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base">
+              <Plus className="mr-2 h-5 w-5" /> Novo Orçamento
+            </Button>
+          )}
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
