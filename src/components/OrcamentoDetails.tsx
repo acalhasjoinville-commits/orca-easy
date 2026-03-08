@@ -254,32 +254,13 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
       {/* Mobile Action Bar — fixed above bottom nav */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card p-3 lg:hidden">
-        <div className="flex items-center gap-2 max-w-3xl mx-auto">
+        <div className="grid grid-cols-[1fr_auto] gap-2 max-w-3xl mx-auto">
           <PDFDownloadButton
             orcamento={orcamento}
             cliente={cliente}
             empresa={empresa}
-            className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-xs"
           />
-
-          {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
-            <OSDownloadButton
-              orcamento={orcamento}
-              cliente={cliente}
-              empresa={empresa}
-              className="flex-1"
-            />
-          )}
-
-          <Button
-            variant="outline"
-            size="default"
-            onClick={() => onEdit(orcamento)}
-            className="flex-1"
-          >
-            <Pencil className="mr-1.5 h-4 w-4" />
-            Editar
-          </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -305,6 +286,28 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {(orcamento.status === 'aprovado' || orcamento.status === 'executado') && (
+            <OSDownloadButton
+              orcamento={orcamento}
+              cliente={cliente}
+              empresa={empresa}
+              className="w-full text-xs"
+            />
+          )}
+
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => onEdit(orcamento)}
+            className={cn(
+              "w-full text-xs",
+              !(orcamento.status === 'aprovado' || orcamento.status === 'executado') && "col-span-1"
+            )}
+          >
+            <Pencil className="mr-1.5 h-4 w-4" />
+            Editar
+          </Button>
         </div>
       </div>
     </div>
