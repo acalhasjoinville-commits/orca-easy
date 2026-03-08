@@ -123,7 +123,8 @@ export interface MinhaEmpresa {
   bairro: string;
   cidade: string;
   estado: string;
-  corTemaPdf: string;
+  corPrimaria: string;
+  corDestaque: string;
 }
 
 export interface Orcamento {

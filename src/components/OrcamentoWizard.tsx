@@ -396,7 +396,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </Card>
       )}
 
-      {itens.length > 0 && (
+      {itens.length > 0 && (() => {
+        const empresa = storage.getMinhaEmpresa();
+        const corDestaque = empresa?.corDestaque || '#16A34A';
+        return (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
             <div className="flex justify-between text-sm mb-1">
@@ -415,10 +418,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             )}
             <div className="flex justify-between items-end mb-3">
               <span className="text-base font-semibold">Valor Final</span>
-              <span className="text-xl font-bold text-accent">{fmt(valorFinal)}</span>
+              <span className="text-xl font-bold" style={{ color: corDestaque }}>{fmt(valorFinal)}</span>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 h-11">
+              <Button onClick={handleSave} className="flex-1 h-11" style={{ backgroundColor: corDestaque, color: '#fff' }}>
                 {isEditing ? (
                   <><Save className="mr-2 h-5 w-5" /> Salvar Alterações</>
                 ) : (
@@ -428,7 +431,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} />
     </div>
