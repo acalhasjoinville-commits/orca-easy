@@ -40,6 +40,9 @@ export function buildProposalHtml(params: TemplateParams): string {
   const corD = empresa?.corDestaque || '#F57C00';
   const dataFormatada = new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR');
 
+  const isPJ = cliente?.tipo === 'PJ';
+  const nameLabel = cliente ? (isPJ ? 'Razão Social' : 'Nome') : 'Nome/Razão Social';
+  const docLabel = cliente ? (isPJ ? 'CNPJ' : 'CPF') : 'CPF/CNPJ';
   const clienteName = cliente?.nomeRazaoSocial || orcamento.nomeCliente;
   const clienteDoc = cliente?.documento || '';
   const clienteTel = cliente?.whatsapp || '';
