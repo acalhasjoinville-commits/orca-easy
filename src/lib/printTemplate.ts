@@ -365,9 +365,11 @@ export function buildProposalHtml(params: TemplateParams): string {
   <div class="signatures">
     <div class="sig-block">
       <div class="sig-line">Assinatura do Cliente</div>
+      <div class="sig-sub">Nome / ${docLabel} / Data</div>
     </div>
     <div class="sig-block">
-      <div class="sig-line">Assinatura do Técnico</div>
+      <div class="sig-line">Assinatura do Técnico / Empresa</div>
+      <div class="sig-sub">Nome / Data</div>
     </div>
   </div>
 
