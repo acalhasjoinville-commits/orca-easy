@@ -47,8 +47,12 @@ const Index = () => {
   }
 
   // Still loading roles → show spinner (avoid flashing PendingApproval)
-  if (user && !hasAnyRole && roles.length === 0 && !loading) {
-    // Check if roles are still being fetched by looking at the actual state
+  if (!rolesLoaded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   // Authenticated but no role → pending approval
