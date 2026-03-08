@@ -119,14 +119,8 @@ export function buildProposalHtml(params: TemplateParams): string {
     white-space: pre-wrap;
     word-break: break-word;
   }
-  .client-name-val {
-    display: inline-block;
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: bottom;
-  }
+  .client-line { font-size: 9pt; margin-bottom: 3px; }
+  .client-line b { color: ${corP}; }
 
   /* ===== HEADER ===== */
   .header {
