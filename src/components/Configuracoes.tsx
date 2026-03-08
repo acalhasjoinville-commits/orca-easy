@@ -420,11 +420,6 @@ export function Configuracoes() {
         </Select>
       </div>
       <div>
-        <Label className="text-xs">Descrição Geral</Label>
-        <Textarea value={form.descricaoGeral || ''} onChange={e => setField('descricaoGeral', e.target.value)}
-          placeholder="Descreva o escopo padrão do serviço..." rows={2} className="text-sm" />
-      </div>
-      <div>
         <Label className="text-xs">Formas de Pagamento</Label>
         <Textarea value={form.formasPagamento || ''} onChange={e => setField('formasPagamento', e.target.value)}
           placeholder="Condições de pagamento padrão..." rows={2} className="text-sm" />
