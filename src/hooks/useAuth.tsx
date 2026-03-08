@@ -59,12 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
-          // setTimeout avoids Supabase client deadlock
           setTimeout(() => fetchRoles(newSession.user.id), 0);
         } else {
           setRoles([]);
+          setRolesLoaded(true);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
