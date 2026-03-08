@@ -26,6 +26,8 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
   const slogan = empresa?.slogan || '';
   const telefone = empresa?.telefoneWhatsApp || '';
   const email = empresa?.emailContato || '';
+  const enderecoEmpresa = [empresa?.endereco, empresa?.numero, empresa?.bairro, empresa?.cidade, empresa?.estado]
+    .filter(Boolean).join(', ');
 
   const clienteEndereco = [cliente?.endereco, cliente?.numero, cliente?.bairro, cliente?.cidade]
     .filter(Boolean).join(', ');
@@ -86,6 +88,7 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
             <Text style={s.contactLine}>
               {[telefone, email].filter(Boolean).join(' · ')}
             </Text>
+            {enderecoEmpresa ? <Text style={s.contactLine}>{enderecoEmpresa}</Text> : null}
           </View>
         </View>
 
