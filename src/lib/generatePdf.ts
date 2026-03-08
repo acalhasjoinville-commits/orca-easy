@@ -319,6 +319,40 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     }
     .print-btn:hover { opacity: 0.9; }
   }
+
+  /* Mobile responsive */
+  @media screen and (max-width: 640px) {
+    body { margin: 0; padding: 0; background: #fff; font-size: 9pt; }
+    .page-wrap { padding: 12px; box-shadow: none; min-height: auto; padding-bottom: 100px; }
+    .header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .header-left { gap: 8px; }
+    .header-logo img { max-height: 40px; max-width: 60px; }
+    .header-company-name { font-size: 13pt; }
+    .header-right { text-align: left; }
+    .header-right .number { font-size: 14pt; }
+    .client-row { flex-direction: column; gap: 4px; }
+    .meta-grid { grid-template-columns: 1fr 1fr 1fr; font-size: 8pt; }
+    .meta-cell { padding: 4px 6px; }
+    .meta-cell .meta-value { font-size: 9pt; }
+    table.services { font-size: 8pt; }
+    table.services thead th { padding: 6px 4px; font-size: 7.5pt; }
+    table.services tbody td { padding: 5px 4px; }
+    .total-bar { flex-direction: column; gap: 4px; text-align: center; padding: 10px; }
+    .total-bar .total-label { font-size: 10pt; }
+    .total-bar .total-value { font-size: 12pt; }
+    .signatures { flex-direction: column; gap: 24px; align-items: center; margin-top: 24px; }
+    .sig-block { width: 70%; }
+    .footer { position: relative; flex-direction: column; gap: 6px; text-align: center; padding: 10px 12px; }
+    .footer-right { justify-content: center; }
+    .print-btn {
+      position: fixed;
+      top: auto !important;
+      bottom: 16px !important;
+      right: 16px !important;
+      padding: 10px 20px;
+      font-size: 12pt;
+    }
+  }
 </style>
 </head>
 <body>
