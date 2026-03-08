@@ -264,10 +264,18 @@ export function Configuracoes() {
         if (editItem) await updateRegra.mutateAsync(entry);
         else await addRegra.mutateAsync(entry);
       } else if (tab === 'catalogo') {
+        const pm1 = form.permiteMotor1 === 'true';
+        const pm2 = form.permiteMotor2 === 'true';
+        if (!pm1 && !pm2) { toast.error('Selecione pelo menos um motor permitido.'); return; }
+        let pref = (form.motorPreferencial as MotorType) || 'motor1';
+        if (pm1 && !pm2) pref = 'motor1';
+        if (!pm1 && pm2) pref = 'motor2';
         const entry: ServicoTemplate = {
           id, nomeServico: form.nomeServico || '',
           regraId: form.regraId || '',
-          motorPadrao: (form.motorPadrao as MotorType) || 'motor1',
+          permiteMotor1: pm1,
+          permiteMotor2: pm2,
+          motorPreferencial: pref,
           materialPadrao: form.materialPadrao || '',
           espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
           cortePadrao: parseFloat(form.cortePadrao) || 0,
