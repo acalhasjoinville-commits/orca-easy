@@ -92,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     loading,
+    rolesLoaded,
     roles,
     isAdmin,
     isVendedor,
