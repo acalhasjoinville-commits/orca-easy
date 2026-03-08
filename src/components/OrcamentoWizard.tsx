@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { storage } from '@/lib/storage';
-import { ItemServico, Orcamento, Dificuldade, Cliente } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -15,6 +17,13 @@ interface Props {
   onDone: () => void;
   editingOrcamento?: Orcamento | null;
 }
+
+const statusOptions: { value: StatusOrcamento; label: string; color: string }[] = [
+  { value: 'pendente', label: 'Pendente', color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
+  { value: 'aprovado', label: 'Aprovado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
+  { value: 'rejeitado', label: 'Rejeitado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
+  { value: 'executado', label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+];
 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
@@ -27,7 +36,16 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [editMetragem, setEditMetragem] = useState('');
   const [editDificuldade, setEditDificuldade] = useState<Dificuldade>('facil');
 
+  // Commercial details state
+  const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
+  const [desconto, setDesconto] = useState(String(editingOrcamento?.desconto ?? 0));
+  const [validade, setValidade] = useState(editingOrcamento?.validade ?? '');
+  const [descricaoGeral, setDescricaoGeral] = useState(editingOrcamento?.descricaoGeral ?? '');
+  const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
+  const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
+
   const clientes = useMemo(() => storage.getClientes(), []);
+  const politicas = useMemo(() => storage.getPoliticas(), []);
   const selectedCliente = clientes.find(c => c.id === selectedClienteId);
 
   const filteredClientes = clientes.filter(c =>
@@ -39,6 +57,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const totalCusto = itens.reduce((s, i) => s + i.custoTotalObra, 0);
   const totalVenda = itens.reduce((s, i) => s + i.valorVenda, 0);
+  const descontoNum = parseFloat(desconto) || 0;
+  const valorFinal = Math.max(totalVenda - descontoNum, 0);
 
   const handleAddItem = (item: ItemServico) => {
     setItens(prev => [...prev, item]);
@@ -94,33 +114,45 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     toast.success('Item atualizado!');
   };
 
+  const loadPolitica = (politicaId: string) => {
+    const pol = politicas.find(p => p.id === politicaId);
+    if (!pol) return;
+    setValidade(`${pol.validadeDias} dias`);
+    setDescricaoGeral(pol.descricaoGeral);
+    setFormasPagamento(pol.formasPagamento);
+    setGarantia(pol.garantia);
+    toast.success(`Política "${pol.nomePolitica}" carregada!`);
+  };
+
   const dificuldadeLabel: Record<Dificuldade, string> = {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
   const handleSave = () => {
     if (itens.length === 0 || !selectedCliente) return;
+    const base = {
+      clienteId: selectedCliente.id,
+      nomeCliente: selectedCliente.nomeRazaoSocial,
+      itensServico: itens,
+      custoTotalObra: totalCusto,
+      valorVenda: totalVenda,
+      desconto: descontoNum,
+      valorFinal,
+      status,
+      validade,
+      descricaoGeral,
+      formasPagamento,
+      garantia,
+    };
     if (isEditing && editingOrcamento) {
-      const updated: Orcamento = {
-        ...editingOrcamento,
-        clienteId: selectedCliente.id,
-        nomeCliente: selectedCliente.nomeRazaoSocial,
-        itensServico: itens,
-        custoTotalObra: totalCusto,
-        valorVenda: totalVenda,
-      };
-      storage.updateOrcamento(updated);
+      storage.updateOrcamento({ ...editingOrcamento, ...base });
       toast.success('Orçamento atualizado!');
     } else {
       const orcamento: Orcamento = {
         id: crypto.randomUUID(),
         numeroOrcamento: storage.getNextNumeroOrcamento(),
-        clienteId: selectedCliente.id,
-        nomeCliente: selectedCliente.nomeRazaoSocial,
-        itensServico: itens,
-        custoTotalObra: totalCusto,
-        valorVenda: totalVenda,
         dataCriacao: new Date().toISOString(),
+        ...base,
       };
       storage.addOrcamento(orcamento);
       toast.success('Orçamento salvo com sucesso!');
@@ -182,6 +214,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     );
   }
 
+  const currentStatus = statusOptions.find(s => s.value === status)!;
+
   // Phase 2: Cart
   return (
     <div className="px-4 pb-36 pt-4">
@@ -189,12 +223,26 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         <button onClick={() => isEditing ? onDone() : setPhase('cliente')} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-bold text-primary">
             {isEditing ? `Orçamento Nº ${editingOrcamento?.numeroOrcamento}` : 'Detalhes do Orçamento'}
           </h1>
           <p className="text-xs text-muted-foreground">Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}</p>
         </div>
+      </div>
+
+      {/* Status */}
+      <div className="mb-4">
+        <Select value={status} onValueChange={v => setStatus(v as StatusOrcamento)}>
+          <SelectTrigger className={cn('h-9 w-fit text-xs font-semibold border', currentStatus.color)}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map(s => (
+              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Button onClick={() => setModalOpen(true)}
@@ -272,6 +320,62 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
       )}
 
+      {/* Commercial details section */}
+      {itens.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-primary flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Detalhes Comerciais
+              </h2>
+            </div>
+
+            {politicas.length > 0 && (
+              <div>
+                <Label className="text-xs">Carregar Política Padrão</Label>
+                <Select onValueChange={loadPolitica}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione uma política..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {politicas.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nomePolitica}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Validade</Label>
+                <Input value={validade} onChange={e => setValidade(e.target.value)} placeholder="Ex: 15 dias" className="h-9" />
+              </div>
+              <div>
+                <Label className="text-xs">Desconto (R$)</Label>
+                <Input type="number" inputMode="decimal" value={desconto} onChange={e => setDesconto(e.target.value)} placeholder="0" className="h-9" />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Descrição Geral</Label>
+              <Textarea value={descricaoGeral} onChange={e => setDescricaoGeral(e.target.value)}
+                placeholder="Descreva o escopo do serviço..." rows={2} className="text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs">Formas de Pagamento</Label>
+              <Textarea value={formasPagamento} onChange={e => setFormasPagamento(e.target.value)}
+                placeholder="Condições de pagamento..." rows={2} className="text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs">Garantia</Label>
+              <Textarea value={garantia} onChange={e => setGarantia(e.target.value)}
+                placeholder="Termos de garantia..." rows={2} className="text-sm" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {itens.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
@@ -279,17 +383,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <span className="text-muted-foreground">Custo Total</span>
               <span className="font-medium">{fmt(totalCusto)}</span>
             </div>
-            <div className="flex justify-between items-end mb-3">
-              <span className="text-base font-semibold">Valor de Venda</span>
-              <span className="text-xl font-bold text-accent">{fmt(totalVenda)}</span>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-muted-foreground">Valor de Venda</span>
+              <span className="font-medium">{fmt(totalVenda)}</span>
             </div>
-            <Button onClick={handleSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
-              {isEditing ? (
-                <><Save className="mr-2 h-5 w-5" /> Salvar Alterações</>
-              ) : (
-                <><Check className="mr-2 h-5 w-5" /> Gerar Proposta ({itens.length} {itens.length === 1 ? 'item' : 'itens'})</>
-              )}
-            </Button>
+            {descontoNum > 0 && (
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Desconto</span>
+                <span className="font-medium text-destructive">-{fmt(descontoNum)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-end mb-3">
+              <span className="text-base font-semibold">Valor Final</span>
+              <span className="text-xl font-bold text-accent">{fmt(valorFinal)}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 h-11">
+                {isEditing ? (
+                  <><Save className="mr-2 h-5 w-5" /> Salvar Alterações</>
+                ) : (
+                  <><Check className="mr-2 h-5 w-5" /> Gerar Proposta ({itens.length} {itens.length === 1 ? 'item' : 'itens'})</>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
