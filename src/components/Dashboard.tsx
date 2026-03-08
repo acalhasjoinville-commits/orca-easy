@@ -1,9 +1,9 @@
+import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
 import { Orcamento, StatusOrcamento } from '@/lib/types';
-import { storage } from '@/lib/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, FileText, Trash2, Pencil, Search, Copy } from 'lucide-react';
+import { Plus, FileText, Trash2, Pencil, Search, Copy, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -21,25 +21,33 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 };
 
 export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(storage.getOrcamentos());
+  const { orcamentos, isLoading, getNextNumero, addOrcamento, deleteOrcamento } = useOrcamentos();
   const [search, setSearch] = useState('');
 
-  const handleDelete = (id: string) => {
-    storage.deleteOrcamento(id);
-    setOrcamentos(storage.getOrcamentos());
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteOrcamento.mutateAsync(id);
+      toast.success('Orçamento removido.');
+    } catch {
+      toast.error('Erro ao remover.');
+    }
   };
 
-  const handleDuplicate = (orc: Orcamento) => {
-    const duplicated: Orcamento = {
-      ...orc,
-      id: crypto.randomUUID(),
-      numeroOrcamento: storage.getNextNumeroOrcamento(),
-      dataCriacao: new Date().toISOString(),
-      status: 'pendente',
-    };
-    storage.addOrcamento(duplicated);
-    setOrcamentos(storage.getOrcamentos());
-    toast.success(`Orçamento duplicado como #${duplicated.numeroOrcamento}`);
+  const handleDuplicate = async (orc: Orcamento) => {
+    try {
+      const nextNum = await getNextNumero();
+      const duplicated: Orcamento = {
+        ...orc,
+        id: crypto.randomUUID(),
+        numeroOrcamento: nextNum,
+        dataCriacao: new Date().toISOString(),
+        status: 'pendente',
+      };
+      await addOrcamento.mutateAsync(duplicated);
+      toast.success(`Orçamento duplicado como #${duplicated.numeroOrcamento}`);
+    } catch {
+      toast.error('Erro ao duplicar.');
+    }
   };
 
   const formatCurrency = (v: number) =>
@@ -53,6 +61,14 @@ export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
       String(o.numeroOrcamento ?? '').includes(q)
     );
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pb-24 pt-4">

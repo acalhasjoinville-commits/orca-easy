@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { storage } from '@/lib/storage';
+import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Loader2 } from 'lucide-react';
 import { generatePdf } from '@/lib/generatePdf';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
@@ -37,7 +38,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [editMetragem, setEditMetragem] = useState('');
   const [editDificuldade, setEditDificuldade] = useState<Dificuldade>('facil');
 
-  // Commercial details state
   const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
   const [desconto, setDesconto] = useState(String(editingOrcamento?.desconto ?? 0));
   const [validade, setValidade] = useState(editingOrcamento?.validade ?? '');
@@ -46,8 +46,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
   const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
 
-  const clientes = useMemo(() => storage.getClientes(), []);
-  const politicas = useMemo(() => storage.getPoliticas(), []);
+  const { clientes, isLoading: loadingClientes } = useClientes();
+  const { politicas } = usePoliticas();
+  const { getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
+  const { empresa } = useEmpresa();
+
   const selectedCliente = clientes.find(c => c.id === selectedClienteId);
 
   const filteredClientes = clientes.filter(c =>
@@ -132,7 +135,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (itens.length === 0 || !selectedCliente) return;
     const base = {
       clienteId: selectedCliente.id,
@@ -149,20 +152,25 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       garantia,
       tempoGarantia,
     };
-    if (isEditing && editingOrcamento) {
-      storage.updateOrcamento({ ...editingOrcamento, ...base });
-      toast.success('Orçamento atualizado!');
-    } else {
-      const orcamento: Orcamento = {
-        id: crypto.randomUUID(),
-        numeroOrcamento: storage.getNextNumeroOrcamento(),
-        dataCriacao: new Date().toISOString(),
-        ...base,
-      };
-      storage.addOrcamento(orcamento);
-      toast.success('Orçamento salvo com sucesso!');
+    try {
+      if (isEditing && editingOrcamento) {
+        await updateOrcamento.mutateAsync({ ...editingOrcamento, ...base });
+        toast.success('Orçamento atualizado!');
+      } else {
+        const nextNum = await getNextNumero();
+        const orcamento: Orcamento = {
+          id: crypto.randomUUID(),
+          numeroOrcamento: nextNum,
+          dataCriacao: new Date().toISOString(),
+          ...base,
+        };
+        await addOrcamento.mutateAsync(orcamento);
+        toast.success('Orçamento salvo com sucesso!');
+      }
+      onDone();
+    } catch {
+      toast.error('Erro ao salvar orçamento.');
     }
-    onDone();
   };
 
   // Phase 1: Client selection
@@ -179,35 +187,41 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
             </div>
 
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {filteredClientes.length === 0 ? (
-                <div className="text-center py-6">
-                  <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
-                  <p className="text-sm text-muted-foreground">
-                    {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
-                  </p>
-                  {clientes.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Cadastre clientes na aba "Clientes".</p>
-                  )}
-                </div>
-              ) : (
-                filteredClientes.map(c => (
-                  <button key={c.id} onClick={() => setSelectedClienteId(c.id)}
-                    className={cn(
-                      'w-full text-left rounded-lg border p-3 transition-all',
-                      selectedClienteId === c.id
-                        ? 'border-accent bg-accent/10'
-                        : 'border-border hover:border-primary/30'
-                    )}>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{c.tipo}</span>
-                      <p className="text-sm font-medium truncate">{c.nomeRazaoSocial}</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{c.documento} · {c.whatsapp}</p>
-                  </button>
-                ))
-              )}
-            </div>
+            {loadingClientes ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {filteredClientes.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">
+                      {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
+                    </p>
+                    {clientes.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">Cadastre clientes na aba "Clientes".</p>
+                    )}
+                  </div>
+                ) : (
+                  filteredClientes.map(c => (
+                    <button key={c.id} onClick={() => setSelectedClienteId(c.id)}
+                      className={cn(
+                        'w-full text-left rounded-lg border p-3 transition-all',
+                        selectedClienteId === c.id
+                          ? 'border-accent bg-accent/10'
+                          : 'border-border hover:border-primary/30'
+                      )}>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{c.tipo}</span>
+                        <p className="text-sm font-medium truncate">{c.nomeRazaoSocial}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{c.documento} · {c.whatsapp}</p>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
 
             <Button onClick={() => setPhase('carrinho')} disabled={!selectedClienteId}
               className="w-full bg-primary text-primary-foreground h-12">
@@ -220,6 +234,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   }
 
   const currentStatus = statusOptions.find(s => s.value === status)!;
+  const corDestaque = empresa?.corDestaque || '#F57C00';
 
   // Phase 2: Cart
   return (
@@ -396,10 +411,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </Card>
       )}
 
-      {itens.length > 0 && (() => {
-        const empresa = storage.getMinhaEmpresa();
-        const corDestaque = empresa?.corDestaque || '#F57C00';
-        return (
+      {itens.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
           <div className="mx-auto max-w-lg px-4 py-3">
             <div className="flex justify-between text-sm mb-1">
@@ -429,52 +441,56 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 )}
               </Button>
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (itens.length === 0 || !selectedCliente) return;
-                  // Build current orcamento from UI state
                   let orcToSave: Orcamento;
-                  if (isEditing && editingOrcamento) {
-                    orcToSave = {
-                      ...editingOrcamento,
-                      clienteId: selectedCliente.id,
-                      nomeCliente: selectedCliente.nomeRazaoSocial,
-                      itensServico: itens,
-                      custoTotalObra: totalCusto,
-                      valorVenda: totalVenda,
-                      desconto: descontoNum,
-                      valorFinal,
-                      status,
-                      validade,
-                      descricaoGeral,
-                      formasPagamento,
-                      garantia,
-                      tempoGarantia,
-                    };
-                    storage.updateOrcamento(orcToSave);
-                  } else {
-                    orcToSave = {
-                      id: crypto.randomUUID(),
-                      numeroOrcamento: storage.getNextNumeroOrcamento(),
-                      dataCriacao: new Date().toISOString(),
-                      clienteId: selectedCliente.id,
-                      nomeCliente: selectedCliente.nomeRazaoSocial,
-                      itensServico: itens,
-                      custoTotalObra: totalCusto,
-                      valorVenda: totalVenda,
-                      desconto: descontoNum,
-                      valorFinal,
-                      status,
-                      validade,
-                      descricaoGeral,
-                      formasPagamento,
-                      garantia,
-                      tempoGarantia,
-                    };
-                    storage.addOrcamento(orcToSave);
+                  try {
+                    if (isEditing && editingOrcamento) {
+                      orcToSave = {
+                        ...editingOrcamento,
+                        clienteId: selectedCliente.id,
+                        nomeCliente: selectedCliente.nomeRazaoSocial,
+                        itensServico: itens,
+                        custoTotalObra: totalCusto,
+                        valorVenda: totalVenda,
+                        desconto: descontoNum,
+                        valorFinal,
+                        status,
+                        validade,
+                        descricaoGeral,
+                        formasPagamento,
+                        garantia,
+                        tempoGarantia,
+                      };
+                      await updateOrcamento.mutateAsync(orcToSave);
+                    } else {
+                      const nextNum = await getNextNumero();
+                      orcToSave = {
+                        id: crypto.randomUUID(),
+                        numeroOrcamento: nextNum,
+                        dataCriacao: new Date().toISOString(),
+                        clienteId: selectedCliente.id,
+                        nomeCliente: selectedCliente.nomeRazaoSocial,
+                        itensServico: itens,
+                        custoTotalObra: totalCusto,
+                        valorVenda: totalVenda,
+                        desconto: descontoNum,
+                        valorFinal,
+                        status,
+                        validade,
+                        descricaoGeral,
+                        formasPagamento,
+                        garantia,
+                        tempoGarantia,
+                      };
+                      await addOrcamento.mutateAsync(orcToSave);
+                    }
+                    const cli = clientes.find(c => c.id === selectedCliente.id);
+                    generatePdf(orcToSave, cli, empresa);
+                    toast.success('PDF gerado e orçamento salvo!');
+                  } catch {
+                    toast.error('Erro ao salvar/gerar PDF.');
                   }
-                  const cli = clientes.find(c => c.id === selectedCliente.id);
-                  generatePdf(orcToSave, cli, empresa);
-                  toast.success('PDF gerado e orçamento salvo!');
                 }}
                 variant="outline"
                 className="h-11 px-4 font-semibold"
@@ -485,8 +501,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
           </div>
         </div>
-        );
-      })()}
+      )}
 
       <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} />
     </div>
