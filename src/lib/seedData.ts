@@ -98,26 +98,26 @@ export const seedRegras: RegraCalculo[] = [
 export const seedServicos: ServicoTemplate[] = [
   {
     id: SERVICO_IDS.calhaBeiral, nomeServico: 'Calha Beiral Alumínio 0.5mm',
-    regraId: REGRA_IDS.beiral, motorPadrao: 'motor1', materialPadrao: 'Alumínio',
-    espessuraPadrao: 0.5, cortePadrao: 300,
+    regraId: REGRA_IDS.beiral, permiteMotor1: true, permiteMotor2: false, motorPreferencial: 'motor1',
+    materialPadrao: 'Alumínio', espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.6, dificuldadeMedia: 3.5, dificuldadeDificil: 4.6,
   },
   {
     id: SERVICO_IDS.rufoPingadeira, nomeServico: 'Rufo Pingadeira Alumínio 0.5mm',
-    regraId: REGRA_IDS.rufoPingadeira, motorPadrao: 'motor1', materialPadrao: 'Alumínio',
-    espessuraPadrao: 0.5, cortePadrao: 200,
+    regraId: REGRA_IDS.rufoPingadeira, permiteMotor1: true, permiteMotor2: false, motorPreferencial: 'motor1',
+    materialPadrao: 'Alumínio', espessuraPadrao: 0.5, cortePadrao: 200,
     dificuldadeFacil: 2.4, dificuldadeMedia: 3.2, dificuldadeDificil: 4.2,
   },
   {
     id: SERVICO_IDS.rufoEncosto, nomeServico: 'Rufo Encosto Galvanizado 0.5mm',
-    regraId: REGRA_IDS.rufoEncosto, motorPadrao: 'motor2', materialPadrao: 'Aço Galvanizado',
-    espessuraPadrao: 0.5, cortePadrao: 300,
+    regraId: REGRA_IDS.rufoEncosto, permiteMotor1: false, permiteMotor2: true, motorPreferencial: 'motor2',
+    materialPadrao: 'Aço Galvanizado', espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.6, dificuldadeDificil: 4.8,
   },
   {
     id: SERVICO_IDS.calhaAmericana, nomeServico: 'Calha Americana Alumínio 0.7mm',
-    regraId: REGRA_IDS.americana, motorPadrao: 'motor1', materialPadrao: 'Alumínio',
-    espessuraPadrao: 0.7, cortePadrao: 500,
+    regraId: REGRA_IDS.americana, permiteMotor1: true, permiteMotor2: false, motorPreferencial: 'motor1',
+    materialPadrao: 'Alumínio', espessuraPadrao: 0.7, cortePadrao: 500,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.8, dificuldadeDificil: 5.0,
   },
 ];

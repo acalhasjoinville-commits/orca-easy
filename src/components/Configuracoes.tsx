@@ -238,6 +238,9 @@ export function Configuracoes() {
     Object.entries(item).forEach(([k, v]) => {
       if (k !== 'id' && k !== 'itensRegra') f[k] = String(v);
     });
+    // Ensure boolean fields are stored as strings for the form
+    if (item.permiteMotor1 !== undefined) f.permiteMotor1 = String(item.permiteMotor1);
+    if (item.permiteMotor2 !== undefined) f.permiteMotor2 = String(item.permiteMotor2);
     setForm(f);
     if (item.itensRegra) setRegraItens([...item.itensRegra]);
     setDialogOpen(true);
@@ -264,10 +267,18 @@ export function Configuracoes() {
         if (editItem) await updateRegra.mutateAsync(entry);
         else await addRegra.mutateAsync(entry);
       } else if (tab === 'catalogo') {
+        const pm1 = form.permiteMotor1 === 'true';
+        const pm2 = form.permiteMotor2 === 'true';
+        if (!pm1 && !pm2) { toast.error('Selecione pelo menos um motor permitido.'); return; }
+        let pref = (form.motorPreferencial as MotorType) || 'motor1';
+        if (pm1 && !pm2) pref = 'motor1';
+        if (!pm1 && pm2) pref = 'motor2';
         const entry: ServicoTemplate = {
           id, nomeServico: form.nomeServico || '',
           regraId: form.regraId || '',
-          motorPadrao: (form.motorPadrao as MotorType) || 'motor1',
+          permiteMotor1: pm1,
+          permiteMotor2: pm2,
+          motorPreferencial: pref,
           materialPadrao: form.materialPadrao || '',
           espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
           cortePadrao: parseFloat(form.cortePadrao) || 0,
@@ -397,66 +408,112 @@ export function Configuracoes() {
     </div>
   );
 
-  const renderCatalogoForm = () => (
-    <div className="space-y-3">
-      <div>
-        <Label className="text-xs">Nome do Serviço</Label>
-        <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
-      </div>
-      <div>
-        <Label className="text-xs">Regra de Cálculo</Label>
-        <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-          <SelectContent>
-            {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-xs">Motor Padrão</Label>
-        <Select value={form.motorPadrao || 'motor1'} onValueChange={v => setField('motorPadrao', v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
-            <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-xs">Material Padrão</Label>
-        <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-          <SelectContent>
-            {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
+  const renderCatalogoForm = () => {
+    const pm1 = form.permiteMotor1 === 'true';
+    const pm2 = form.permiteMotor2 === 'true';
+
+    const handleToggleMotor1 = () => {
+      const newVal = !pm1;
+      setField('permiteMotor1', String(newVal));
+      if (!newVal && pm2) setField('motorPreferencial', 'motor2');
+      if (newVal && !pm2) setField('motorPreferencial', 'motor1');
+    };
+
+    const handleToggleMotor2 = () => {
+      const newVal = !pm2;
+      setField('permiteMotor2', String(newVal));
+      if (!newVal && pm1) setField('motorPreferencial', 'motor1');
+      if (newVal && !pm1) setField('motorPreferencial', 'motor2');
+    };
+
+    const prefOptions: { value: string; label: string }[] = [];
+    if (pm1) prefOptions.push({ value: 'motor1', label: 'Fabricar (Motor 1)' });
+    if (pm2) prefOptions.push({ value: 'motor2', label: 'Comprar Dobrado (Motor 2)' });
+
+    return (
+      <div className="space-y-3">
         <div>
-          <Label className="text-xs">Espessura (mm)</Label>
-          <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
+          <Label className="text-xs">Nome do Serviço</Label>
+          <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
         </div>
         <div>
-          <Label className="text-xs">Corte (mm)</Label>
-          <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
+          <Label className="text-xs">Regra de Cálculo</Label>
+          <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Motor permissions */}
+        <div>
+          <Label className="text-xs font-semibold">Motores Permitidos</Label>
+          <div className="flex gap-4 mt-1.5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={pm1} onChange={handleToggleMotor1}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+              <span className="text-xs">Motor 1 (Fabricar)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={pm2} onChange={handleToggleMotor2}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+              <span className="text-xs">Motor 2 (Comprar Dobrado)</span>
+            </label>
+          </div>
+          {!pm1 && !pm2 && (
+            <p className="text-xs text-destructive mt-1">Selecione pelo menos um motor.</p>
+          )}
+        </div>
+
+        {prefOptions.length > 1 && (
+          <div>
+            <Label className="text-xs">Motor Preferencial</Label>
+            <Select value={form.motorPreferencial || 'motor1'} onValueChange={v => setField('motorPreferencial', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {prefOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div>
+          <Label className="text-xs">Material Padrão</Label>
+          <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
+            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+            <SelectContent>
+              {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Espessura (mm)</Label>
+            <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Corte (mm)</Label>
+            <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Fator Fácil</Label>
+            <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Fator Médio</Label>
+            <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Fator Difícil</Label>
+            <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
+          </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div>
-          <Label className="text-xs">Fator Fácil</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Fator Médio</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Fator Difícil</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
 
