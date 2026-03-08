@@ -459,24 +459,10 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
 </body>
 </html>`;
 
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = 'none';
-  document.body.appendChild(iframe);
-  const iframeDoc = iframe.contentWindow?.document;
-  if (iframeDoc) {
-    iframeDoc.open();
-    iframeDoc.write(html);
-    iframeDoc.close();
-    setTimeout(() => {
-      iframe.contentWindow?.print();
-      setTimeout(() => iframe.remove(), 1000);
-    }, 500);
-  } else {
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank') || (window.location.href = url);
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if (!w) {
+    window.location.href = url;
   }
 }
