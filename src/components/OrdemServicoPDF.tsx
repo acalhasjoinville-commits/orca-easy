@@ -6,6 +6,7 @@ interface OrdemServicoPDFProps {
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
+  termoRecebimento?: string | null;
 }
 
 const fmtDate = (d: string) => {
