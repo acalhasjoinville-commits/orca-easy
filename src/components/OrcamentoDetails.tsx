@@ -163,7 +163,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               </div>
             </>
           )}
-          <div className="flex justify-between text-xs text-muted-foreground pt-1">
+          <div className="flex justify-between text-xs text-muted-foreground pt-2 pb-1">
             <span>Margem</span>
             <span>{((1 - orcamento.custoTotalObra / displayValue) * 100).toFixed(1)}%</span>
           </div>
