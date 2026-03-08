@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Printer, Loader2 } from 'lucide-react';
 import { generatePdfFromHtml } from '@/lib/generatePdf';
 import { buildProposalHtml, imageToDataUrl } from '@/lib/printTemplate';
-import { printViaIframe } from '@/lib/printViaIframe';
+
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
