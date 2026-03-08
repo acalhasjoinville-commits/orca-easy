@@ -162,11 +162,6 @@ export function Configuracoes() {
                   <SelectItem value="dividir">A cada (m):</SelectItem>
                 </SelectContent>
               </Select>
-                <SelectContent>
-                  <SelectItem value="multiplicar">× Mult.</SelectItem>
-                  <SelectItem value="dividir">÷ Div.</SelectItem>
-                </SelectContent>
-              </Select>
               <Input
                 type="number"
                 inputMode="decimal"
