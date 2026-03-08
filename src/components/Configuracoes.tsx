@@ -340,7 +340,8 @@ export function Configuracoes() {
       <h1 className="mb-4 text-xl font-bold text-primary">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-6 mb-4">
+        <TabsList className="w-full grid grid-cols-7 mb-4">
+          <TabsTrigger value="empresa" className="text-[10px] px-1">Empresa</TabsTrigger>
           <TabsTrigger value="motor1" className="text-[10px] px-1">Motor 1</TabsTrigger>
           <TabsTrigger value="motor2" className="text-[10px] px-1">Motor 2</TabsTrigger>
           <TabsTrigger value="insumos" className="text-[10px] px-1">Insumos</TabsTrigger>
@@ -349,6 +350,10 @@ export function Configuracoes() {
           <TabsTrigger value="politicas" className="text-[10px] px-1">Políticas</TabsTrigger>
         </TabsList>
 
+        {tab === 'empresa' ? (
+          <MinhaEmpresaForm />
+        ) : (
+        <>
         <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="mr-1 h-3 w-3" /> Adicionar
         </Button>
