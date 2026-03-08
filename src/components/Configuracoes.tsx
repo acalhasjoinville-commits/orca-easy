@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { storage } from '@/lib/storage';
+import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useEmpresa, usePoliticas } from '@/hooks/useSupabaseData';
 import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario, MinhaEmpresa } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,7 +25,6 @@ function MinhaEmpresaForm() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Sync from DB once loaded via useEffect
   useEffect(() => {
     if (!initialized && !isLoading) {
       if (existing) setForm(existing);
@@ -203,15 +202,17 @@ function MinhaEmpresaForm() {
 
 export function Configuracoes() {
   const [tab, setTab] = useState('empresa');
-  const [motor1, setMotor1] = useState(storage.getMotor1());
-  const [motor2, setMotor2] = useState(storage.getMotor2());
-  const [insumos, setInsumos] = useState(storage.getInsumos());
-  const [regras, setRegras] = useState(storage.getRegras());
-  const [servicos, setServicos] = useState(storage.getServicos());
-  
-  // Politicas from Supabase
+
+  // All data from Supabase hooks
+  const { motor1, isLoading: loadingM1, addMotor1, updateMotor1, deleteMotor1 } = useMotor1();
+  const { motor2, isLoading: loadingM2, addMotor2, updateMotor2, deleteMotor2 } = useMotor2();
+  const { insumos, isLoading: loadingIns, addInsumo, updateInsumo, deleteInsumo } = useInsumos();
+  const { regras, isLoading: loadingReg, addRegra, updateRegra, deleteRegra } = useRegras();
+  const { servicos, isLoading: loadingSrv, addServico, updateServico, deleteServico } = useServicos();
   const { politicas, addPolitica, updatePolitica, deletePolitica } = usePoliticas();
   
+  const isLoadingTech = loadingM1 || loadingM2 || loadingIns || loadingReg || loadingSrv;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
 
@@ -241,76 +242,69 @@ export function Configuracoes() {
   const handleSave = async () => {
     const id = editItem?.id || crypto.randomUUID();
 
-    if (tab === 'motor1') {
-      const entry: Motor1Entry = { id, material: form.material || '', densidade: parseFloat(form.densidade) || 0, precoQuilo: parseFloat(form.precoQuilo) || 0 };
-      const updated = editItem ? motor1.map(e => e.id === id ? entry : e) : [...motor1, entry];
-      setMotor1(updated); storage.setMotor1(updated);
-    } else if (tab === 'motor2') {
-      const entry: Motor2Entry = { id, material: form.material || '', espessura: parseFloat(form.espessura) || 0, corte: parseFloat(form.corte) || 0, precoMetroLinear: parseFloat(form.precoMetroLinear) || 0 };
-      const updated = editItem ? motor2.map(e => e.id === id ? entry : e) : [...motor2, entry];
-      setMotor2(updated); storage.setMotor2(updated);
-    } else if (tab === 'insumos') {
-      const entry: InsumoEntry = { id, nomeEmbalagemCompra: form.nomeEmbalagemCompra || '', nomeUnidadeConsumo: form.nomeUnidadeConsumo || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
-      const updated = editItem ? insumos.map(e => e.id === id ? entry : e) : [...insumos, entry];
-      setInsumos(updated); storage.setInsumos(updated);
-    } else if (tab === 'regras') {
-      const entry: RegraCalculo = { id, nomeRegra: form.nomeRegra || '', itensRegra: regraItens };
-      const updated = editItem ? regras.map(e => e.id === id ? entry : e) : [...regras, entry];
-      setRegras(updated); storage.setRegras(updated);
-    } else if (tab === 'catalogo') {
-      const entry: ServicoTemplate = {
-        id, nomeServico: form.nomeServico || '',
-        regraId: form.regraId || '',
-        motorPadrao: (form.motorPadrao as MotorType) || 'motor1',
-        materialPadrao: form.materialPadrao || '',
-        espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
-        cortePadrao: parseFloat(form.cortePadrao) || 0,
-        dificuldadeFacil: parseFloat(form.dificuldadeFacil) || 2.6,
-        dificuldadeMedia: parseFloat(form.dificuldadeMedia) || 3.5,
-        dificuldadeDificil: parseFloat(form.dificuldadeDificil) || 4.6,
-      };
-      const updated = editItem ? servicos.map(e => e.id === id ? entry : e) : [...servicos, entry];
-      setServicos(updated); storage.setServicos(updated);
-    } else if (tab === 'politicas') {
-      const entry: PoliticaComercial = {
-        id,
-        nomePolitica: form.nomePolitica || '',
-        validadeDias: parseInt(form.validadeDias) || 15,
-        formasPagamento: form.formasPagamento || '',
-        garantia: form.garantia || '',
-        tempoGarantia: form.tempoGarantia || '1 ano',
-      };
-      try {
-        if (editItem) {
-          await updatePolitica.mutateAsync(entry);
-        } else {
-          await addPolitica.mutateAsync(entry);
-        }
-      } catch {
-        toast.error('Erro ao salvar política.');
-        return;
+    try {
+      if (tab === 'motor1') {
+        const entry: Motor1Entry = { id, material: form.material || '', densidade: parseFloat(form.densidade) || 0, precoQuilo: parseFloat(form.precoQuilo) || 0 };
+        if (editItem) await updateMotor1.mutateAsync(entry);
+        else await addMotor1.mutateAsync(entry);
+      } else if (tab === 'motor2') {
+        const entry: Motor2Entry = { id, material: form.material || '', espessura: parseFloat(form.espessura) || 0, corte: parseFloat(form.corte) || 0, precoMetroLinear: parseFloat(form.precoMetroLinear) || 0 };
+        if (editItem) await updateMotor2.mutateAsync(entry);
+        else await addMotor2.mutateAsync(entry);
+      } else if (tab === 'insumos') {
+        const entry: InsumoEntry = { id, nomeEmbalagemCompra: form.nomeEmbalagemCompra || '', nomeUnidadeConsumo: form.nomeUnidadeConsumo || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
+        if (editItem) await updateInsumo.mutateAsync(entry);
+        else await addInsumo.mutateAsync(entry);
+      } else if (tab === 'regras') {
+        const entry: RegraCalculo = { id, nomeRegra: form.nomeRegra || '', itensRegra: regraItens };
+        if (editItem) await updateRegra.mutateAsync(entry);
+        else await addRegra.mutateAsync(entry);
+      } else if (tab === 'catalogo') {
+        const entry: ServicoTemplate = {
+          id, nomeServico: form.nomeServico || '',
+          regraId: form.regraId || '',
+          motorPadrao: (form.motorPadrao as MotorType) || 'motor1',
+          materialPadrao: form.materialPadrao || '',
+          espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
+          cortePadrao: parseFloat(form.cortePadrao) || 0,
+          dificuldadeFacil: parseFloat(form.dificuldadeFacil) || 2.6,
+          dificuldadeMedia: parseFloat(form.dificuldadeMedia) || 3.5,
+          dificuldadeDificil: parseFloat(form.dificuldadeDificil) || 4.6,
+        };
+        if (editItem) await updateServico.mutateAsync(entry);
+        else await addServico.mutateAsync(entry);
+      } else if (tab === 'politicas') {
+        const entry: PoliticaComercial = {
+          id,
+          nomePolitica: form.nomePolitica || '',
+          validadeDias: parseInt(form.validadeDias) || 15,
+          formasPagamento: form.formasPagamento || '',
+          garantia: form.garantia || '',
+          tempoGarantia: form.tempoGarantia || '1 ano',
+        };
+        if (editItem) await updatePolitica.mutateAsync(entry);
+        else await addPolitica.mutateAsync(entry);
       }
-    }
 
-    setDialogOpen(false);
-    toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
+      setDialogOpen(false);
+      toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
+    } catch {
+      toast.error('Erro ao salvar.');
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (tab === 'motor1') { const u = motor1.filter(e => e.id !== id); setMotor1(u); storage.setMotor1(u); }
-    else if (tab === 'motor2') { const u = motor2.filter(e => e.id !== id); setMotor2(u); storage.setMotor2(u); }
-    else if (tab === 'insumos') { const u = insumos.filter(e => e.id !== id); setInsumos(u); storage.setInsumos(u); }
-    else if (tab === 'regras') { const u = regras.filter(e => e.id !== id); setRegras(u); storage.setRegras(u); }
-    else if (tab === 'catalogo') { const u = servicos.filter(e => e.id !== id); setServicos(u); storage.setServicos(u); }
-    else if (tab === 'politicas') {
-      try {
-        await deletePolitica.mutateAsync(id);
-      } catch {
-        toast.error('Erro ao remover política.');
-        return;
-      }
+    try {
+      if (tab === 'motor1') await deleteMotor1.mutateAsync(id);
+      else if (tab === 'motor2') await deleteMotor2.mutateAsync(id);
+      else if (tab === 'insumos') await deleteInsumo.mutateAsync(id);
+      else if (tab === 'regras') await deleteRegra.mutateAsync(id);
+      else if (tab === 'catalogo') await deleteServico.mutateAsync(id);
+      else if (tab === 'politicas') await deletePolitica.mutateAsync(id);
+      toast.success('Removido!');
+    } catch {
+      toast.error('Erro ao remover.');
     }
-    toast.success('Removido!');
   };
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -553,6 +547,10 @@ export function Configuracoes() {
 
         {tab === 'empresa' ? (
           <MinhaEmpresaForm />
+        ) : isLoadingTech ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
         ) : (
         <>
         <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
