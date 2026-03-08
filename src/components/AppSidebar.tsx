@@ -43,6 +43,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
     canManageClientes,
     canViewFinanceiro,
     canManageSettings,
+    canManageUsers,
   };
 
   const visibleItems = allItems.filter(item => permissionMap[item.permission]);
