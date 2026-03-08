@@ -51,6 +51,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const { politicas } = usePoliticas();
   const { getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { empresa } = useEmpresa();
+  const { servicos: servicosList } = useServicos();
+  const { regras: regrasList } = useRegras();
+  const { motor1: motor1List } = useMotor1();
+  const { motor2: motor2List } = useMotor2();
+  const { insumos: insumosList } = useInsumos();
 
   const selectedCliente = clientes.find(c => c.id === selectedClienteId);
 
