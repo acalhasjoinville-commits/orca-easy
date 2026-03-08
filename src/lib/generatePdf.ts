@@ -188,7 +188,6 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const conditions: { label: string; value: string; highlight?: boolean }[] = [];
   if (orcamento.validade) conditions.push({ label: 'Validade', value: orcamento.validade });
   if (orcamento.formasPagamento) conditions.push({ label: 'Formas de Pagamento', value: orcamento.formasPagamento });
-  if (orcamento.descricaoGeral) conditions.push({ label: 'Descrição', value: orcamento.descricaoGeral });
   if (orcamento.tempoGarantia) conditions.push({ label: 'Garantia', value: orcamento.tempoGarantia, highlight: true });
   if (orcamento.garantia) conditions.push({ label: 'Detalhes da Garantia', value: orcamento.garantia });
 
