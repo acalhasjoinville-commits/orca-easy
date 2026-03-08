@@ -559,7 +559,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
       )}
 
-      <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} />
+      <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} motorType={motorType} />
     </div>
   );
 }
