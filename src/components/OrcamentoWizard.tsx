@@ -191,7 +191,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </button>
         <div>
           <h1 className="text-lg font-bold text-primary">
-            {isEditing ? 'Editar Orçamento' : 'Detalhes do Orçamento'}
+            {isEditing ? `Orçamento Nº ${editingOrcamento?.numeroOrcamento}` : 'Detalhes do Orçamento'}
           </h1>
           <p className="text-xs text-muted-foreground">Cliente: {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}</p>
         </div>
