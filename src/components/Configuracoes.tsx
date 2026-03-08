@@ -373,7 +373,7 @@ export function Configuracoes() {
           {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
         </TabsContent>
         <TabsContent value="politicas">
-          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · ${e.formasPagamento.substring(0, 40)}...`))}
+          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`))}
         </TabsContent>
       </Tabs>
 
