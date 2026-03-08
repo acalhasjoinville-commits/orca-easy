@@ -41,12 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Error fetching roles:', error);
         setRoles([]);
-        return;
+      } else {
+        setRoles((data || []).map((r: any) => r.role as AppRole));
       }
-      setRoles((data || []).map((r: any) => r.role as AppRole));
     } catch (err) {
       console.error('Error fetching roles:', err);
       setRoles([]);
+    } finally {
+      setRolesLoaded(true);
     }
   }, []);
 
