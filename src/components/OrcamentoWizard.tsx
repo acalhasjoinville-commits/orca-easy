@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Loader2 } from 'lucide-react';
-import { generatePdf } from '@/lib/generatePdf';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Printer, Loader2 } from 'lucide-react';
+import { generatePdf, openPrintWindow } from '@/lib/generatePdf';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -133,6 +133,40 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const dificuldadeLabel: Record<Dificuldade, string> = {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
+  };
+
+  const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
+    if (itens.length === 0 || !selectedCliente) return null;
+    const base = {
+      clienteId: selectedCliente.id,
+      nomeCliente: selectedCliente.nomeRazaoSocial,
+      itensServico: itens,
+      custoTotalObra: totalCusto,
+      valorVenda: totalVenda,
+      desconto: descontoNum,
+      valorFinal,
+      status,
+      validade,
+      descricaoGeral,
+      formasPagamento,
+      garantia,
+      tempoGarantia,
+    };
+    if (isEditing && editingOrcamento) {
+      const orc = { ...editingOrcamento, ...base };
+      await updateOrcamento.mutateAsync(orc);
+      return orc;
+    } else {
+      const nextNum = await getNextNumero();
+      const orc: Orcamento = {
+        id: crypto.randomUUID(),
+        numeroOrcamento: nextNum,
+        dataCriacao: new Date().toISOString(),
+        ...base,
+      };
+      await addOrcamento.mutateAsync(orc);
+      return orc;
+    }
   };
 
   const handleSave = async () => {
@@ -443,48 +477,28 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Button
                 onClick={async () => {
                   if (itens.length === 0 || !selectedCliente) return;
-                  let orcToSave: Orcamento;
                   try {
-                    if (isEditing && editingOrcamento) {
-                      orcToSave = {
-                        ...editingOrcamento,
-                        clienteId: selectedCliente.id,
-                        nomeCliente: selectedCliente.nomeRazaoSocial,
-                        itensServico: itens,
-                        custoTotalObra: totalCusto,
-                        valorVenda: totalVenda,
-                        desconto: descontoNum,
-                        valorFinal,
-                        status,
-                        validade,
-                        descricaoGeral,
-                        formasPagamento,
-                        garantia,
-                        tempoGarantia,
-                      };
-                      await updateOrcamento.mutateAsync(orcToSave);
-                    } else {
-                      const nextNum = await getNextNumero();
-                      orcToSave = {
-                        id: crypto.randomUUID(),
-                        numeroOrcamento: nextNum,
-                        dataCriacao: new Date().toISOString(),
-                        clienteId: selectedCliente.id,
-                        nomeCliente: selectedCliente.nomeRazaoSocial,
-                        itensServico: itens,
-                        custoTotalObra: totalCusto,
-                        valorVenda: totalVenda,
-                        desconto: descontoNum,
-                        valorFinal,
-                        status,
-                        validade,
-                        descricaoGeral,
-                        formasPagamento,
-                        garantia,
-                        tempoGarantia,
-                      };
-                      await addOrcamento.mutateAsync(orcToSave);
-                    }
+                    const orcToSave = await saveAndGetOrcamento();
+                    if (!orcToSave) return;
+                    const cli = clientes.find(c => c.id === selectedCliente.id);
+                    await openPrintWindow(orcToSave, cli, empresa);
+                    toast.success('Orçamento salvo!');
+                  } catch {
+                    toast.error('Erro ao salvar/imprimir.');
+                  }
+                }}
+                variant="outline"
+                className="h-11 px-3 font-semibold"
+                style={{ borderColor: corDestaque, color: corDestaque }}
+              >
+                <Printer className="h-5 w-5" />
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (itens.length === 0 || !selectedCliente) return;
+                  try {
+                    const orcToSave = await saveAndGetOrcamento();
+                    if (!orcToSave) return;
                     const cli = clientes.find(c => c.id === selectedCliente.id);
                     await generatePdf(orcToSave, cli, empresa);
                     toast.success('PDF gerado e orçamento salvo!');
@@ -493,10 +507,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   }
                 }}
                 variant="outline"
-                className="h-11 px-4 font-semibold"
+                className="h-11 px-3 font-semibold"
                 style={{ borderColor: corDestaque, color: corDestaque }}
               >
-                <FileDown className="mr-1 h-5 w-5" /> PDF
+                <FileDown className="h-5 w-5" />
               </Button>
             </div>
           </div>
