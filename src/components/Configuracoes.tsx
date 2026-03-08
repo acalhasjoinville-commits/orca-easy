@@ -253,6 +253,8 @@ export function Configuracoes() {
     </div>
   );
 
+  const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
+
   const renderPoliticaForm = () => (
     <div className="space-y-3">
       <div>
@@ -262,6 +264,17 @@ export function Configuracoes() {
       <div>
         <Label className="text-xs">Validade (dias)</Label>
         <Input type="number" inputMode="numeric" value={form.validadeDias || ''} onChange={e => setField('validadeDias', e.target.value)} placeholder="15" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold text-accent">Tempo de Garantia</Label>
+        <Select value={form.tempoGarantia || '1 ano'} onValueChange={v => setField('tempoGarantia', v)}>
+          <SelectTrigger className="h-9 border-accent/30">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label className="text-xs">Descrição Geral</Label>
@@ -274,9 +287,9 @@ export function Configuracoes() {
           placeholder="Condições de pagamento padrão..." rows={2} className="text-sm" />
       </div>
       <div>
-        <Label className="text-xs">Garantia</Label>
+        <Label className="text-xs">Termos de Garantia (detalhes)</Label>
         <Textarea value={form.garantia || ''} onChange={e => setField('garantia', e.target.value)}
-          placeholder="Termos de garantia padrão..." rows={2} className="text-sm" />
+          placeholder="Detalhes dos termos de garantia..." rows={2} className="text-sm" />
       </div>
     </div>
   );
