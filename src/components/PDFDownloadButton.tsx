@@ -32,8 +32,6 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
 
   const handleDownload = async () => {
     if (generating) return;
-
-    const popup = window.open('about:blank', '_blank');
     setGenerating(true);
 
     // Yield to UI thread so spinner renders before heavy PDF work
@@ -64,25 +62,22 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
       const url = URL.createObjectURL(blob);
       const fileName = `orcamento-${orcamento.numeroOrcamento || 'novo'}.pdf`;
 
-      if (popup && !popup.closed) {
-        popup.location.href = url;
-        setTimeout(() => URL.revokeObjectURL(url), 15000);
-      } else {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-          window.open(url, '_blank');
-        } else {
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
-        setTimeout(() => URL.revokeObjectURL(url), 15000);
+      // Use a hidden <a> tag for all platforms — avoids popup blockers entirely
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      // On iOS Safari, setting download may force a save dialog; 
+      // on Android/desktop it triggers download. Both work without popups.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (!isIOS) {
+        a.download = fileName;
       }
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
     } catch (err) {
-      if (popup && !popup.closed) popup.close();
       console.error('Erro ao gerar PDF:', err);
       toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente. Se persistir, gere sem logo.', variant: 'destructive' });
     } finally {
