@@ -234,21 +234,11 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
         <View style={s.signaturesRow}>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
-            <Text style={s.signatureName}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
-            <Text style={s.signatureRole}>Cliente</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>Nome:</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>CPF/RG:</Text>
+            <Text style={s.signatureName}>Assinatura do Cliente</Text>
           </View>
           <View style={s.signatureBlock}>
             <View style={s.signatureLine} />
-            <Text style={s.signatureName}>{nomeEmpresa}</Text>
-            <Text style={s.signatureRole}>Prestador</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>Nome:</Text>
-            <View style={s.signatureFieldLine} />
-            <Text style={s.signatureField}>CPF/RG:</Text>
+            <Text style={s.signatureName}>Responsável Técnica - {nomeEmpresa}</Text>
           </View>
         </View>
 
