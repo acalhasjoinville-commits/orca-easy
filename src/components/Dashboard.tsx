@@ -71,7 +71,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
             <Button onClick={onNewOrcamento} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base">
               <Plus className="mr-2 h-5 w-5" /> Novo Orçamento
             </Button>
-          )
+          )}
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
