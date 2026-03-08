@@ -52,6 +52,10 @@ export const storage = {
     list.unshift(o);
     save(KEYS.orcamentos, list);
   },
+  updateOrcamento: (updated: Orcamento) => {
+    const list = storage.getOrcamentos().map(o => o.id === updated.id ? updated : o);
+    save(KEYS.orcamentos, list);
+  },
   deleteOrcamento: (id: string) => {
     const list = storage.getOrcamentos().filter(o => o.id !== id);
     save(KEYS.orcamentos, list);

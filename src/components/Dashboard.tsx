@@ -2,14 +2,15 @@ import { Orcamento } from '@/lib/types';
 import { storage } from '@/lib/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Trash2 } from 'lucide-react';
+import { Plus, FileText, Trash2, Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
+  onEditOrcamento: (orc: Orcamento) => void;
 }
 
-export function Dashboard({ onNewOrcamento }: DashboardProps) {
+export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>(storage.getOrcamentos());
 
   const handleDelete = (id: string) => {
@@ -47,7 +48,7 @@ export function Dashboard({ onNewOrcamento }: DashboardProps) {
             </Button>
           </div>
           {orcamentos.map(o => (
-            <Card key={o.id} className="overflow-hidden">
+            <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onEditOrcamento(o)}>
               <CardHeader className="pb-2 pt-4 px-4">
                 <div className="flex items-start justify-between">
                   <div>
@@ -58,9 +59,14 @@ export function Dashboard({ onNewOrcamento }: DashboardProps) {
                       {o.itensServico.map(i => i.nomeServico).join(', ')}
                     </p>
                   </div>
-                  <button onClick={() => handleDelete(o.id)} className="text-muted-foreground hover:text-destructive p-1">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex gap-1">
+                    <button onClick={(e) => { e.stopPropagation(); onEditOrcamento(o); }} className="text-muted-foreground hover:text-primary p-1">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(o.id); }} className="text-muted-foreground hover:text-destructive p-1">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="px-4 pb-4 pt-0">
