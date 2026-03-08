@@ -447,8 +447,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       )}
 
       {itens.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 border-t bg-card shadow-lg">
-          <div className="mx-auto max-w-lg px-4 py-3">
+        <div className="fixed bottom-16 lg:bottom-0 left-0 lg:left-64 right-0 z-40 border-t bg-card shadow-lg">
+          <div className="mx-auto max-w-4xl px-4 py-3">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-muted-foreground">Custo Total</span>
               <span className="font-medium">{fmt(totalCusto)}</span>
