@@ -108,6 +108,22 @@ export interface PoliticaComercial {
   descricaoGeral: string;
   formasPagamento: string;
   garantia: string;
+  tempoGarantia: string;
+}
+
+export interface MinhaEmpresa {
+  logoUrl: string;
+  nomeFantasia: string;
+  razaoSocial: string;
+  cnpjCpf: string;
+  telefoneWhatsApp: string;
+  emailContato: string;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  corTemaPdf: string;
 }
 
 export interface Orcamento {
