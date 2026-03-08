@@ -43,6 +43,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [descricaoGeral, setDescricaoGeral] = useState(editingOrcamento?.descricaoGeral ?? '');
   const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
   const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
+  const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
 
   const clientes = useMemo(() => storage.getClientes(), []);
   const politicas = useMemo(() => storage.getPoliticas(), []);
