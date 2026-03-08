@@ -144,6 +144,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
+      motorType,
       itensServico: itens,
       custoTotalObra: totalCusto,
       valorVenda: totalVenda,
