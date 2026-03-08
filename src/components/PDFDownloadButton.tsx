@@ -56,8 +56,11 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
         blob = await buildBlob(false);
       }
 
-      const fileName = `orcamento-${orcamento.numeroOrcamento || 'novo'}.pdf`;
-      const file = new File([blob], fileName, { type: 'application/pdf' });
+      const nomeCliente = (cliente?.nomeRazaoSocial || orcamento.nomeCliente || 'Cliente_Nao_Identificado')
+        .trim()
+        .replace(/\s+/g, '_');
+      const nomeArquivo = `Orcamento_${nomeCliente}_${orcamento.numeroOrcamento || 'novo'}.pdf`;
+      const file = new File([blob], nomeArquivo, { type: 'application/pdf' });
 
       // Try Web Share API (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
