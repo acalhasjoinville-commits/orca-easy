@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, FileText, Search, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
