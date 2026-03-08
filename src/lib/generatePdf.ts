@@ -11,165 +11,251 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 
 const PAGE_H = 297;
 const PAGE_W = 210;
-const MARGIN = 15;
-const CONTENT_W = PAGE_W - MARGIN * 2;
-const FOOTER_ZONE = 25;
+const M = 15; // margin
+const CW = PAGE_W - M * 2; // content width
 
-function drawFooter(doc: jsPDF) {
-  const footerY = PAGE_H - 10;
-  doc.setDrawColor(210, 210, 210);
-  doc.setLineWidth(0.2);
-  doc.line(MARGIN, footerY - 4, PAGE_W - MARGIN, footerY - 4);
-  doc.setTextColor(180, 180, 180);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Documento gerado via OrçaCalhas — A solução está no nome', PAGE_W / 2, footerY, { align: 'center' });
+function drawFooterBar(doc: jsPDF, empresa: MinhaEmpresa | null) {
+  doc.setFillColor(50, 50, 50);
+  doc.rect(0, PAGE_H - 14, PAGE_W, 14, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  const footerText = empresa?.nomeFantasia
+    ? `${empresa.nomeFantasia} — A solução está no nome`
+    : 'OrçaCalhas — A solução está no nome';
+  doc.text(footerText, PAGE_W / 2, PAGE_H - 6, { align: 'center' });
 }
 
-function ensureSpace(doc: jsPDF, y: number, needed: number): number {
-  if (y + needed > PAGE_H - FOOTER_ZONE) {
+function ensureSpace(doc: jsPDF, y: number, needed: number, empresa: MinhaEmpresa | null): number {
+  if (y + needed > PAGE_H - 20) {
     doc.addPage();
-    drawFooter(doc);
-    return MARGIN + 5;
+    drawFooterBar(doc, empresa);
+    return M + 5;
   }
   return y;
 }
 
 export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, empresa: MinhaEmpresa | null) {
   const doc = new jsPDF('p', 'mm', 'a4');
-
-  const corPrimaria = empresa?.corPrimaria || '#0B1B32';
-  const corDestaque = empresa?.corDestaque || '#F57C00';
-  const rgbP = hexToRgb(corPrimaria);
-  const rgbD = hexToRgb(corDestaque);
+  const corD = empresa?.corDestaque || '#F57C00';
+  const rgbD = hexToRgb(corD);
 
   let y = 0;
 
   // ═══════════════════════════════════════════
-  // HEADER — 42mm tall bar
+  // HEADER — white bg, logo left, info right
   // ═══════════════════════════════════════════
-  const headerH = 42;
-  doc.setFillColor(...rgbP);
-  doc.rect(0, 0, PAGE_W, headerH, 'F');
+  y = 10;
 
   if (empresa?.logoUrl) {
-    try { doc.addImage(empresa.logoUrl, 'PNG', MARGIN, 5, 32, 32); } catch { /* skip */ }
+    try { doc.addImage(empresa.logoUrl, 'PNG', M, 6, 40, 25); } catch { /* skip */ }
   }
 
-  const infoX = empresa?.logoUrl ? MARGIN + 38 : MARGIN;
+  // Company info — right aligned
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  const rightX = PAGE_W - M;
+  let hy = 10;
+  const endParts = [empresa?.endereco, empresa?.numero, empresa?.cidade, empresa?.estado].filter(Boolean);
+  if (endParts.length) { doc.text(endParts.join(', '), rightX, hy, { align: 'right' }); hy += 4.5; }
+  if (empresa?.cnpjCpf) { doc.text(`CNPJ: ${empresa.cnpjCpf}`, rightX, hy, { align: 'right' }); hy += 4.5; }
+  doc.setTextColor(...rgbD);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.text('A solução está no nome', rightX, hy, { align: 'right' });
+
+  y = 34;
+
+  // ═══════════════════════════════════════════
+  // ORANGE CONTACT BAR
+  // ═══════════════════════════════════════════
+  doc.setFillColor(...rgbD);
+  doc.rect(0, y, PAGE_W, 9, 'F');
   doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  const contactParts: string[] = [];
+  if (empresa?.telefoneWhatsApp) contactParts.push(`📞 ${empresa.telefoneWhatsApp}`);
+  if (empresa?.emailContato) contactParts.push(`✉ ${empresa.emailContato}`);
+  doc.text(contactParts.join('     '), PAGE_W / 2, y + 6, { align: 'center' });
+  y += 14;
+
+  // ═══════════════════════════════════════════
+  // TITLE: ORDEM DE SERVIÇO + #NUMBER
+  // ═══════════════════════════════════════════
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ORDEM DE SERVIÇO', M, y + 5);
+
+  // Number badge right
+  doc.setTextColor(...rgbD);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text(empresa?.nomeFantasia || 'Minha Empresa', infoX, 16);
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  const lines: string[] = [];
-  if (empresa?.cnpjCpf) lines.push(`CNPJ/CPF: ${empresa.cnpjCpf}`);
-  if (empresa?.telefoneWhatsApp) lines.push(`WhatsApp: ${empresa.telefoneWhatsApp}`);
-  if (empresa?.emailContato) lines.push(empresa.emailContato);
-  const endParts = [empresa?.endereco, empresa?.numero, empresa?.bairro, empresa?.cidade, empresa?.estado].filter(Boolean);
-  if (endParts.length) lines.push(endParts.join(', '));
-  lines.forEach((l, i) => doc.text(l, infoX, 23 + i * 4.5));
-
-  y = headerH + 6;
-
-  // ═══════════════════════════════════════════
-  // TITLE BANNER
-  // ═══════════════════════════════════════════
-  doc.setFillColor(...rgbP);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 11, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`PROPOSTA COMERCIAL  Nº ${orcamento.numeroOrcamento}`, PAGE_W / 2, y + 7.5, { align: 'center' });
-  y += 15;
-
-  // Date
-  const dataFormatada = new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR');
+  const numStr = `#${String(orcamento.numeroOrcamento).padStart(4, '0')}`;
+  doc.text(numStr, PAGE_W - M, y + 2, { align: 'right' });
   doc.setTextColor(140, 140, 140);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Data: ${dataFormatada}`, PAGE_W - MARGIN, y, { align: 'right' });
+  doc.text('Orçamento', PAGE_W - M, y + 7, { align: 'right' });
 
-  // ═══════════════════════════════════════════
-  // CLIENT CARD — light gray background
-  // ═══════════════════════════════════════════
-  const clienteName = cliente?.nomeRazaoSocial || orcamento.nomeCliente;
-  const clienteDoc = cliente?.documento || '';
-  const clienteWpp = cliente?.whatsapp || '';
-  const clienteEnd = [cliente?.endereco, cliente?.numero, cliente?.bairro, cliente?.cidade].filter(Boolean).join(', ');
+  y += 14;
 
-  const clientLines = [clienteName, clienteDoc, clienteWpp, clienteEnd].filter(Boolean);
-  const cardH = 10 + clientLines.length * 5;
-
-  doc.setFillColor(248, 249, 250);
-  doc.roundedRect(MARGIN, y - 2, CONTENT_W, cardH, 2, 2, 'F');
-
-  // Left accent bar
-  doc.setFillColor(...rgbP);
-  doc.rect(MARGIN, y - 2, 3, cardH, 'F');
-
-  doc.setTextColor(...rgbP);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO CLIENTE', MARGIN + 8, y + 4);
-  y += 9;
-
-  doc.setFontSize(8.5);
-  doc.setTextColor(60, 60, 60);
-
-  const drawField = (label: string, value: string) => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${label}: `, MARGIN + 8, y);
-    const labelW = doc.getTextWidth(`${label}: `);
-    doc.setFont('helvetica', 'normal');
-    doc.text(value, MARGIN + 8 + labelW, y);
-    y += 5;
-  };
-
-  drawField('Nome', clienteName);
-  if (clienteDoc) drawField('CPF/CNPJ', clienteDoc);
-  if (clienteWpp) drawField('WhatsApp', clienteWpp);
-  if (clienteEnd) drawField('Endereço', clienteEnd);
-
+  // Thin separator
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.line(M, y, PAGE_W - M, y);
   y += 6;
 
   // ═══════════════════════════════════════════
-  // ESCOPO DO SERVIÇO — left border style
+  // INFO ROW: Emissão | Validade | Garantia | Responsável
+  // ═══════════════════════════════════════════
+  const colW = CW / 4;
+  const dataFormatada = new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR');
+
+  const infoItems = [
+    { label: 'Emissão', value: dataFormatada },
+    { label: 'Validade', value: orcamento.validade || '-' },
+    { label: 'Garantia', value: orcamento.tempoGarantia || '-' },
+    { label: 'Responsável', value: empresa?.nomeFantasia || '-' },
+  ];
+
+  infoItems.forEach((item, i) => {
+    const x = M + i * colW;
+    doc.setTextColor(140, 140, 140);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(item.label, x + 2, y);
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.value, x + 2, y + 5);
+  });
+
+  y += 12;
+
+  // Separator
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.line(M, y, PAGE_W - M, y);
+  y += 6;
+
+  // ═══════════════════════════════════════════
+  // DADOS DO CLIENTE — orange left border
+  // ═══════════════════════════════════════════
+  const clienteName = cliente?.nomeRazaoSocial || orcamento.nomeCliente;
+
+  // Section title with orange bar
+  doc.setFillColor(...rgbD);
+  doc.rect(M, y - 2, 3, 7, 'F');
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Dados do Cliente', M + 7, y + 3);
+  y += 10;
+
+  // Grid: left column (Nome, Telefone) | right column (CPF/CNPJ, Endereço)
+  const halfW = CW / 2;
+  const leftCol = M;
+  const rightCol = M + halfW;
+
+  // Row 1
+  doc.setTextColor(140, 140, 140);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Nome', leftCol, y);
+  doc.text('CPF/CNPJ', rightCol, y);
+  y += 4.5;
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(clienteName, leftCol, y);
+  doc.text(cliente?.documento || '-', rightCol, y);
+  y += 7;
+
+  // Row 2
+  doc.setTextColor(140, 140, 140);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Telefone', leftCol, y);
+  doc.text('Endereço', rightCol, y);
+  y += 4.5;
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(cliente?.whatsapp || '-', leftCol, y);
+
+  // Endereço can be multi-line
+  doc.setFont('helvetica', 'bold');
+  const enderecoFull = [cliente?.endereco, cliente?.numero].filter(Boolean).join(', nº ');
+  doc.text(enderecoFull || '-', rightCol, y);
+  y += 4.5;
+  const bairroCidade = [
+    cliente?.bairro ? `Bairro: ${cliente.bairro}` : null,
+    [cliente?.cidade].filter(Boolean).join(' - '),
+  ].filter(Boolean).join(' | ');
+  if (bairroCidade) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(bairroCidade, rightCol, y);
+    y += 5;
+  }
+
+  y += 5;
+
+  // Separator
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.line(M, y, PAGE_W - M, y);
+  y += 6;
+
+  // ═══════════════════════════════════════════
+  // DESCRIÇÃO DO SERVIÇO — orange left border
   // ═══════════════════════════════════════════
   if (orcamento.descricaoGeral) {
-    y = ensureSpace(doc, y, 30);
-    const escopoLines = doc.splitTextToSize(orcamento.descricaoGeral, CONTENT_W - 16);
-    const escopoH = 12 + escopoLines.length * 4.2;
+    y = ensureSpace(doc, y, 25, empresa);
 
-    doc.setFillColor(248, 249, 250);
-    doc.roundedRect(MARGIN, y, CONTENT_W, escopoH, 2, 2, 'F');
-    doc.setFillColor(...rgbP);
-    doc.rect(MARGIN, y, 3, escopoH, 'F');
-
-    doc.setTextColor(...rgbP);
-    doc.setFontSize(10);
+    doc.setFillColor(...rgbD);
+    doc.rect(M, y - 2, 3, 7, 'F');
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('ESCOPO DO SERVIÇO', MARGIN + 8, y + 6);
+    doc.text('Descrição do Serviço', M + 7, y + 3);
+    y += 10;
 
     doc.setTextColor(60, 60, 60);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(escopoLines, MARGIN + 8, y + 13);
-    y += escopoH + 6;
+    const descLines = doc.splitTextToSize(orcamento.descricaoGeral, CW - 5);
+    doc.text(descLines, M, y);
+    y += descLines.length * 4.5 + 5;
+
+    // Separator
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(M, y, PAGE_W - M, y);
+    y += 6;
   }
 
   // ═══════════════════════════════════════════
-  // SERVICES TABLE — striped theme
+  // SERVIÇOS TABLE — orange header
   // ═══════════════════════════════════════════
-  y = ensureSpace(doc, y, 30);
+  y = ensureSpace(doc, y, 30, empresa);
 
-  const tableHead = [['#', 'Descrição do Serviço', 'Medida', 'Preço Unit.', 'Total']];
-  const tableBody = orcamento.itensServico.map((item, i) => [
-    String(i + 1),
+  // Section title
+  doc.setFillColor(...rgbD);
+  doc.rect(M, y - 2, 3, 7, 'F');
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Serviços', M + 7, y + 3);
+  y += 10;
+
+  const tableHead = [['Serviço', 'Qtd', 'Valor Unit.', 'Subtotal']];
+  const tableBody = orcamento.itensServico.map((item) => [
     item.nomeServico,
-    `${item.metragem} m`,
+    String(item.metragem),
     fmt(item.metragem > 0 ? item.valorVenda / item.metragem : 0),
     fmt(item.valorVenda),
   ]);
@@ -178,147 +264,138 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     startY: y,
     head: tableHead,
     body: tableBody,
-    margin: { left: MARGIN, right: MARGIN },
-    theme: 'striped',
+    margin: { left: M, right: M },
+    theme: 'plain',
     headStyles: {
-      fillColor: rgbP,
+      fillColor: rgbD,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 9,
-      halign: 'center',
       cellPadding: 4,
     },
     bodyStyles: {
       fontSize: 8.5,
       textColor: [50, 50, 50],
-      cellPadding: 3.5,
-    },
-    alternateRowStyles: {
-      fillColor: [245, 246, 248],
+      cellPadding: 4,
+      lineColor: [235, 235, 235],
+      lineWidth: 0.3,
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12 },
-      1: { cellWidth: 'auto' },
-      2: { halign: 'center', cellWidth: 24 },
-      3: { halign: 'right', cellWidth: 30 },
-      4: { halign: 'right', cellWidth: 30 },
+      0: { cellWidth: 'auto' },
+      1: { halign: 'center', cellWidth: 22 },
+      2: { halign: 'right', cellWidth: 30 },
+      3: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
+    },
+    didParseCell: (data) => {
+      // Alternate row background
+      if (data.section === 'body' && data.row.index % 2 === 1) {
+        data.cell.styles.fillColor = [250, 250, 250];
+      }
     },
   });
 
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y = (doc as any).lastAutoTable.finalY;
 
-  // ═══════════════════════════════════════════
-  // TOTALS
-  // ═══════════════════════════════════════════
-  y = ensureSpace(doc, y, 40);
-
-  const totalsX = PAGE_W - MARGIN - 90;
-
-  // Subtotal
-  doc.setTextColor(100, 100, 100);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Subtotal:', totalsX, y);
-  doc.text(fmt(orcamento.valorVenda), PAGE_W - MARGIN, y, { align: 'right' });
-  y += 6;
-
-  // Discount
-  if (orcamento.desconto > 0) {
-    doc.text('Desconto:', totalsX, y);
-    doc.setTextColor(200, 60, 60);
-    doc.text(`- ${fmt(orcamento.desconto)}`, PAGE_W - MARGIN, y, { align: 'right' });
-    y += 7;
-  }
-
-  // VALOR FINAL highlight box
+  // TOTAL ROW — orange background
   doc.setFillColor(...rgbD);
-  doc.roundedRect(totalsX - 4, y - 5, 98, 18, 3, 3, 'F');
+  doc.rect(M, y, CW, 12, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('VALOR FINAL:', totalsX + 2, y + 5);
-  doc.setFontSize(16);
-  doc.text(fmt(orcamento.valorFinal), PAGE_W - MARGIN - 3, y + 5, { align: 'right' });
-  y += 28;
+  doc.text('TOTAL', M + 5, y + 8);
 
-  // ═══════════════════════════════════════════
-  // CONDIÇÕES E GARANTIA
-  // ═══════════════════════════════════════════
-  y = ensureSpace(doc, y, 50);
-
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
-  y += 7;
-
-  doc.setTextColor(...rgbP);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CONDIÇÕES E GARANTIA', MARGIN, y);
-  y += 8;
-
-  const drawCondition = (label: string, value: string, highlight = false) => {
-    y = ensureSpace(doc, y, 14);
-    doc.setFontSize(8.5);
-
-    // Bullet
-    if (highlight) {
-      doc.setFillColor(...rgbD);
-    } else {
-      doc.setFillColor(...rgbP);
-    }
-    doc.circle(MARGIN + 3, y - 1.2, 1.2, 'F');
-
-    // Label
+  // Show discount if any
+  let totalText = fmt(orcamento.valorFinal);
+  if (orcamento.desconto > 0) {
+    // Show original + discount info above
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Subtotal: ${fmt(orcamento.valorVenda)}  |  Desconto: -${fmt(orcamento.desconto)}`, PAGE_W - M - 5, y + 4, { align: 'right' });
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(highlight ? rgbD[0] : 80, highlight ? rgbD[1] : 80, highlight ? rgbD[2] : 80);
-    doc.text(`${label}:`, MARGIN + 7, y);
+    doc.text(totalText, PAGE_W - M - 5, y + 9, { align: 'right' });
+  } else {
+    doc.setFontSize(12);
+    doc.text(totalText, PAGE_W - M - 5, y + 8, { align: 'right' });
+  }
 
-    // Value
-    const valX = MARGIN + 48;
-    doc.setFont('helvetica', highlight ? 'bold' : 'normal');
-    doc.setTextColor(60, 60, 60);
-    const textLines = doc.splitTextToSize(value, CONTENT_W - 50);
-    doc.text(textLines, valX, y);
-    y += Math.max(6, textLines.length * 4.5);
-  };
-
-  if (orcamento.validade) drawCondition('Validade', orcamento.validade);
-  if (orcamento.formasPagamento) drawCondition('Pagamento', orcamento.formasPagamento);
-  if (orcamento.tempoGarantia) drawCondition('Garantia', orcamento.tempoGarantia, true);
-  if (orcamento.garantia) drawCondition('Detalhes', orcamento.garantia);
+  y += 20;
 
   // ═══════════════════════════════════════════
-  // SIGNATURES — dotted lines
+  // PAGE 2: FORMAS DE PAGAMENTO
   // ═══════════════════════════════════════════
-  y = ensureSpace(doc, y, 45);
-  y = Math.max(y + 15, 248);
+  y = ensureSpace(doc, y, 60, empresa);
 
-  const sigWidth = (CONTENT_W - 30) / 2;
-  const sigLeftX = MARGIN;
-  const sigRightX = MARGIN + sigWidth + 30;
+  if (orcamento.formasPagamento || orcamento.garantia) {
+    // Formas de Pagamento
+    if (orcamento.formasPagamento) {
+      doc.setFillColor(...rgbD);
+      doc.rect(M, y - 2, 3, 7, 'F');
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Formas de Pagamento', M + 7, y + 3);
+      y += 10;
 
-  doc.setDrawColor(150, 150, 150);
-  doc.setLineWidth(0.3);
-  doc.setLineDashPattern([1.5, 1.5], 0);
-  doc.line(sigLeftX, y, sigLeftX + sigWidth, y);
-  doc.line(sigRightX, y, sigRightX + sigWidth, y);
-  doc.setLineDashPattern([], 0);
+      // Parse payment text into bullet points
+      const payLines = orcamento.formasPagamento.split(/[.\n]/).filter(l => l.trim());
+      payLines.forEach(line => {
+        y = ensureSpace(doc, y, 8, empresa);
+        doc.setTextColor(...rgbD);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('–', M + 2, y);
+        doc.setTextColor(60, 60, 60);
+        doc.setFont('helvetica', 'normal');
+        const wrappedLines = doc.splitTextToSize(line.trim(), CW - 12);
+        doc.text(wrappedLines, M + 8, y);
+        y += wrappedLines.length * 4.5 + 2;
+      });
 
-  doc.setTextColor(100, 100, 100);
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Assinatura do Cliente', sigLeftX + sigWidth / 2, y + 5, { align: 'center' });
+      y += 5;
+    }
+
+    // Garantia details box
+    if (orcamento.garantia) {
+      y = ensureSpace(doc, y, 25, empresa);
+
+      doc.setFillColor(...rgbD);
+      doc.rect(M, y - 2, 3, 7, 'F');
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Garantia', M + 7, y + 3);
+      y += 10;
+
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      const garLines = doc.splitTextToSize(orcamento.garantia, CW - 5);
+      doc.text(garLines, M, y);
+      y += garLines.length * 4.5 + 8;
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // SIGNATURES
+  // ═══════════════════════════════════════════
+  y = ensureSpace(doc, y, 35, empresa);
+  y = Math.max(y + 10, PAGE_H - 55);
+
+  const sigW = (CW - 20) / 2;
+  const sigL = M;
+  const sigR = M + sigW + 20;
+
+  doc.setDrawColor(80, 80, 80);
+  doc.setLineWidth(0.5);
+  doc.line(sigL, y, sigL + sigW, y);
+  doc.line(sigR, y, sigR + sigW, y);
+
+  doc.setTextColor(60, 60, 60);
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.text(clienteName, sigLeftX + sigWidth / 2, y + 9, { align: 'center' });
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7.5);
-  doc.text('Assinatura do Responsável', sigRightX + sigWidth / 2, y + 5, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.text(empresa?.nomeFantasia || '', sigRightX + sigWidth / 2, y + 9, { align: 'center' });
+  doc.text('Assinatura do Cliente', sigL, y + 6);
+  doc.text('Assinatura do Técnico', sigR, y + 6);
 
   // ═══════════════════════════════════════════
   // FOOTER on all pages
@@ -326,19 +403,16 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    drawFooter(doc);
+    drawFooterBar(doc, empresa);
   }
 
   // ═══════════════════════════════════════════
-  // OUTPUT — blob URL for max compatibility
+  // OUTPUT
   // ═══════════════════════════════════════════
   const blob = doc.output('blob');
   const blobUrl = URL.createObjectURL(blob);
-
-  // Try opening in new tab (works on iOS Safari + desktop)
   const newWindow = window.open(blobUrl, '_blank');
   if (!newWindow) {
-    // Fallback: force download via anchor
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = `proposta-${orcamento.numeroOrcamento}.pdf`;
@@ -346,7 +420,5 @@ export function generatePdf(orcamento: Orcamento, cliente: Cliente | undefined, 
     link.click();
     document.body.removeChild(link);
   }
-
-  // Clean up blob URL after a delay
   setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 }
