@@ -14,7 +14,7 @@ function isOrcamentoTab(tab: Tab) {
 }
 
 export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBottomNavProps) {
-  const { canCreateEditBudget, canViewFinanceiro, canManageSettings } = useAuth();
+  const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
 
   // Build items dynamically based on permissions
   const items: { title: string; tab: Tab; icon: React.ElementType; accent?: boolean; action?: () => void }[] = [
