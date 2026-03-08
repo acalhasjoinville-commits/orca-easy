@@ -142,6 +142,15 @@ export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
                         size="icon"
                         className="h-7 w-7 p-1"
                       />
+                      {(o.status === 'aprovado' || o.status === 'executado') && (
+                        <OSDownloadButton
+                          orcamento={o}
+                          cliente={clientes.find(c => c.id === o.clienteId)}
+                          empresa={empresa}
+                          size="icon"
+                          className="h-7 w-7 p-1"
+                        />
+                      )}
                       <button onClick={(e) => { e.stopPropagation(); onEditOrcamento(o); }} className="text-muted-foreground hover:text-primary p-1">
                         <Pencil className="h-4 w-4" />
                       </button>
