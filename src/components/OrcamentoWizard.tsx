@@ -122,7 +122,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
     setValidade(`${pol.validadeDias} dias`);
-    setDescricaoGeral(pol.descricaoGeral);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
     setTempoGarantia(pol.tempoGarantia || '');
