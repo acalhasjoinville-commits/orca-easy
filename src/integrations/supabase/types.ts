@@ -459,7 +459,6 @@ export type Database = {
           espessura_padrao: number
           id: string
           material_padrao: string
-          motor_padrao: string
           motor_preferencial: string
           nome_servico: string
           permite_motor1: boolean
@@ -477,7 +476,6 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
-          motor_padrao?: string
           motor_preferencial?: string
           nome_servico: string
           permite_motor1?: boolean
@@ -495,7 +493,6 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
-          motor_padrao?: string
           motor_preferencial?: string
           nome_servico?: string
           permite_motor1?: boolean
