@@ -372,8 +372,23 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Textarea value={formasPagamento} onChange={e => setFormasPagamento(e.target.value)}
                 placeholder="Condições de pagamento..." rows={2} className="text-sm" />
             </div>
+            {/* Tempo de Garantia - highlighted */}
+            <div className="rounded-lg border-2 border-accent/30 bg-accent/5 p-3">
+              <Label className="text-sm font-bold text-accent flex items-center gap-2">
+                🛡️ Tempo de Garantia
+              </Label>
+              <Select value={tempoGarantia} onValueChange={setTempoGarantia}>
+                <SelectTrigger className="h-10 mt-1 border-accent/30 text-base font-semibold">
+                  <SelectValue placeholder="Selecione a garantia..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
-              <Label className="text-xs">Garantia</Label>
+              <Label className="text-xs">Detalhes da Garantia</Label>
               <Textarea value={garantia} onChange={e => setGarantia(e.target.value)}
                 placeholder="Termos de garantia..." rows={2} className="text-sm" />
             </div>
