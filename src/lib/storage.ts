@@ -48,6 +48,12 @@ export const storage = {
     const stored = localStorage.getItem(KEYS.orcamentos);
     return stored ? JSON.parse(stored) : [];
   },
+  getNextNumeroOrcamento: (): number => {
+    const list = storage.getOrcamentos();
+    if (list.length === 0) return 1001;
+    const max = Math.max(...list.map(o => o.numeroOrcamento ?? 0));
+    return Math.max(max + 1, 1001);
+  },
   addOrcamento: (o: Orcamento) => {
     const list = storage.getOrcamentos();
     list.unshift(o);

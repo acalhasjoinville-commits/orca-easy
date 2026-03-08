@@ -101,6 +101,7 @@ export interface ItemServico {
 
 export interface Orcamento {
   id: string;
+  numeroOrcamento: number;
   clienteId: string;
   nomeCliente: string;
   itensServico: ItemServico[];

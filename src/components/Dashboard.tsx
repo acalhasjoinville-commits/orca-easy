@@ -2,7 +2,8 @@ import { Orcamento } from '@/lib/types';
 import { storage } from '@/lib/storage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Trash2, Pencil } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Plus, FileText, Trash2, Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface DashboardProps {
@@ -12,6 +13,7 @@ interface DashboardProps {
 
 export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>(storage.getOrcamentos());
+  const [search, setSearch] = useState('');
 
   const handleDelete = (id: string) => {
     storage.deleteOrcamento(id);
@@ -20,6 +22,15 @@ export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
 
   const formatCurrency = (v: number) =>
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const filtered = orcamentos.filter(o => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      o.nomeCliente.toLowerCase().includes(q) ||
+      String(o.numeroOrcamento ?? '').includes(q)
+    );
+  });
 
   return (
     <div className="px-4 pb-24 pt-4">
@@ -47,12 +58,23 @@ export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
               <Plus className="mr-1 h-3 w-3" /> Novo
             </Button>
           </div>
-          {orcamentos.map(o => (
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome ou número..." value={search}
+              onChange={e => setSearch(e.target.value)} className="pl-9" />
+          </div>
+
+          {filtered.map(o => (
             <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onEditOrcamento(o)}>
               <CardHeader className="pb-2 pt-4 px-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-base">{o.nomeCliente}</CardTitle>
+                    <CardTitle className="text-base">
+                      <span className="font-bold text-accent">#{o.numeroOrcamento ?? '—'}</span>
+                      {' - '}
+                      {o.nomeCliente}
+                    </CardTitle>
                     <p className="text-xs text-muted-foreground">
                       {o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}
                       {' · '}
@@ -86,6 +108,10 @@ export function Dashboard({ onNewOrcamento, onEditOrcamento }: DashboardProps) {
               </CardContent>
             </Card>
           ))}
+
+          {filtered.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhum orçamento encontrado.</p>
+          )}
         </div>
       )}
     </div>
