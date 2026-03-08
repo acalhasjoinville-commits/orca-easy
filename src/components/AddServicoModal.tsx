@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { storage } from '@/lib/storage';
-import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumos, getFatorDificuldade } from '@/lib/calcEngine';
-import { Dificuldade, ItemServico } from '@/lib/types';
+import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
+import { Dificuldade, ItemServico, InsumoCalculado } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,10 +25,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
   const [servicoId, setServicoId] = useState('');
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
-
-  const [editQtdSuportes, setEditQtdSuportes] = useState<number | null>(null);
-  const [editQtdPU, setEditQtdPU] = useState<number | null>(null);
-  const [editQtdRebites, setEditQtdRebites] = useState<number | null>(null);
+  const [editQtds, setEditQtds] = useState<Record<string, number>>({});
 
   const servico = servicosList.find(s => s.id === servicoId);
   const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
@@ -50,36 +47,27 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
     }
 
     const custoTotalMaterial = custoMetroLinear * m;
-    const ins = calcInsumos(m, regra, insumosList);
+    const insumosCalc = calcInsumosDinamicos(m, regra, insumosList);
     const fator = getFatorDificuldade(servico, dificuldade);
 
-    return { custoMetroLinear, custoTotalMaterial, ...ins, fatorDificuldade: fator };
+    return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
   }, [servico, regra, metragem, dificuldade, motor1List, motor2List, insumosList]);
 
   const finalCalc = useMemo(() => {
     if (!calc) return null;
-    const suporteInsumo = insumosList.find(i => i.nome.toLowerCase().includes('suporte'));
-    const puInsumo = insumosList.find(i => i.nome.toLowerCase().includes('pu'));
-    const rebiteInsumo = insumosList.find(i => i.nome.toLowerCase().includes('rebite'));
 
-    const qs = editQtdSuportes ?? calc.qtdSuportes;
-    const qp = editQtdPU ?? calc.qtdPU;
-    const qr = editQtdRebites ?? calc.qtdRebites;
+    const insumosFinais: InsumoCalculado[] = calc.insumosCalc.map(ic => {
+      const qtdOverride = editQtds[ic.insumoId];
+      const quantidade = qtdOverride !== undefined ? qtdOverride : ic.quantidade;
+      return { ...ic, quantidade, custoTotal: quantidade * ic.custoUnitario };
+    });
 
-    const cs = qs * (suporteInsumo?.custoUnitario ?? 0);
-    const cp = qp * (puInsumo?.custoUnitario ?? 0);
-    const cr = qr * (rebiteInsumo?.custoUnitario ?? 0);
-    const totalInsumos = cs + cp + cr;
-    const custoObra = calc.custoTotalMaterial + totalInsumos;
-    const valorVenda = custoObra * calc.fatorDificuldade;
+    const custoTotalInsumos = insumosFinais.reduce((s, i) => s + i.custoTotal, 0);
+    const custoTotalObra = calc.custoTotalMaterial + custoTotalInsumos;
+    const valorVenda = custoTotalObra * calc.fatorDificuldade;
 
-    return {
-      ...calc,
-      qtdSuportes: qs, qtdPU: qp, qtdRebites: qr,
-      custoSuportes: cs, custoPU: cp, custoRebites: cr,
-      custoTotalInsumos: totalInsumos, custoTotalObra: custoObra, valorVenda,
-    };
-  }, [calc, editQtdSuportes, editQtdPU, editQtdRebites, insumosList]);
+    return { ...calc, insumosFinais, custoTotalInsumos, custoTotalObra, valorVenda };
+  }, [calc, editQtds]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -104,12 +92,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
       fatorDificuldade: finalCalc.fatorDificuldade,
       custoMetroLinear: finalCalc.custoMetroLinear,
       custoTotalMaterial: finalCalc.custoTotalMaterial,
-      qtdSuportes: finalCalc.qtdSuportes,
-      qtdPU: finalCalc.qtdPU,
-      qtdRebites: finalCalc.qtdRebites,
-      custoSuportes: finalCalc.custoSuportes,
-      custoPU: finalCalc.custoPU,
-      custoRebites: finalCalc.custoRebites,
+      insumosCalculados: finalCalc.insumosFinais,
       custoTotalInsumos: finalCalc.custoTotalInsumos,
       custoTotalObra: finalCalc.custoTotalObra,
       valorVenda: finalCalc.valorVenda,
@@ -122,9 +105,7 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
     setServicoId('');
     setMetragem('');
     setDificuldade('facil');
-    setEditQtdSuportes(null);
-    setEditQtdPU(null);
-    setEditQtdRebites(null);
+    setEditQtds({});
   };
 
   return (
@@ -135,7 +116,6 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Serviço da Biblioteca */}
           <div>
             <Label>Serviço</Label>
             <Select value={servicoId} onValueChange={setServicoId}>
@@ -148,7 +128,6 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
             </Select>
           </div>
 
-          {/* Info do serviço selecionado */}
           {servico && regra && (
             <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
               <p><span className="font-medium text-foreground">Motor:</span> {servico.motorPadrao === 'motor1' ? 'Fabricar (Motor 1)' : 'Comprar Dobrado (Motor 2)'}</p>
@@ -157,13 +136,11 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
             </div>
           )}
 
-          {/* Metragem */}
           <div>
             <Label>Metragem Total (m)</Label>
             <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
           </div>
 
-          {/* Dificuldade */}
           {servico && (
             <div>
               <Label>Dificuldade</Label>
@@ -190,7 +167,6 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
             </div>
           )}
 
-          {/* Resumo do cálculo */}
           {finalCalc && (
             <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
               <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
@@ -199,23 +175,18 @@ export function AddServicoModal({ open, onClose, onSave }: Props) {
                 <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>
               </div>
 
-              {regra && regra.divisorSuporte > 0 && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs flex-1">Suportes</span>
-                  <Input type="number" className="w-14 h-7 text-center text-xs" value={editQtdSuportes ?? finalCalc.qtdSuportes} onChange={e => setEditQtdSuportes(parseInt(e.target.value) || 0)} />
-                  <span className="text-xs w-16 text-right">{fmt(finalCalc.custoSuportes)}</span>
+              {finalCalc.insumosFinais.map(ic => (
+                <div key={ic.insumoId} className="flex items-center justify-between gap-2">
+                  <span className="text-xs flex-1 truncate">{ic.nomeInsumo}</span>
+                  <Input
+                    type="number"
+                    className="w-14 h-7 text-center text-xs"
+                    value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
+                    onChange={e => setEditQtds(prev => ({ ...prev, [ic.insumoId]: parseInt(e.target.value) || 0 }))}
+                  />
+                  <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
                 </div>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs flex-1">PU</span>
-                <Input type="number" className="w-14 h-7 text-center text-xs" value={editQtdPU ?? finalCalc.qtdPU} onChange={e => setEditQtdPU(parseInt(e.target.value) || 0)} />
-                <span className="text-xs w-16 text-right">{fmt(finalCalc.custoPU)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs flex-1">Rebites</span>
-                <Input type="number" className="w-14 h-7 text-center text-xs" value={editQtdRebites ?? finalCalc.qtdRebites} onChange={e => setEditQtdRebites(parseInt(e.target.value) || 0)} />
-                <span className="text-xs w-16 text-right">{fmt(finalCalc.custoRebites)}</span>
-              </div>
+              ))}
 
               <div className="border-t pt-2 flex justify-between text-sm font-semibold">
                 <span>Valor de Venda</span>

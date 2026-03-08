@@ -16,15 +16,28 @@ export interface Motor2Entry {
 export interface InsumoEntry {
   id: string;
   nome: string;
-  custoUnitario: number;
+  precoEmbalagem: number;
+  qtdEmbalagem: number;
+}
+
+// Computed getter
+export function getCustoUnitario(insumo: InsumoEntry): number {
+  return insumo.qtdEmbalagem > 0 ? insumo.precoEmbalagem / insumo.qtdEmbalagem : 0;
+}
+
+export type MetodoCalculo = 'multiplicar' | 'dividir';
+
+export interface ItemRegra {
+  id: string;
+  insumoId: string;
+  metodoCalculo: MetodoCalculo;
+  fator: number;
 }
 
 export interface RegraCalculo {
   id: string;
   nomeRegra: string;
-  divisorSuporte: number;
-  divisorPU: number;
-  multiplicadorRebite: number;
+  itensRegra: ItemRegra[];
 }
 
 export interface ServicoTemplate {
@@ -43,6 +56,14 @@ export interface ServicoTemplate {
 export type MotorType = 'motor1' | 'motor2';
 export type Dificuldade = 'facil' | 'medio' | 'dificil';
 
+export interface InsumoCalculado {
+  insumoId: string;
+  nomeInsumo: string;
+  quantidade: number;
+  custoUnitario: number;
+  custoTotal: number;
+}
+
 export interface ItemServico {
   id: string;
   servicoTemplateId: string;
@@ -56,12 +77,7 @@ export interface ItemServico {
   fatorDificuldade: number;
   custoMetroLinear: number;
   custoTotalMaterial: number;
-  qtdSuportes: number;
-  qtdPU: number;
-  qtdRebites: number;
-  custoSuportes: number;
-  custoPU: number;
-  custoRebites: number;
+  insumosCalculados: InsumoCalculado[];
   custoTotalInsumos: number;
   custoTotalObra: number;
   valorVenda: number;
