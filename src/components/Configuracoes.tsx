@@ -501,8 +501,8 @@ export function Configuracoes() {
         {prefOptions.length > 1 && (
           <div>
             <Label className="text-xs">Motor Preferencial</Label>
-            <Select value={form.motorPreferencial || 'motor1'} onValueChange={v => setField('motorPreferencial', v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={form.motorPreferencial || ''} onValueChange={v => setField('motorPreferencial', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione o motor preferencial" /></SelectTrigger>
               <SelectContent>
                 {prefOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
