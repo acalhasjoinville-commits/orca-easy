@@ -22,6 +22,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 
 export function Dashboard({ onNewOrcamento, onViewOrcamento }: DashboardProps) {
   const { orcamentos, isLoading } = useOrcamentos();
+  const { canCreateEditBudget } = useAuth();
   const [search, setSearch] = useState('');
 
   const formatCurrency = (v: number) =>
