@@ -92,11 +92,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const saveEditItem = (item: ItemServico) => {
     const m = parseFloat(editMetragem);
     if (isNaN(m) || m <= 0) return;
-    const servicosList = storage.getServicos();
-    const regrasList = storage.getRegras();
-    const motor1List = storage.getMotor1();
-    const motor2List = storage.getMotor2();
-    const insumosList = storage.getInsumos();
     const servico = servicosList.find(s => s.id === item.servicoTemplateId);
     const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
     if (!servico || !regra) return;
