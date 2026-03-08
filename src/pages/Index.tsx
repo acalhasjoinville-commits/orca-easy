@@ -21,7 +21,7 @@ import { LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget, canManageUsers } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
