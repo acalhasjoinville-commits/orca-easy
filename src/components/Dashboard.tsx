@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { PDFDownloadButton } from './PDFDownloadButton';
+import { OSDownloadButton } from './OSDownloadButton';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
