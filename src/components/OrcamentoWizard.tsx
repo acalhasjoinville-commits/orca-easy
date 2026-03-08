@@ -1,21 +1,31 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { storage } from '@/lib/storage';
-import { ItemServico, Orcamento } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade } from '@/lib/types';
+import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
+import { cn } from '@/lib/utils';
 
-interface Props { onDone: () => void; }
+interface Props {
+  onDone: () => void;
+  editingOrcamento?: Orcamento | null;
+}
 
-export function OrcamentoWizard({ onDone }: Props) {
-  const [phase, setPhase] = useState<'cliente' | 'carrinho'>('cliente');
-  const [nomeCliente, setNomeCliente] = useState('');
-  const [itens, setItens] = useState<ItemServico[]>([]);
+export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
+  const isEditing = !!editingOrcamento;
+  const [phase, setPhase] = useState<'cliente' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
+  const [nomeCliente, setNomeCliente] = useState(editingOrcamento?.nomeCliente ?? '');
+  const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editMetragem, setEditMetragem] = useState('');
+  const [editDificuldade, setEditDificuldade] = useState<Dificuldade>('facil');
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -32,18 +42,92 @@ export function OrcamentoWizard({ onDone }: Props) {
     setItens(prev => prev.filter(i => i.id !== id));
   };
 
+  const startEditItem = (item: ItemServico) => {
+    setEditingItemId(item.id);
+    setEditMetragem(String(item.metragem));
+    setEditDificuldade(item.dificuldade);
+  };
+
+  const cancelEditItem = () => {
+    setEditingItemId(null);
+  };
+
+  const saveEditItem = (item: ItemServico) => {
+    const m = parseFloat(editMetragem);
+    if (isNaN(m) || m <= 0) return;
+
+    const servicosList = storage.getServicos();
+    const regrasList = storage.getRegras();
+    const motor1List = storage.getMotor1();
+    const motor2List = storage.getMotor2();
+    const insumosList = storage.getInsumos();
+
+    const servico = servicosList.find(s => s.id === item.servicoTemplateId);
+    const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
+    if (!servico || !regra) return;
+
+    let custoMetroLinear: number;
+    if (servico.motorPadrao === 'motor1') {
+      const motor1 = motor1List.find(e => e.material === servico.materialPadrao);
+      if (!motor1) return;
+      custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
+    } else {
+      const resultado = calcCustoMetroMotor2(servico.materialPadrao, servico.espessuraPadrao, servico.cortePadrao, motor2List);
+      if (resultado === null) return;
+      custoMetroLinear = resultado;
+    }
+
+    const custoTotalMaterial = custoMetroLinear * m;
+    const insumosCalc = calcInsumosDinamicos(m, regra, insumosList);
+    const fator = getFatorDificuldade(servico, editDificuldade);
+    const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
+    const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
+    const valorVenda = custoTotalObra * fator;
+
+    setItens(prev => prev.map(i => i.id !== item.id ? i : {
+      ...i,
+      metragem: m,
+      dificuldade: editDificuldade,
+      fatorDificuldade: fator,
+      custoMetroLinear,
+      custoTotalMaterial,
+      insumosCalculados: insumosCalc,
+      custoTotalInsumos,
+      custoTotalObra,
+      valorVenda,
+    }));
+    setEditingItemId(null);
+    toast.success('Item atualizado!');
+  };
+
+  const dificuldadeLabel: Record<Dificuldade, string> = {
+    facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
+  };
+
   const handleSave = () => {
     if (itens.length === 0) return;
-    const orcamento: Orcamento = {
-      id: crypto.randomUUID(),
-      nomeCliente,
-      itensServico: itens,
-      custoTotalObra: totalCusto,
-      valorVenda: totalVenda,
-      dataCriacao: new Date().toISOString(),
-    };
-    storage.addOrcamento(orcamento);
-    toast.success('Orçamento salvo com sucesso!');
+    if (isEditing && editingOrcamento) {
+      const updated: Orcamento = {
+        ...editingOrcamento,
+        nomeCliente,
+        itensServico: itens,
+        custoTotalObra: totalCusto,
+        valorVenda: totalVenda,
+      };
+      storage.updateOrcamento(updated);
+      toast.success('Orçamento atualizado!');
+    } else {
+      const orcamento: Orcamento = {
+        id: crypto.randomUUID(),
+        nomeCliente,
+        itensServico: itens,
+        custoTotalObra: totalCusto,
+        valorVenda: totalVenda,
+        dataCriacao: new Date().toISOString(),
+      };
+      storage.addOrcamento(orcamento);
+      toast.success('Orçamento salvo com sucesso!');
+    }
     onDone();
   };
 
@@ -78,11 +162,13 @@ export function OrcamentoWizard({ onDone }: Props) {
   return (
     <div className="px-4 pb-36 pt-4">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => setPhase('cliente')} className="text-primary">
+        <button onClick={() => isEditing ? onDone() : setPhase('cliente')} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-primary">Detalhes do Orçamento</h1>
+          <h1 className="text-lg font-bold text-primary">
+            {isEditing ? 'Editar Orçamento' : 'Detalhes do Orçamento'}
+          </h1>
           <p className="text-xs text-muted-foreground">Cliente: {nomeCliente}</p>
         </div>
       </div>
@@ -104,24 +190,76 @@ export function OrcamentoWizard({ onDone }: Props) {
         </div>
       ) : (
         <div className="space-y-3">
-          {itens.map((item, idx) => (
+          {itens.map((item) => (
             <Card key={item.id} className="overflow-hidden">
               <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
+                {editingItemId === item.id ? (
+                  /* Inline edit mode */
+                  <div className="space-y-3">
                     <p className="text-sm font-semibold">{item.nomeServico}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.metragem}m · {item.motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
-                    </p>
+                    <div>
+                      <Label className="text-xs">Metragem (m)</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={editMetragem}
+                        onChange={e => setEditMetragem(e.target.value)}
+                        className="h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Dificuldade</Label>
+                      <div className="grid grid-cols-3 gap-1.5 mt-1">
+                        {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => (
+                          <button
+                            key={d}
+                            onClick={() => setEditDificuldade(d)}
+                            className={cn(
+                              'rounded-md border px-2 py-1.5 text-xs font-medium transition-all',
+                              editDificuldade === d
+                                ? 'border-accent bg-accent/10 text-accent'
+                                : 'border-border text-muted-foreground'
+                            )}
+                          >
+                            {dificuldadeLabel[d]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => saveEditItem(item)} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
+                        <Check className="mr-1 h-3 w-3" /> Salvar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancelEditItem} className="flex-1">
+                        <X className="mr-1 h-3 w-3" /> Cancelar
+                      </Button>
+                    </div>
                   </div>
-                  <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Custo: {fmt(item.custoTotalObra)}</span>
-                  <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
-                </div>
+                ) : (
+                  /* View mode */
+                  <>
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-semibold">{item.nomeServico}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Custo: {fmt(item.custoTotalObra)}</span>
+                      <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -141,7 +279,11 @@ export function OrcamentoWizard({ onDone }: Props) {
               <span className="text-xl font-bold text-accent">{fmt(totalVenda)}</span>
             </div>
             <Button onClick={handleSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
-              <Check className="mr-2 h-5 w-5" /> Gerar Proposta ({itens.length} {itens.length === 1 ? 'item' : 'itens'})
+              {isEditing ? (
+                <><Save className="mr-2 h-5 w-5" /> Salvar Alterações</>
+              ) : (
+                <><Check className="mr-2 h-5 w-5" /> Gerar Proposta ({itens.length} {itens.length === 1 ? 'item' : 'itens'})</>
+              )}
             </Button>
           </div>
         </div>
