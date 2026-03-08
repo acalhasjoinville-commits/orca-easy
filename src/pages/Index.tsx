@@ -3,9 +3,10 @@ import { BottomNav } from '@/components/BottomNav';
 import { Dashboard } from '@/components/Dashboard';
 import { OrcamentoWizard } from '@/components/OrcamentoWizard';
 import { Configuracoes } from '@/components/Configuracoes';
+import { Clientes } from '@/components/Clientes';
 import { Orcamento } from '@/lib/types';
 
-type Tab = 'dashboard' | 'orcamento' | 'config';
+type Tab = 'dashboard' | 'orcamento' | 'clientes' | 'config';
 
 const Index = () => {
   const [tab, setTab] = useState<Tab>('dashboard');
@@ -31,6 +32,7 @@ const Index = () => {
         {tab === 'orcamento' && (
           <OrcamentoWizard key={wizardKey} onDone={() => { setEditingOrcamento(null); setTab('dashboard'); }} editingOrcamento={editingOrcamento} />
         )}
+        {tab === 'clientes' && <Clientes />}
         {tab === 'config' && <Configuracoes />}
       </div>
       <BottomNav active={tab} onNavigate={setTab} />

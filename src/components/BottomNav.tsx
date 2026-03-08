@@ -1,9 +1,9 @@
-import { LayoutDashboard, Settings, Plus } from 'lucide-react';
+import { LayoutDashboard, Settings, Plus, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomNavProps {
-  active: 'dashboard' | 'orcamento' | 'config';
-  onNavigate: (tab: 'dashboard' | 'orcamento' | 'config') => void;
+  active: 'dashboard' | 'orcamento' | 'clientes' | 'config';
+  onNavigate: (tab: 'dashboard' | 'orcamento' | 'clientes' | 'config') => void;
 }
 
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
@@ -13,7 +13,7 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         <button
           onClick={() => onNavigate('dashboard')}
           className={cn(
-            'flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors',
+            'flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors',
             active === 'dashboard' ? 'text-primary font-semibold' : 'text-muted-foreground'
           )}
         >
@@ -22,12 +22,23 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         </button>
 
         <button
+          onClick={() => onNavigate('clientes')}
+          className={cn(
+            'flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors',
+            active === 'clientes' ? 'text-primary font-semibold' : 'text-muted-foreground'
+          )}
+        >
+          <Users className="h-5 w-5" />
+          Clientes
+        </button>
+
+        <button
           onClick={() => onNavigate('orcamento')}
           className="flex flex-col items-center gap-0.5"
         >
           <div className={cn(
             'flex h-12 w-12 items-center justify-center rounded-full shadow-md -mt-6 transition-colors',
-            active === 'orcamento' ? 'bg-accent text-accent-foreground' : 'bg-accent text-accent-foreground'
+            'bg-accent text-accent-foreground'
           )}>
             <Plus className="h-6 w-6" />
           </div>
@@ -40,7 +51,7 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
         <button
           onClick={() => onNavigate('config')}
           className={cn(
-            'flex flex-col items-center gap-0.5 px-4 py-1 text-xs transition-colors',
+            'flex flex-col items-center gap-0.5 px-3 py-1 text-xs transition-colors',
             active === 'config' ? 'text-primary font-semibold' : 'text-muted-foreground'
           )}
         >
