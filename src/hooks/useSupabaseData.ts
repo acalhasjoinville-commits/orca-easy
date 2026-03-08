@@ -81,6 +81,7 @@ function dbToOrcamento(row: any): Orcamento {
     numeroOrcamento: row.numero_orcamento,
     clienteId: row.cliente_id || '',
     nomeCliente: row.nome_cliente,
+    motorType: row.motor_type || undefined,
     itensServico: (row.itens_servico || []) as ItemServico[],
     custoTotalObra: Number(row.custo_total_obra),
     valorVenda: Number(row.valor_venda),
