@@ -13,6 +13,7 @@ import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, 
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
+import { PDFDownloadButton } from './PDFDownloadButton';
 import { cn } from '@/lib/utils';
 
 interface Props {
