@@ -1,3 +1,18 @@
+export type TipoPessoa = 'PF' | 'PJ';
+
+export interface Cliente {
+  id: string;
+  tipo: TipoPessoa;
+  nomeRazaoSocial: string;
+  documento: string;
+  whatsapp: string;
+  cep: string;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+}
+
 export interface Motor1Entry {
   id: string;
   material: string;
@@ -86,6 +101,7 @@ export interface ItemServico {
 
 export interface Orcamento {
   id: string;
+  clienteId: string;
   nomeCliente: string;
   itensServico: ItemServico[];
   custoTotalObra: number;
