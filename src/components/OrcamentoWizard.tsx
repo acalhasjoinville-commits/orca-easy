@@ -43,6 +43,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [descricaoGeral, setDescricaoGeral] = useState(editingOrcamento?.descricaoGeral ?? '');
   const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
   const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
+  const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
 
   const clientes = useMemo(() => storage.getClientes(), []);
   const politicas = useMemo(() => storage.getPoliticas(), []);
@@ -114,6 +115,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     toast.success('Item atualizado!');
   };
 
+  const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
+
   const loadPolitica = (politicaId: string) => {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
@@ -121,6 +124,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setDescricaoGeral(pol.descricaoGeral);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
+    setTempoGarantia(pol.tempoGarantia || '');
     toast.success(`Política "${pol.nomePolitica}" carregada!`);
   };
 
@@ -143,6 +147,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       descricaoGeral,
       formasPagamento,
       garantia,
+      tempoGarantia,
     };
     if (isEditing && editingOrcamento) {
       storage.updateOrcamento({ ...editingOrcamento, ...base });
@@ -367,8 +372,23 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Textarea value={formasPagamento} onChange={e => setFormasPagamento(e.target.value)}
                 placeholder="Condições de pagamento..." rows={2} className="text-sm" />
             </div>
+            {/* Tempo de Garantia - highlighted */}
+            <div className="rounded-lg border-2 border-accent/30 bg-accent/5 p-3">
+              <Label className="text-sm font-bold text-accent flex items-center gap-2">
+                🛡️ Tempo de Garantia
+              </Label>
+              <Select value={tempoGarantia} onValueChange={setTempoGarantia}>
+                <SelectTrigger className="h-10 mt-1 border-accent/30 text-base font-semibold">
+                  <SelectValue placeholder="Selecione a garantia..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
-              <Label className="text-xs">Garantia</Label>
+              <Label className="text-xs">Detalhes da Garantia</Label>
               <Textarea value={garantia} onChange={e => setGarantia(e.target.value)}
                 placeholder="Termos de garantia..." rows={2} className="text-sm" />
             </div>

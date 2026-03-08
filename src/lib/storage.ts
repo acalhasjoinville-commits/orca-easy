@@ -1,4 +1,4 @@
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento, Cliente, PoliticaComercial } from './types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, Orcamento, Cliente, PoliticaComercial, MinhaEmpresa } from './types';
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos, seedPoliticas } from './seedData';
 
 function getOrSeed<T>(key: string, seed: T[], version?: number): T[] {
@@ -45,8 +45,16 @@ export const storage = {
   getServicos: (): ServicoTemplate[] => getOrSeed(KEYS.servicos, seedServicos),
   setServicos: (d: ServicoTemplate[]) => save(KEYS.servicos, d),
 
-  getPoliticas: (): PoliticaComercial[] => getOrSeed(KEYS.politicas, seedPoliticas),
-  setPoliticas: (d: PoliticaComercial[]) => save(KEYS.politicas, d),
+  getPoliticas: (): PoliticaComercial[] => getOrSeed(KEYS.politicas, seedPoliticas, 2),
+  setPoliticas: (d: PoliticaComercial[]) => { save(KEYS.politicas, d); localStorage.setItem(KEYS.politicas + '_v', '2'); },
+
+  getMinhaEmpresa: (): MinhaEmpresa | null => {
+    const stored = localStorage.getItem('orcacalhas_minha_empresa');
+    return stored ? JSON.parse(stored) : null;
+  },
+  setMinhaEmpresa: (e: MinhaEmpresa) => {
+    localStorage.setItem('orcacalhas_minha_empresa', JSON.stringify(e));
+  },
 
   getOrcamentos: (): Orcamento[] => {
     const stored = localStorage.getItem(KEYS.orcamentos);

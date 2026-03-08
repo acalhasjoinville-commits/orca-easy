@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { storage } from '@/lib/storage';
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario } from '@/lib/types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario, MinhaEmpresa } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,139 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Upload, Save } from 'lucide-react';
 import { toast } from 'sonner';
+
+function MinhaEmpresaForm() {
+  const existing = storage.getMinhaEmpresa();
+  const [form, setForm] = useState<MinhaEmpresa>(existing ?? {
+    logoUrl: '', nomeFantasia: '', razaoSocial: '', cnpjCpf: '',
+    telefoneWhatsApp: '', emailContato: '', endereco: '', numero: '',
+    bairro: '', cidade: '', estado: '', corTemaPdf: '#0044CC',
+  });
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const set = (k: keyof MinhaEmpresa, v: string) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      set('logoUrl', url);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    storage.setMinhaEmpresa(form);
+    toast.success('Dados da empresa salvos!');
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold text-primary">Minha Empresa</h2>
+          </div>
+
+          {/* Logo */}
+          <div>
+            <Label className="text-xs font-semibold">Logomarca</Label>
+            <div className="flex items-center gap-4 mt-1">
+              {form.logoUrl ? (
+                <img src={form.logoUrl} alt="Logo" className="h-16 w-16 rounded-lg object-contain border bg-background" />
+              ) : (
+                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                  <Upload className="h-5 w-5 text-muted-foreground/40" />
+                </div>
+              )}
+              <div>
+                <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                  <Upload className="mr-1 h-3 w-3" /> Upload Logo
+                </Button>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, máx 2MB</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Nome Fantasia</Label>
+              <Input value={form.nomeFantasia} onChange={e => set('nomeFantasia', e.target.value)} placeholder="Nome comercial" className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Razão Social</Label>
+              <Input value={form.razaoSocial} onChange={e => set('razaoSocial', e.target.value)} placeholder="Razão social" className="h-9" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">CNPJ / CPF</Label>
+              <Input value={form.cnpjCpf} onChange={e => set('cnpjCpf', e.target.value)} placeholder="00.000.000/0001-00" className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">WhatsApp</Label>
+              <Input value={form.telefoneWhatsApp} onChange={e => set('telefoneWhatsApp', e.target.value)} placeholder="(00) 00000-0000" className="h-9" />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">E-mail de Contato</Label>
+            <Input type="email" value={form.emailContato} onChange={e => set('emailContato', e.target.value)} placeholder="contato@empresa.com" className="h-9" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <Label className="text-xs">Endereço</Label>
+              <Input value={form.endereco} onChange={e => set('endereco', e.target.value)} placeholder="Rua / Av." className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Número</Label>
+              <Input value={form.numero} onChange={e => set('numero', e.target.value)} placeholder="Nº" className="h-9" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs">Bairro</Label>
+              <Input value={form.bairro} onChange={e => set('bairro', e.target.value)} className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Cidade</Label>
+              <Input value={form.cidade} onChange={e => set('cidade', e.target.value)} className="h-9" />
+            </div>
+            <div>
+              <Label className="text-xs">Estado</Label>
+              <Input value={form.estado} onChange={e => set('estado', e.target.value)} placeholder="UF" className="h-9" />
+            </div>
+          </div>
+
+          {/* Color picker */}
+          <div>
+            <Label className="text-xs font-semibold">Cor Tema do PDF</Label>
+            <div className="flex items-center gap-3 mt-1">
+              <input type="color" value={form.corTemaPdf} onChange={e => set('corTemaPdf', e.target.value)}
+                className="h-10 w-14 rounded-md border cursor-pointer" />
+              <Input value={form.corTemaPdf} onChange={e => set('corTemaPdf', e.target.value)}
+                placeholder="#0044CC" className="h-9 w-28 font-mono text-sm" />
+              <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corTemaPdf }} />
+            </div>
+          </div>
+
+          <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground h-11">
+            <Save className="mr-2 h-4 w-4" /> Salvar Dados da Empresa
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export function Configuracoes() {
   const [tab, setTab] = useState('motor1');
@@ -87,6 +218,7 @@ export function Configuracoes() {
         descricaoGeral: form.descricaoGeral || '',
         formasPagamento: form.formasPagamento || '',
         garantia: form.garantia || '',
+        tempoGarantia: form.tempoGarantia || '1 ano',
       };
       const updated = editItem ? politicas.map(e => e.id === id ? entry : e) : [...politicas, entry];
       setPoliticas(updated); storage.setPoliticas(updated);
@@ -252,6 +384,8 @@ export function Configuracoes() {
     </div>
   );
 
+  const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
+
   const renderPoliticaForm = () => (
     <div className="space-y-3">
       <div>
@@ -261,6 +395,17 @@ export function Configuracoes() {
       <div>
         <Label className="text-xs">Validade (dias)</Label>
         <Input type="number" inputMode="numeric" value={form.validadeDias || ''} onChange={e => setField('validadeDias', e.target.value)} placeholder="15" />
+      </div>
+      <div>
+        <Label className="text-xs font-semibold text-accent">Tempo de Garantia</Label>
+        <Select value={form.tempoGarantia || '1 ano'} onValueChange={v => setField('tempoGarantia', v)}>
+          <SelectTrigger className="h-9 border-accent/30">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label className="text-xs">Descrição Geral</Label>
@@ -273,9 +418,9 @@ export function Configuracoes() {
           placeholder="Condições de pagamento padrão..." rows={2} className="text-sm" />
       </div>
       <div>
-        <Label className="text-xs">Garantia</Label>
+        <Label className="text-xs">Termos de Garantia (detalhes)</Label>
         <Textarea value={form.garantia || ''} onChange={e => setField('garantia', e.target.value)}
-          placeholder="Termos de garantia padrão..." rows={2} className="text-sm" />
+          placeholder="Detalhes dos termos de garantia..." rows={2} className="text-sm" />
       </div>
     </div>
   );
@@ -326,7 +471,8 @@ export function Configuracoes() {
       <h1 className="mb-4 text-xl font-bold text-primary">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-6 mb-4">
+        <TabsList className="w-full grid grid-cols-7 mb-4">
+          <TabsTrigger value="empresa" className="text-[10px] px-1">Empresa</TabsTrigger>
           <TabsTrigger value="motor1" className="text-[10px] px-1">Motor 1</TabsTrigger>
           <TabsTrigger value="motor2" className="text-[10px] px-1">Motor 2</TabsTrigger>
           <TabsTrigger value="insumos" className="text-[10px] px-1">Insumos</TabsTrigger>
@@ -335,6 +481,10 @@ export function Configuracoes() {
           <TabsTrigger value="politicas" className="text-[10px] px-1">Políticas</TabsTrigger>
         </TabsList>
 
+        {tab === 'empresa' ? (
+          <MinhaEmpresaForm />
+        ) : (
+        <>
         <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="mr-1 h-3 w-3" /> Adicionar
         </Button>
@@ -359,8 +509,10 @@ export function Configuracoes() {
           {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
         </TabsContent>
         <TabsContent value="politicas">
-          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · ${e.formasPagamento.substring(0, 40)}...`))}
+          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`))}
         </TabsContent>
+        </>
+        )}
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
