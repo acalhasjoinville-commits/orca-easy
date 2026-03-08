@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   rolesLoaded: boolean;
   roles: AppRole[];
+  empresaId: string | null;
   isAdmin: boolean;
   isVendedor: boolean;
   isFinanceiro: boolean;
@@ -19,6 +20,7 @@ interface AuthContextType {
   canViewFinanceiro: boolean;
   canCreateEditBudget: boolean;
   canManageClientes: boolean;
+  canManageUsers: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -32,38 +34,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [rolesLoaded, setRolesLoaded] = useState(false);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
 
-  const fetchRoles = useCallback(async (userId: string) => {
+  const fetchRolesAndEmpresa = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await (supabase as any)
+      // Fetch roles
+      const { data: rolesData, error: rolesErr } = await (supabase as any)
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
-      if (error) {
-        console.error('Error fetching roles:', error);
+      if (rolesErr) {
+        console.error('Error fetching roles:', rolesErr);
         setRoles([]);
       } else {
-        setRoles((data || []).map((r: any) => r.role as AppRole));
+        setRoles((rolesData || []).map((r: any) => r.role as AppRole));
+      }
+
+      // Fetch empresa_id from profile
+      const { data: profile, error: profileErr } = await (supabase as any)
+        .from('profiles')
+        .select('empresa_id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (profileErr) {
+        console.error('Error fetching profile:', profileErr);
+        setEmpresaId(null);
+      } else {
+        setEmpresaId(profile?.empresa_id || null);
       }
     } catch (err) {
-      console.error('Error fetching roles:', err);
+      console.error('Error fetching roles/empresa:', err);
       setRoles([]);
+      setEmpresaId(null);
     } finally {
       setRolesLoaded(true);
     }
   }, []);
 
   useEffect(() => {
-    // Set up auth listener BEFORE checking existing session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession?.user) {
           setRolesLoaded(false);
-          setTimeout(() => fetchRoles(newSession.user.id), 0);
+          setTimeout(() => fetchRolesAndEmpresa(newSession.user.id), 0);
         } else {
           setRoles([]);
+          setEmpresaId(null);
           setRolesLoaded(true);
         }
       }
@@ -73,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
       if (existingSession?.user) {
-        fetchRoles(existingSession.user.id).then(() => setLoading(false));
+        fetchRolesAndEmpresa(existingSession.user.id).then(() => setLoading(false));
       } else {
         setRolesLoaded(true);
         setLoading(false);
@@ -81,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchRoles]);
+  }, [fetchRolesAndEmpresa]);
 
   const isAdmin = roles.includes('admin');
   const isVendedor = roles.includes('vendedor');
@@ -94,16 +112,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     rolesLoaded,
     roles,
+    empresaId,
     isAdmin,
     isVendedor,
     isFinanceiro,
     hasAnyRole,
-    // Permission helpers
     canManageSettings: isAdmin,
     canDeleteBudget: isAdmin,
     canViewFinanceiro: isAdmin || isFinanceiro,
     canCreateEditBudget: isAdmin || isVendedor,
     canManageClientes: isAdmin || isVendedor,
+    canManageUsers: isAdmin,
     signIn: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error };
@@ -119,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut: async () => {
       await supabase.auth.signOut();
       setRoles([]);
+      setEmpresaId(null);
     },
   };
 

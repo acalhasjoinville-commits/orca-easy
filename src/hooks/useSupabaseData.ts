@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Cliente, MinhaEmpresa, Orcamento, PoliticaComercial, ItemServico } from '@/lib/types';
 import { Json } from '@/integrations/supabase/types';
+import { useAuth } from '@/hooks/useAuth';
 
 // ─── MAPPERS ───
 
@@ -20,7 +21,7 @@ function dbToCliente(row: any): Cliente {
   };
 }
 
-function clienteToDb(c: Cliente) {
+function clienteToDb(c: Cliente, empresaId: string) {
   return {
     id: c.id,
     tipo: c.tipo,
@@ -32,6 +33,7 @@ function clienteToDb(c: Cliente) {
     numero: c.numero,
     bairro: c.bairro,
     cidade: c.cidade,
+    empresa_id: empresaId,
   };
 }
 
@@ -94,7 +96,7 @@ function dbToOrcamento(row: any): Orcamento {
   };
 }
 
-function orcamentoToDb(o: Orcamento) {
+function orcamentoToDb(o: Orcamento, empresaId: string) {
   return {
     id: o.id,
     numero_orcamento: o.numeroOrcamento,
@@ -112,6 +114,7 @@ function orcamentoToDb(o: Orcamento) {
     formas_pagamento: o.formasPagamento,
     garantia: o.garantia,
     tempo_garantia: o.tempoGarantia,
+    empresa_id: empresaId,
   };
 }
 
@@ -127,7 +130,7 @@ function dbToPolitica(row: any): PoliticaComercial {
   };
 }
 
-function politicaToDb(p: PoliticaComercial) {
+function politicaToDb(p: PoliticaComercial, empresaId: string) {
   return {
     id: p.id,
     nome_politica: p.nomePolitica,
@@ -136,6 +139,7 @@ function politicaToDb(p: PoliticaComercial) {
     garantia: p.garantia,
     tempo_garantia: p.tempoGarantia,
     termo_recebimento_os: p.termoRecebimentoOs,
+    empresa_id: empresaId,
   };
 }
 
@@ -143,6 +147,7 @@ function politicaToDb(p: PoliticaComercial) {
 
 export function useClientes() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const query = useQuery({
     queryKey: ['clientes'],
     queryFn: async () => {
@@ -154,7 +159,8 @@ export function useClientes() {
 
   const addCliente = useMutation({
     mutationFn: async (c: Cliente) => {
-      const { error } = await supabase.from('clientes').insert(clienteToDb(c));
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('clientes').insert(clienteToDb(c, empresaId));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
@@ -162,7 +168,8 @@ export function useClientes() {
 
   const updateCliente = useMutation({
     mutationFn: async (c: Cliente) => {
-      const { error } = await supabase.from('clientes').update(clienteToDb(c)).eq('id', c.id);
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('clientes').update(clienteToDb(c, empresaId)).eq('id', c.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
@@ -192,7 +199,6 @@ export function useEmpresa() {
 
   const saveEmpresa = useMutation({
     mutationFn: async (e: MinhaEmpresa) => {
-      // Check if a row exists directly in the mutation to avoid stale closures
       const { data: rows } = await supabase.from('empresa').select('id').limit(1);
       const existingId = rows && rows.length > 0 ? rows[0].id : null;
       if (existingId) {
@@ -211,6 +217,7 @@ export function useEmpresa() {
 
 export function useOrcamentos() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const query = useQuery({
     queryKey: ['orcamentos'],
     queryFn: async () => {
@@ -228,7 +235,8 @@ export function useOrcamentos() {
 
   const addOrcamento = useMutation({
     mutationFn: async (o: Orcamento) => {
-      const { error } = await supabase.from('orcamentos').insert(orcamentoToDb(o));
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('orcamentos').insert(orcamentoToDb(o, empresaId));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orcamentos'] }),
@@ -236,7 +244,8 @@ export function useOrcamentos() {
 
   const updateOrcamento = useMutation({
     mutationFn: async (o: Orcamento) => {
-      const { error } = await supabase.from('orcamentos').update(orcamentoToDb(o)).eq('id', o.id);
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('orcamentos').update(orcamentoToDb(o, empresaId)).eq('id', o.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orcamentos'] }),
@@ -262,6 +271,7 @@ export function useOrcamentos() {
 
 export function usePoliticas() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const query = useQuery({
     queryKey: ['politicas'],
     queryFn: async () => {
@@ -273,7 +283,8 @@ export function usePoliticas() {
 
   const addPolitica = useMutation({
     mutationFn: async (p: PoliticaComercial) => {
-      const { error } = await supabase.from('politicas_comerciais').insert(politicaToDb(p));
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('politicas_comerciais').insert(politicaToDb(p, empresaId));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['politicas'] }),
@@ -281,7 +292,8 @@ export function usePoliticas() {
 
   const updatePolitica = useMutation({
     mutationFn: async (p: PoliticaComercial) => {
-      const { error } = await supabase.from('politicas_comerciais').update(politicaToDb(p)).eq('id', p.id);
+      if (!empresaId) throw new Error('Empresa não vinculada');
+      const { error } = await supabase.from('politicas_comerciais').update(politicaToDb(p, empresaId)).eq('id', p.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['politicas'] }),
