@@ -25,6 +25,7 @@ const KEYS = {
   regras: 'orcacalhas_regras',
   servicos: 'orcacalhas_servicos',
   orcamentos: 'orcacalhas_orcamentos',
+  clientes: 'orcacalhas_clientes',
 };
 
 export const storage = {
