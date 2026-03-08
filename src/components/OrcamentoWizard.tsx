@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, FileDown, Printer, Loader2 } from 'lucide-react';
 import { generatePdfFromHtml } from '@/lib/generatePdf';
 import { buildProposalHtml, imageToDataUrl } from '@/lib/printTemplate';
-import { printViaIframe } from '@/lib/printViaIframe';
+
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { cn } from '@/lib/utils';
@@ -487,8 +487,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     const logoDataUrl = empresa?.logoUrl ? await imageToDataUrl(empresa.logoUrl) : undefined;
                     const templateHtml = buildProposalHtml({ orcamento: orcToSave, cliente: cli, empresa, logoDataUrl });
 
-                    printViaIframe(templateHtml);
+                    sessionStorage.setItem('printHtml', templateHtml);
+                    sessionStorage.setItem('printNumero', String(orcToSave.numeroOrcamento));
                     toast.success('Orçamento salvo!');
+                    window.location.href = '/imprimir';
                   } catch {
                     toast.error('Erro ao imprimir. Use "Baixar PDF".');
                   }
