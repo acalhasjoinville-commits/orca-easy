@@ -71,6 +71,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const totalVenda = itens.reduce((s, i) => s + i.valorVenda, 0);
   const descontoNum = parseFloat(desconto) || 0;
   const valorFinal = Math.max(totalVenda - descontoNum, 0);
+  const hasItems = itens.length > 0;
+
+  const handleBackFromCart = () => {
+    if (isEditing) {
+      onDone();
+      return;
+    }
+
+    if (hasItems) {
+      toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.');
+      return;
+    }
+
+    setPhase('motor');
+  };
+
+  const handleMotorSelect = (nextMotor: MotorType) => {
+    if (hasItems && nextMotor !== motorType) {
+      toast.error('Motor travado após adicionar item.');
+      return;
+    }
+    setMotorType(nextMotor);
+  };
 
   const handleAddItem = (item: ItemServico) => {
     setItens(prev => [...prev, item]);
