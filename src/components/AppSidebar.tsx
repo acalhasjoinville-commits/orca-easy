@@ -13,7 +13,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-export type Tab = 'dashboard' | 'orcamentos' | 'orcamento-detalhes' | 'orcamento-novo' | 'clientes' | 'financeiro' | 'config';
+export type Tab = 'dashboard' | 'orcamentos' | 'orcamento-detalhes' | 'orcamento-novo' | 'clientes' | 'financeiro' | 'usuarios' | 'config';
 
 interface AppSidebarProps {
   active: Tab;
