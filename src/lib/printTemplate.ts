@@ -231,6 +231,7 @@ export function buildProposalHtml(params: TemplateParams): string {
   }
   .sig-block { width: 42%; text-align: center; }
   .sig-line { border-top: 1px solid #555; padding-top: 6px; font-size: 8.5pt; color: #555; }
+  .sig-sub { font-size: 7pt; color: #999; margin-top: 2px; }
 
   /* ===== FOOTER ===== */
   .footer {
