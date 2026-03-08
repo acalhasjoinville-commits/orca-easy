@@ -135,6 +135,40 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
+  const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
+    if (itens.length === 0 || !selectedCliente) return null;
+    const base = {
+      clienteId: selectedCliente.id,
+      nomeCliente: selectedCliente.nomeRazaoSocial,
+      itensServico: itens,
+      custoTotalObra: totalCusto,
+      valorVenda: totalVenda,
+      desconto: descontoNum,
+      valorFinal,
+      status,
+      validade,
+      descricaoGeral,
+      formasPagamento,
+      garantia,
+      tempoGarantia,
+    };
+    if (isEditing && editingOrcamento) {
+      const orc = { ...editingOrcamento, ...base };
+      await updateOrcamento.mutateAsync(orc);
+      return orc;
+    } else {
+      const nextNum = await getNextNumero();
+      const orc: Orcamento = {
+        id: crypto.randomUUID(),
+        numeroOrcamento: nextNum,
+        dataCriacao: new Date().toISOString(),
+        ...base,
+      };
+      await addOrcamento.mutateAsync(orc);
+      return orc;
+    }
+  };
+
   const handleSave = async () => {
     if (itens.length === 0 || !selectedCliente) return;
     const base = {
