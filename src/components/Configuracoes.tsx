@@ -270,9 +270,20 @@ export function Configuracoes() {
         const pm1 = form.permiteMotor1 === 'true';
         const pm2 = form.permiteMotor2 === 'true';
         if (!pm1 && !pm2) { toast.error('Selecione pelo menos um motor permitido.'); return; }
-        let pref = (form.motorPreferencial as MotorType) || 'motor1';
-        if (pm1 && !pm2) pref = 'motor1';
-        if (!pm1 && pm2) pref = 'motor2';
+
+        const prefRaw = form.motorPreferencial as MotorType | undefined;
+        let pref: MotorType;
+        if (pm1 && !pm2) {
+          pref = 'motor1';
+        } else if (!pm1 && pm2) {
+          pref = 'motor2';
+        } else {
+          if (prefRaw !== 'motor1' && prefRaw !== 'motor2') {
+            toast.error('Selecione o motor preferencial.');
+            return;
+          }
+          pref = prefRaw;
+        }
         const entry: ServicoTemplate = {
           id, nomeServico: form.nomeServico || '',
           regraId: form.regraId || '',
