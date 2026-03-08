@@ -1,4 +1,4 @@
-import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate } from './types';
+import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial } from './types';
 
 export const seedMotor1: Motor1Entry[] = [
   { id: '1', material: 'Alumínio', densidade: 2.7, precoQuilo: 37.50 },
@@ -77,5 +77,24 @@ export const seedServicos: ServicoTemplate[] = [
     regraId: '4', motorPadrao: 'motor1', materialPadrao: 'Alumínio',
     espessuraPadrao: 0.7, cortePadrao: 500,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.8, dificuldadeDificil: 5.0,
+  },
+];
+
+export const seedPoliticas: PoliticaComercial[] = [
+  {
+    id: '1',
+    nomePolitica: 'Padrão Residencial',
+    validadeDias: 15,
+    descricaoGeral: 'Fornecimento e instalação de calhas, rufos e acessórios conforme especificações técnicas.',
+    formasPagamento: '50% na aprovação + 50% na conclusão. PIX, transferência ou dinheiro.',
+    garantia: '5 anos contra defeitos de fabricação e instalação, exceto mau uso.',
+  },
+  {
+    id: '2',
+    nomePolitica: 'Padrão Condomínio',
+    validadeDias: 30,
+    descricaoGeral: 'Fornecimento e instalação de calhas, rufos e acessórios para áreas comuns conforme vistoria técnica.',
+    formasPagamento: '30% na aprovação + 40% no início da obra + 30% na conclusão. Boleto, PIX ou transferência.',
+    garantia: '5 anos contra defeitos de fabricação e instalação. Manutenção preventiva semestral recomendada.',
   },
 ];

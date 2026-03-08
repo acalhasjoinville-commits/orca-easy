@@ -99,6 +99,17 @@ export interface ItemServico {
   valorVenda: number;
 }
 
+export type StatusOrcamento = 'pendente' | 'aprovado' | 'rejeitado' | 'executado';
+
+export interface PoliticaComercial {
+  id: string;
+  nomePolitica: string;
+  validadeDias: number;
+  descricaoGeral: string;
+  formasPagamento: string;
+  garantia: string;
+}
+
 export interface Orcamento {
   id: string;
   numeroOrcamento: number;
@@ -107,5 +118,12 @@ export interface Orcamento {
   itensServico: ItemServico[];
   custoTotalObra: number;
   valorVenda: number;
+  desconto: number;
+  valorFinal: number;
   dataCriacao: string;
+  status: StatusOrcamento;
+  validade: string;
+  descricaoGeral: string;
+  formasPagamento: string;
+  garantia: string;
 }
