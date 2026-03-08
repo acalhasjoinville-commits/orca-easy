@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial } from '@/lib/types';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
