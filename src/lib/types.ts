@@ -105,7 +105,6 @@ export interface PoliticaComercial {
   id: string;
   nomePolitica: string;
   validadeDias: number;
-  descricaoGeral: string;
   formasPagamento: string;
   garantia: string;
   tempoGarantia: string;
