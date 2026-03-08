@@ -71,6 +71,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const totalVenda = itens.reduce((s, i) => s + i.valorVenda, 0);
   const descontoNum = parseFloat(desconto) || 0;
   const valorFinal = Math.max(totalVenda - descontoNum, 0);
+  const hasItems = itens.length > 0;
+
+  const handleBackFromCart = () => {
+    if (isEditing) {
+      onDone();
+      return;
+    }
+
+    if (hasItems) {
+      toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.');
+      return;
+    }
+
+    setPhase('motor');
+  };
+
+  const handleMotorSelect = (nextMotor: MotorType) => {
+    if (hasItems && nextMotor !== motorType) {
+      toast.error('Motor travado após adicionar item.');
+      return;
+    }
+    setMotorType(nextMotor);
+  };
 
   const handleAddItem = (item: ItemServico) => {
     setItens(prev => [...prev, item]);
@@ -278,7 +301,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     return (
       <div className="px-4 pb-24 pt-4">
         <div className="mb-4 flex items-center gap-3">
-          <button onClick={() => setPhase('cliente')} className="text-primary">
+          <button onClick={() => hasItems ? setPhase('carrinho') : setPhase('cliente')} className="text-primary">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-bold text-primary">Tipo de Orçamento</h1>
@@ -287,11 +310,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
           <CardContent className="pt-6 space-y-4">
             <Label>Selecionar Motor do Orçamento</Label>
             <p className="text-xs text-muted-foreground">Todos os serviços deste orçamento usarão o motor selecionado.</p>
+            {hasItems && (
+              <p className="text-xs text-destructive">Motor travado: remova todos os itens para alterar.</p>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setMotorType('motor1')}
+                onClick={() => handleMotorSelect('motor1')}
+                disabled={hasItems}
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all disabled:cursor-not-allowed disabled:opacity-70',
                   motorType === 'motor1'
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/30'
@@ -302,9 +329,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <span className="text-[10px]">Fabricar</span>
               </button>
               <button
-                onClick={() => setMotorType('motor2')}
+                onClick={() => handleMotorSelect('motor2')}
+                disabled={hasItems}
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all',
+                  'flex flex-col items-center gap-2 rounded-lg border-2 p-5 transition-all disabled:cursor-not-allowed disabled:opacity-70',
                   motorType === 'motor2'
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/30'
@@ -332,7 +360,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   return (
     <div className="px-4 pb-36 pt-4">
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => isEditing ? onDone() : setPhase('motor')} className="text-primary">
+        <button onClick={handleBackFromCart} className="text-primary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1">
