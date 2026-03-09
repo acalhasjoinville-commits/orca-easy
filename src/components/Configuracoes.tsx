@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useEmpresa, usePoliticas } from '@/hooks/useSupabaseData';
 import { Motor1Entry, Motor2Entry, InsumoEntry, RegraCalculo, ServicoTemplate, PoliticaComercial, MotorType, ItemRegra, MetodoCalculo, getCustoUnitario, MinhaEmpresa } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2, Layers, Calculator, BookOpen, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
+// ─── Types for active entity tracking ───
+type EntitySection = 'motor1' | 'motor2' | 'insumos' | 'regras' | 'catalogo' | 'politicas';
+
+// ─── MinhaEmpresaForm (unchanged) ───
 function MinhaEmpresaForm() {
   const { empresa: existing, isLoading, saveEmpresa } = useEmpresa();
   const [initialized, setInitialized] = useState(false);
@@ -44,7 +48,6 @@ function MinhaEmpresaForm() {
     setUploading(true);
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      // Get empresa_id for path segregation
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await (supabase as any).from('profiles').select('empresa_id').eq('id', user?.id).maybeSingle();
       const empresaPrefix = profile?.empresa_id || 'default';
@@ -81,12 +84,16 @@ function MinhaEmpresaForm() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <SectionHeader
+        title="Minha Empresa"
+        description="Dados institucionais, identidade visual e informações de contato."
+      />
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold text-primary">Minha Empresa</h2>
+            <h2 className="text-base font-semibold text-primary">Dados da Empresa</h2>
           </div>
 
           {/* Logo */}
@@ -204,17 +211,68 @@ function MinhaEmpresaForm() {
   );
 }
 
+// ─── Reusable section header ───
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-2">
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+// ─── Reusable sub-section with header + add button + list ───
+function SubSection({
+  title,
+  description,
+  onAdd,
+  isEmpty,
+  emptyText,
+  children,
+}: {
+  title: string;
+  description: string;
+  onAdd: () => void;
+  isEmpty: boolean;
+  emptyText: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <Button size="sm" onClick={onAdd} className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90">
+          <Plus className="mr-1 h-3 w-3" /> Novo
+        </Button>
+      </div>
+      {isEmpty ? (
+        <div className="rounded-lg border border-dashed border-muted-foreground/25 py-8 text-center">
+          <p className="text-sm text-muted-foreground">{emptyText}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">{children}</div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Component ───
 export function Configuracoes() {
   const [tab, setTab] = useState('empresa');
+  // Tracks which entity type the dialog is editing (important for "materiais" tab)
+  const [activeSection, setActiveSection] = useState<EntitySection>('motor1');
 
-  // All data from Supabase hooks
+  // All data from Supabase hooks (unchanged)
   const { motor1, isLoading: loadingM1, addMotor1, updateMotor1, deleteMotor1 } = useMotor1();
   const { motor2, isLoading: loadingM2, addMotor2, updateMotor2, deleteMotor2 } = useMotor2();
   const { insumos, isLoading: loadingIns, addInsumo, updateInsumo, deleteInsumo } = useInsumos();
   const { regras, isLoading: loadingReg, addRegra, updateRegra, deleteRegra } = useRegras();
   const { servicos, isLoading: loadingSrv, addServico, updateServico, deleteServico } = useServicos();
   const { politicas, addPolitica, updatePolitica, deletePolitica } = usePoliticas();
-  
+
   const isLoadingTech = loadingM1 || loadingM2 || loadingIns || loadingReg || loadingSrv;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -227,48 +285,50 @@ export function Configuracoes() {
 
   const [regraItens, setRegraItens] = useState<ItemRegra[]>([]);
 
-  const openAdd = () => {
+  const openAdd = (section: EntitySection) => {
+    setActiveSection(section);
     setEditItem(null);
     setForm({});
     setRegraItens([]);
     setDialogOpen(true);
   };
 
-  const openEdit = (item: any) => {
+  const openEdit = (item: any, section: EntitySection) => {
+    setActiveSection(section);
     setEditItem(item);
     const f: Record<string, string> = {};
     Object.entries(item).forEach(([k, v]) => {
       if (k !== 'id' && k !== 'itensRegra') f[k] = String(v);
     });
-    // motorType is already handled by generic loop above
     setForm(f);
     if (item.itensRegra) setRegraItens([...item.itensRegra]);
     setDialogOpen(true);
   };
 
+  // handleSave now uses activeSection instead of tab
   const handleSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
     const id = editItem?.id || crypto.randomUUID();
 
     try {
-      if (tab === 'motor1') {
+      if (activeSection === 'motor1') {
         const entry: Motor1Entry = { id, material: form.material || '', densidade: parseFloat(form.densidade) || 0, precoQuilo: parseFloat(form.precoQuilo) || 0 };
         if (editItem) await updateMotor1.mutateAsync(entry);
         else await addMotor1.mutateAsync(entry);
-      } else if (tab === 'motor2') {
+      } else if (activeSection === 'motor2') {
         const entry: Motor2Entry = { id, material: form.material || '', espessura: parseFloat(form.espessura) || 0, corte: parseFloat(form.corte) || 0, precoMetroLinear: parseFloat(form.precoMetroLinear) || 0 };
         if (editItem) await updateMotor2.mutateAsync(entry);
         else await addMotor2.mutateAsync(entry);
-      } else if (tab === 'insumos') {
+      } else if (activeSection === 'insumos') {
         const entry: InsumoEntry = { id, nomeEmbalagemCompra: form.nomeEmbalagemCompra || '', nomeUnidadeConsumo: form.nomeUnidadeConsumo || '', precoEmbalagem: parseFloat(form.precoEmbalagem) || 0, qtdEmbalagem: parseFloat(form.qtdEmbalagem) || 1 };
         if (editItem) await updateInsumo.mutateAsync(entry);
         else await addInsumo.mutateAsync(entry);
-      } else if (tab === 'regras') {
+      } else if (activeSection === 'regras') {
         const entry: RegraCalculo = { id, nomeRegra: form.nomeRegra || '', itensRegra: regraItens };
         if (editItem) await updateRegra.mutateAsync(entry);
         else await addRegra.mutateAsync(entry);
-      } else if (tab === 'catalogo') {
+      } else if (activeSection === 'catalogo') {
         const entry: ServicoTemplate = {
           id, nomeServico: form.nomeServico || '',
           regraId: form.regraId || '',
@@ -282,7 +342,7 @@ export function Configuracoes() {
         };
         if (editItem) await updateServico.mutateAsync(entry);
         else await addServico.mutateAsync(entry);
-      } else if (tab === 'politicas') {
+      } else if (activeSection === 'politicas') {
         const entry: PoliticaComercial = {
           id,
           nomePolitica: form.nomePolitica || '',
@@ -305,16 +365,17 @@ export function Configuracoes() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  // handleDelete now uses activeSection
+  const handleDelete = async (id: string, section: EntitySection) => {
     if (deletingId) return;
     setDeletingId(id);
     try {
-      if (tab === 'motor1') await deleteMotor1.mutateAsync(id);
-      else if (tab === 'motor2') await deleteMotor2.mutateAsync(id);
-      else if (tab === 'insumos') await deleteInsumo.mutateAsync(id);
-      else if (tab === 'regras') await deleteRegra.mutateAsync(id);
-      else if (tab === 'catalogo') await deleteServico.mutateAsync(id);
-      else if (tab === 'politicas') await deletePolitica.mutateAsync(id);
+      if (section === 'motor1') await deleteMotor1.mutateAsync(id);
+      else if (section === 'motor2') await deleteMotor2.mutateAsync(id);
+      else if (section === 'insumos') await deleteInsumo.mutateAsync(id);
+      else if (section === 'regras') await deleteRegra.mutateAsync(id);
+      else if (section === 'catalogo') await deleteServico.mutateAsync(id);
+      else if (section === 'politicas') await deletePolitica.mutateAsync(id);
       toast.success('Removido!');
     } catch {
       toast.error('Erro ao remover.');
@@ -325,16 +386,18 @@ export function Configuracoes() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const renderItem = (item: any, subtitle: string) => (
-    <Card key={item.id} className="mb-2">
-      <CardContent className="flex items-center justify-between px-4 py-3">
+  const renderItem = (item: any, subtitle: string, section: EntitySection) => (
+    <Card key={item.id}>
+      <CardContent className="flex items-center justify-between px-4 py-4">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium truncate">{item.material || item.nomeEmbalagemCompra || item.nomeRegra || item.nomeServico || item.nomePolitica}</p>
           <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
         </div>
         <div className="flex gap-1 shrink-0">
-          <button onClick={() => openEdit(item)} className="p-2 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
-          <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive disabled:opacity-50">
+          <button onClick={() => openEdit(item, section)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button onClick={() => handleDelete(item.id, section)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
             {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </button>
         </div>
@@ -356,6 +419,8 @@ export function Configuracoes() {
   const removeRegraItem = (idx: number) => {
     setRegraItens(prev => prev.filter((_, i) => i !== idx));
   };
+
+  // ─── Form renderers (unchanged logic) ───
 
   const renderRegraForm = () => (
     <div className="space-y-3">
@@ -384,7 +449,7 @@ export function Configuracoes() {
                   {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeUnidadeConsumo}</SelectItem>)}
                 </SelectContent>
               </Select>
-               <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
+              <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
                 <SelectTrigger className="h-8 text-xs w-28">
                   <SelectValue />
                 </SelectTrigger>
@@ -410,71 +475,66 @@ export function Configuracoes() {
     </div>
   );
 
-  const renderCatalogoForm = () => {
-    return (
-      <div className="space-y-3">
+  const renderCatalogoForm = () => (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs">Nome do Serviço</Label>
+        <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
+      </div>
+      <div>
+        <Label className="text-xs">Regra de Cálculo</Label>
+        <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
+          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>
+            {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs font-semibold">Motor</Label>
+        <Select value={form.motorType || 'motor1'} onValueChange={v => setField('motorType', v)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
+            <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label className="text-xs">Material Padrão</Label>
+        <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
+          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>
+            {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs">Nome do Serviço</Label>
-          <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
+          <Label className="text-xs">Espessura (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
         </div>
         <div>
-          <Label className="text-xs">Regra de Cálculo</Label>
-          <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Motor único */}
-        <div>
-          <Label className="text-xs font-semibold">Motor</Label>
-          <Select value={form.motorType || 'motor1'} onValueChange={v => setField('motorType', v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
-              <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label className="text-xs">Material Padrão</Label>
-          <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs">Espessura (mm)</Label>
-            <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Corte (mm)</Label>
-            <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <Label className="text-xs">Fator Fácil</Label>
-            <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Fator Médio</Label>
-            <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
-          </div>
-          <div>
-            <Label className="text-xs">Fator Difícil</Label>
-            <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
-          </div>
+          <Label className="text-xs">Corte (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
         </div>
       </div>
-    );
-  };
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <Label className="text-xs">Fator Fácil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Fator Médio</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Fator Difícil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
+        </div>
+      </div>
+    </div>
+  );
 
   const TEMPO_GARANTIA_OPTIONS = ['3 meses', '6 meses', '1 ano', '2 anos', '3 anos', '5 anos'];
 
@@ -539,12 +599,12 @@ export function Configuracoes() {
   };
 
   const renderFormContent = () => {
-    if (tab === 'catalogo') return renderCatalogoForm();
-    if (tab === 'regras') return renderRegraForm();
-    if (tab === 'politicas') return renderPoliticaForm();
+    if (activeSection === 'catalogo') return renderCatalogoForm();
+    if (activeSection === 'regras') return renderRegraForm();
+    if (activeSection === 'politicas') return renderPoliticaForm();
     return (
       <div className="space-y-3">
-        {simpleFields[tab]?.map(f => (
+        {simpleFields[activeSection]?.map(f => (
           <div key={f.key}>
             <Label className="text-xs">{f.label}</Label>
             <Input
@@ -559,66 +619,164 @@ export function Configuracoes() {
     );
   };
 
+  // ─── Dialog title with context ───
+  const sectionLabels: Record<EntitySection, string> = {
+    motor1: 'Motor 1',
+    motor2: 'Motor 2',
+    insumos: 'Insumo',
+    regras: 'Regra de Cálculo',
+    catalogo: 'Serviço',
+    politicas: 'Política Comercial',
+  };
+
+  const dialogTitle = `${editItem ? 'Editar' : 'Adicionar'} ${sectionLabels[activeSection]}`;
+
+  // ─── Tab content renderers ───
+
+  const renderMateriaisTab = () => (
+    <div className="space-y-8">
+      <SectionHeader
+        title="Custos e Materiais"
+        description="Materiais, chapas e insumos usados como base de cálculo dos orçamentos."
+      />
+
+      {/* Motor 1 */}
+      <SubSection
+        title="Motor 1 — Chapas e Bobinas"
+        description="Materiais comprados em bobina/chapa, com cálculo por peso."
+        onAdd={() => openAdd('motor1')}
+        isEmpty={motor1.length === 0}
+        emptyText="Nenhum material cadastrado no Motor 1."
+      >
+        {motor1.map(e => renderItem(e, `${e.densidade} g/cm³ · ${fmt(e.precoQuilo)}/kg`, 'motor1'))}
+      </SubSection>
+
+      <div className="border-t border-border" />
+
+      {/* Motor 2 */}
+      <SubSection
+        title="Motor 2 — Material Dobrado"
+        description="Materiais comprados já dobrados do fornecedor, com preço por metro linear."
+        onAdd={() => openAdd('motor2')}
+        isEmpty={motor2.length === 0}
+        emptyText="Nenhum material cadastrado no Motor 2."
+      >
+        {motor2.map(e => renderItem(e, `${e.espessura}mm · ${e.corte}mm · ${fmt(e.precoMetroLinear)}/m`, 'motor2'))}
+      </SubSection>
+
+      <div className="border-t border-border" />
+
+      {/* Insumos */}
+      <SubSection
+        title="Insumos"
+        description="Materiais consumíveis usados nas regras de cálculo (parafusos, silicone, etc)."
+        onAdd={() => openAdd('insumos')}
+        isEmpty={insumos.length === 0}
+        emptyText="Nenhum insumo cadastrado."
+      >
+        {insumos.map(e => {
+          const preco = e.precoEmbalagem ?? 0;
+          const qtd = e.qtdEmbalagem ?? 1;
+          return renderItem(e, `${fmt(preco)} / ${qtd} un = ${fmt(getCustoUnitario(e))}/un`, 'insumos');
+        })}
+      </SubSection>
+    </div>
+  );
+
+  const renderRegrasTab = () => (
+    <div className="space-y-6">
+      <SubSection
+        title="Regras de Cálculo"
+        description="Definem como os insumos entram no cálculo do orçamento. Cada regra pode ter vários insumos com métodos diferentes."
+        onAdd={() => openAdd('regras')}
+        isEmpty={regras.length === 0}
+        emptyText="Nenhuma regra cadastrada. Crie uma para vincular insumos aos serviços."
+      >
+        {regras.map(e => renderItem(e, `${e.itensRegra.length} insumo(s) vinculado(s)`, 'regras'))}
+      </SubSection>
+    </div>
+  );
+
+  const renderCatalogoTab = () => (
+    <div className="space-y-6">
+      <SubSection
+        title="Catálogo de Serviços"
+        description="Serviços disponíveis para orçamento, com motor, material padrão e fatores de dificuldade."
+        onAdd={() => openAdd('catalogo')}
+        isEmpty={servicos.length === 0}
+        emptyText="Nenhum serviço cadastrado. Adicione para usar nos orçamentos."
+      >
+        {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`, 'catalogo'))}
+      </SubSection>
+    </div>
+  );
+
+  const renderPoliticasTab = () => (
+    <div className="space-y-6">
+      <SubSection
+        title="Políticas Comerciais"
+        description="Condições comerciais usadas no orçamento e na Ordem de Serviço: validade, pagamento, garantia e termos."
+        onAdd={() => openAdd('politicas')}
+        isEmpty={politicas.length === 0}
+        emptyText="Nenhuma política cadastrada. Crie uma para usar nos orçamentos."
+      >
+        {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`, 'politicas'))}
+      </SubSection>
+    </div>
+  );
+
   return (
     <div className="px-4 pb-24 pt-4">
-      <h1 className="mb-4 text-xl font-bold text-primary">Configurações</h1>
+      <h1 className="mb-5 text-xl font-bold text-primary">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-7 mb-4">
-          <TabsTrigger value="empresa" className="text-[10px] px-1">Empresa</TabsTrigger>
-          <TabsTrigger value="motor1" className="text-[10px] px-1">Motor 1</TabsTrigger>
-          <TabsTrigger value="motor2" className="text-[10px] px-1">Motor 2</TabsTrigger>
-          <TabsTrigger value="insumos" className="text-[10px] px-1">Insumos</TabsTrigger>
-          <TabsTrigger value="regras" className="text-[10px] px-1">Regras</TabsTrigger>
-          <TabsTrigger value="catalogo" className="text-[10px] px-1">Catálogo</TabsTrigger>
-          <TabsTrigger value="politicas" className="text-[10px] px-1">Políticas</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-5 mb-6 h-auto">
+          <TabsTrigger value="empresa" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+            <Building2 className="h-4 w-4" />
+            <span>Empresa</span>
+          </TabsTrigger>
+          <TabsTrigger value="materiais" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+            <Layers className="h-4 w-4" />
+            <span>Materiais</span>
+          </TabsTrigger>
+          <TabsTrigger value="regras" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+            <Calculator className="h-4 w-4" />
+            <span>Regras</span>
+          </TabsTrigger>
+          <TabsTrigger value="catalogo" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+            <BookOpen className="h-4 w-4" />
+            <span>Catálogo</span>
+          </TabsTrigger>
+          <TabsTrigger value="politicas" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+            <FileText className="h-4 w-4" />
+            <span>Políticas</span>
+          </TabsTrigger>
         </TabsList>
 
-        {tab === 'empresa' ? (
-          <MinhaEmpresaForm />
-        ) : isLoadingTech ? (
+        {tab === 'empresa' && <MinhaEmpresaForm />}
+
+        {tab !== 'empresa' && isLoadingTech ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-        <>
-        <Button size="sm" onClick={openAdd} className="mb-3 bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus className="mr-1 h-3 w-3" /> Adicionar
-        </Button>
-
-        <TabsContent value="motor1">
-          {motor1.map(e => renderItem(e, `${e.densidade} g/cm³ · ${fmt(e.precoQuilo)}/kg`))}
-        </TabsContent>
-        <TabsContent value="motor2">
-          {motor2.map(e => renderItem(e, `${e.espessura}mm · ${e.corte}mm · ${fmt(e.precoMetroLinear)}/m`))}
-        </TabsContent>
-        <TabsContent value="insumos">
-          {insumos.map(e => {
-            const preco = e.precoEmbalagem ?? 0;
-            const qtd = e.qtdEmbalagem ?? 1;
-            return renderItem(e, `${fmt(preco)} / ${qtd} un = ${fmt(getCustoUnitario(e))}/un`);
-          })}
-        </TabsContent>
-        <TabsContent value="regras">
-          {regras.map(e => renderItem(e, `${e.itensRegra.length} insumo(s) vinculado(s)`))}
-        </TabsContent>
-        <TabsContent value="catalogo">
-          {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`))}
-        </TabsContent>
-        <TabsContent value="politicas">
-          {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`))}
-        </TabsContent>
-        </>
+          <>
+            {tab === 'materiais' && renderMateriaisTab()}
+            {tab === 'regras' && renderRegrasTab()}
+            {tab === 'catalogo' && renderCatalogoTab()}
+            {tab === 'politicas' && renderPoliticasTab()}
+          </>
         )}
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editItem ? 'Editar' : 'Adicionar'}</DialogTitle>
+            <DialogTitle>{dialogTitle}</DialogTitle>
           </DialogHeader>
           {renderFormContent()}
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={isSaving} className="bg-primary text-primary-foreground">
               {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 'Salvar'}
             </Button>
