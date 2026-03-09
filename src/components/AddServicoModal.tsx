@@ -243,6 +243,8 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
                      <Input
                       type="number"
                       min="0"
+                      step="1"
+                      inputMode="numeric"
                       className="w-14 h-7 text-center text-xs"
                       value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
                       onChange={e => {
@@ -256,7 +258,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
                           });
                           return;
                         }
-                        const parsed = parseInt(raw);
+                        const parsed = parseInt(raw, 10);
                         if (isNaN(parsed) || parsed < 0) return;
                         setEditQtds(prev => ({ ...prev, [ic.insumoId]: parsed }));
                       }}
