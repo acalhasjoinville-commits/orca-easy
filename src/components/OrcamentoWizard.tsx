@@ -275,6 +275,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       tempoGarantia,
       // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
+      politicaNomeSnapshot: politicaNomeSnapshot ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
