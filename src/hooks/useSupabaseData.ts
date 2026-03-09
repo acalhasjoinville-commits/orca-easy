@@ -244,9 +244,11 @@ export function useOrcamentos() {
   });
 
   const getNextNumero = async (): Promise<number> => {
-    const { data } = await supabase.from('orcamentos').select('numero_orcamento').order('numero_orcamento', { ascending: false }).limit(1);
-    if (data && data.length > 0) return Math.max(data[0].numero_orcamento + 1, 1001);
-    return 1001;
+    // Number is generated atomically by the database, not the frontend.
+    // The RPC derives empresa_id from auth.uid() — no frontend parameter needed.
+    const { data, error } = await supabase.rpc('next_orcamento_number');
+    if (error) throw new Error('Falha ao gerar número do orçamento: ' + error.message);
+    return data as number;
   };
 
   const addOrcamento = useMutation({
