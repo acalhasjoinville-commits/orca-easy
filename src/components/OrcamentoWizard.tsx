@@ -28,6 +28,8 @@ const statusOptions: { value: StatusOrcamento; label: string; color: string }[] 
   { value: 'executado', label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
 ];
 
+const FALLBACK_TERMO = 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.';
+
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
   const [phase, setPhase] = useState<'cliente' | 'motor' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
@@ -50,6 +52,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   // Track which policy was last loaded (for snapshot linkage)
   const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
     editingOrcamento?.politicaComercialId ?? null
+  );
+  // Termo de recebimento da OS — always has value (snapshot or fallback)
+  const [termoRecebimentoOs, setTermoRecebimentoOs] = useState<string>(
+    editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
   );
 
   const { clientes, isLoading: loadingClientes } = useClientes();
@@ -160,6 +166,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
     setTempoGarantia(pol.tempoGarantia || '');
+    setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
     toast.success(`Política "${pol.nomePolitica}" carregada!`);
   };
 
@@ -170,8 +177,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
     if (itens.length === 0 || !selectedCliente) return null;
     // Snapshot captures the exact final form values at save time.
-    // If user loaded a policy then manually edited fields, the edited values win.
-    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
+    // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -187,13 +193,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
-      // Snapshots — always the final saved form values, not the policy directly
+      // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
       tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
+      termoRecebimentoOsSnapshot: termoRecebimentoOs, // always has value, never null
     };
     if (isEditing && editingOrcamento) {
       const orc = { ...editingOrcamento, ...base };
@@ -214,7 +220,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const handleSave = async () => {
     if (itens.length === 0 || !selectedCliente) return;
-    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
+    // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -230,13 +236,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
-      // Snapshots — exact final form values at save time
+      // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
       tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
+      termoRecebimentoOsSnapshot: termoRecebimentoOs, // always has value, never null
     };
     try {
       if (isEditing && editingOrcamento) {
@@ -510,6 +516,23 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* Campo de edição do termo — visível após carregar política */}
+            {loadedPoliticaId && (
+              <div>
+                <Label className="text-xs">Termo de Recebimento (OS)</Label>
+                <Textarea
+                  value={termoRecebimentoOs}
+                  onChange={e => setTermoRecebimentoOs(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                  placeholder="Texto do canhoto de entrega da OS..."
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Este texto aparece no canhoto de entrega da Ordem de Serviço.
+                </p>
               </div>
             )}
 
