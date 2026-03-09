@@ -201,6 +201,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
+    if (isSaving) return null;
     if (itens.length === 0 || !selectedCliente) return null;
     // Snapshot captures the exact final form values at save time.
     // termoRecebimentoOs state always has a value (edited or fallback), never null.
