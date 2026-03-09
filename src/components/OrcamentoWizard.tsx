@@ -53,6 +53,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
     editingOrcamento?.politicaComercialId ?? null
   );
+  // Nome da política carregada (snapshot histórico) — pode ser null em legado
+  const [politicaNomeSnapshot, setPoliticaNomeSnapshot] = useState<string | null>(
+    editingOrcamento?.politicaNomeSnapshot ?? null
+  );
   // Termo de recebimento da OS — always has value (snapshot or fallback)
   const [termoRecebimentoOs, setTermoRecebimentoOs] = useState<string>(
     editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
