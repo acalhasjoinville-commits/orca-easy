@@ -226,11 +226,26 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
                 {finalCalc.insumosFinais.map(ic => (
                   <div key={ic.insumoId} className="flex items-center justify-between gap-2">
                     <span className="text-xs flex-1 truncate">{ic.nomeInsumo}</span>
-                    <Input
+                     <Input
                       type="number"
+                      min="0"
                       className="w-14 h-7 text-center text-xs"
                       value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
-                      onChange={e => setEditQtds(prev => ({ ...prev, [ic.insumoId]: parseInt(e.target.value) || 0 }))}
+                      onChange={e => {
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          // Empty field = remove override (revert to calculated)
+                          setEditQtds(prev => {
+                            const next = { ...prev };
+                            delete next[ic.insumoId];
+                            return next;
+                          });
+                          return;
+                        }
+                        const parsed = parseInt(raw);
+                        if (isNaN(parsed) || parsed < 0) return;
+                        setEditQtds(prev => ({ ...prev, [ic.insumoId]: parsed }));
+                      }}
                     />
                     <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
                   </div>
