@@ -306,6 +306,8 @@ export function Configuracoes() {
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       if (tab === 'motor1') await deleteMotor1.mutateAsync(id);
       else if (tab === 'motor2') await deleteMotor2.mutateAsync(id);
@@ -316,6 +318,8 @@ export function Configuracoes() {
       toast.success('Removido!');
     } catch {
       toast.error('Erro ao remover.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
