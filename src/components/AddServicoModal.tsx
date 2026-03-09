@@ -77,6 +77,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
     return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
   }, [servico, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
 
+  // Build real overrides: only entries where manual qty differs from calculated base
+  const realOverrides = useMemo(() => {
+    if (!calc) return {};
+    const result: Record<string, number> = {};
+    for (const [insumoId, manualQty] of Object.entries(editQtds)) {
+      const base = calc.insumosCalc.find(ic => ic.insumoId === insumoId);
+      if (base && manualQty !== base.quantidade) {
+        result[insumoId] = manualQty;
+      }
+    }
+    return result;
+  }, [calc, editQtds]);
+
   const finalCalc = useMemo(() => {
     if (!calc) return null;
 
