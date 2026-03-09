@@ -292,6 +292,7 @@ export type Database = {
           nome_cliente: string
           numero_orcamento: number
           politica_comercial_id: string | null
+          politica_nome_snapshot: string | null
           status: string
           tempo_garantia: string | null
           tempo_garantia_snapshot: string | null
@@ -320,6 +321,7 @@ export type Database = {
           nome_cliente: string
           numero_orcamento: number
           politica_comercial_id?: string | null
+          politica_nome_snapshot?: string | null
           status?: string
           tempo_garantia?: string | null
           tempo_garantia_snapshot?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           nome_cliente?: string
           numero_orcamento?: number
           politica_comercial_id?: string | null
+          politica_nome_snapshot?: string | null
           status?: string
           tempo_garantia?: string | null
           tempo_garantia_snapshot?: string | null
