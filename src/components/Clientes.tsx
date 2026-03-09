@@ -38,11 +38,15 @@ export function Clientes() {
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       await deleteCliente.mutateAsync(id);
       toast.success('Cliente removido.');
     } catch {
       toast.error('Erro ao remover cliente.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
