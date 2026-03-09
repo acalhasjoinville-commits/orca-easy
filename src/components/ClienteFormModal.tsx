@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (cliente: Cliente) => void;
+  onSave: (cliente: Cliente) => void | Promise<void>;
   editing?: Cliente | null;
 }
 
