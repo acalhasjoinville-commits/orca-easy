@@ -97,6 +97,8 @@ export interface ItemServico {
   custoTotalInsumos: number;
   custoTotalObra: number;
   valorVenda: number;
+  /** Manual overrides: insumoId → quantidade. Only present when user explicitly changed a quantity. */
+  insumosOverrides?: Record<string, number>;
 }
 
 export type StatusOrcamento = 'pendente' | 'aprovado' | 'rejeitado' | 'executado';

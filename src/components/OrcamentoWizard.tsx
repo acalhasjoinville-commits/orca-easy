@@ -142,8 +142,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       custoMetroLinear = resultado;
     }
     const custoTotalMaterial = custoMetroLinear * m;
-    const insumosCalc = calcInsumosDinamicos(m, regra, insumosList);
+    const insumosBase = calcInsumosDinamicos(m, regra, insumosList);
     const fator = getFatorDificuldade(servico, editDificuldade);
+
+    // Reapply saved overrides — only for insumos that still exist in the calculation
+    const existingOverrides = item.insumosOverrides;
+    const insumosCalc = insumosBase.map(ic => {
+      const override = existingOverrides?.[ic.insumoId];
+      if (override !== undefined) {
+        return { ...ic, quantidade: override, custoTotal: override * ic.custoUnitario };
+      }
+      return ic;
+    });
+
+    // Clean overrides: keep only those that still map to a calculated insumo
+    const validOverrides = existingOverrides
+      ? Object.fromEntries(
+          Object.entries(existingOverrides).filter(([id]) =>
+            insumosBase.some(ic => ic.insumoId === id)
+          )
+        )
+      : undefined;
+    const cleanedOverrides = validOverrides && Object.keys(validOverrides).length > 0 ? validOverrides : undefined;
+
     const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
     const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
     const valorVenda = custoTotalObra * fator;
@@ -151,6 +172,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       ...i, metragem: m, dificuldade: editDificuldade, fatorDificuldade: fator,
       custoMetroLinear, custoTotalMaterial, insumosCalculados: insumosCalc,
       custoTotalInsumos, custoTotalObra, valorVenda,
+      insumosOverrides: cleanedOverrides,
     }));
     setEditingItemId(null);
     toast.success('Item atualizado!');

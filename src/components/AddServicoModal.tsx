@@ -77,6 +77,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
     return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
   }, [servico, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
 
+  // Build real overrides: only entries where manual qty differs from calculated base
+  const realOverrides = useMemo(() => {
+    if (!calc) return {};
+    const result: Record<string, number> = {};
+    for (const [insumoId, manualQty] of Object.entries(editQtds)) {
+      const base = calc.insumosCalc.find(ic => ic.insumoId === insumoId);
+      if (base && manualQty !== base.quantidade) {
+        result[insumoId] = manualQty;
+      }
+    }
+    return result;
+  }, [calc, editQtds]);
+
   const finalCalc = useMemo(() => {
     if (!calc) return null;
 
@@ -120,6 +133,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
       custoTotalInsumos: finalCalc.custoTotalInsumos,
       custoTotalObra: finalCalc.custoTotalObra,
       valorVenda: finalCalc.valorVenda,
+      insumosOverrides: Object.keys(realOverrides).length > 0 ? realOverrides : undefined,
     };
     onSave(item);
     resetForm();
@@ -226,11 +240,26 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
                 {finalCalc.insumosFinais.map(ic => (
                   <div key={ic.insumoId} className="flex items-center justify-between gap-2">
                     <span className="text-xs flex-1 truncate">{ic.nomeInsumo}</span>
-                    <Input
+                     <Input
                       type="number"
+                      min="0"
                       className="w-14 h-7 text-center text-xs"
                       value={editQtds[ic.insumoId] !== undefined ? editQtds[ic.insumoId] : ic.quantidade}
-                      onChange={e => setEditQtds(prev => ({ ...prev, [ic.insumoId]: parseInt(e.target.value) || 0 }))}
+                      onChange={e => {
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          // Empty field = remove override (revert to calculated)
+                          setEditQtds(prev => {
+                            const next = { ...prev };
+                            delete next[ic.insumoId];
+                            return next;
+                          });
+                          return;
+                        }
+                        const parsed = parseInt(raw);
+                        if (isNaN(parsed) || parsed < 0) return;
+                        setEditQtds(prev => ({ ...prev, [ic.insumoId]: parsed }));
+                      }}
                     />
                     <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
                   </div>
