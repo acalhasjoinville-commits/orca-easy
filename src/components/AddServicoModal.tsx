@@ -133,6 +133,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
       custoTotalInsumos: finalCalc.custoTotalInsumos,
       custoTotalObra: finalCalc.custoTotalObra,
       valorVenda: finalCalc.valorVenda,
+      insumosOverrides: Object.keys(realOverrides).length > 0 ? realOverrides : undefined,
     };
     onSave(item);
     resetForm();
