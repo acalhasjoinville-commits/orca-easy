@@ -219,6 +219,8 @@ export function Configuracoes() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
