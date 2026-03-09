@@ -47,6 +47,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
   const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
   const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
+  // Track which policy was last loaded (for snapshot linkage)
+  const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
+    editingOrcamento?.politicaComercialId ?? null
+  );
 
   const { clientes, isLoading: loadingClientes } = useClientes();
   const { politicas } = usePoliticas();
