@@ -149,15 +149,22 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
   const canSave = nome.trim() && rawPhone.length >= 10 && rawDoc.length >= (tipo === 'PF' ? 11 : 14);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSaving) return;
     if (!canSave) return;
-    onSave({
-      id: editing?.id ?? crypto.randomUUID(),
-      tipo, nomeRazaoSocial: nome.trim(), documento, whatsapp,
-      cep, endereco, numero, bairro, cidade,
-    });
+    setIsSaving(true);
+    try {
+      await Promise.resolve(onSave({
+        id: editing?.id ?? crypto.randomUUID(),
+        tipo, nomeRazaoSocial: nome.trim(), documento, whatsapp,
+        cep, endereco, numero, bairro, cidade,
+      }));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
