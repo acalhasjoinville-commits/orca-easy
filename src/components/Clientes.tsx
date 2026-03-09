@@ -120,7 +120,8 @@ export function Clientes() {
         <Plus className="h-6 w-6" />
       </button>
 
-      <ClienteFormModal open={modalOpen} onClose={() => { setModalOpen(false); setEditing(null); }}
+      <ClienteFormModal key={editing?.id ?? 'new'} open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditing(null); }}
         onSave={handleSave} editing={editing} />
     </div>
   );
