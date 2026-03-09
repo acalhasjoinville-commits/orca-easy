@@ -155,15 +155,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       return ic;
     });
 
-    // Clean overrides: keep only those that still map to a calculated insumo
-    const validOverrides = existingOverrides
-      ? Object.fromEntries(
-          Object.entries(existingOverrides).filter(([id]) =>
-            insumosBase.some(ic => ic.insumoId === id)
-          )
-        )
-      : undefined;
-    const cleanedOverrides = validOverrides && Object.keys(validOverrides).length > 0 ? validOverrides : undefined;
+    // Clean overrides: remove orphans (insumo no longer in base) AND non-real (override === new base qty)
+    let cleanedOverrides: Record<string, number> | undefined = undefined;
+    if (existingOverrides) {
+      const filtered: Record<string, number> = {};
+      for (const [insumoId, overrideQty] of Object.entries(existingOverrides)) {
+        const baseInsumo = insumosBase.find(ic => ic.insumoId === insumoId);
+        // Keep only if insumo still exists in base AND override differs from new base qty
+        if (baseInsumo && overrideQty !== baseInsumo.quantidade) {
+          filtered[insumoId] = overrideQty;
+        }
+      }
+      cleanedOverrides = Object.keys(filtered).length > 0 ? filtered : undefined;
+    }
 
     const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
     const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
