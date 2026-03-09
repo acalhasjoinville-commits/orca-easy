@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Users, Pencil, Trash2, Phone, Loader2 } from 'lucide-react';
+
 import { ClienteFormModal } from './ClienteFormModal';
 import { toast } from 'sonner';
 
