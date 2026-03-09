@@ -334,7 +334,9 @@ export function Configuracoes() {
         </div>
         <div className="flex gap-1 shrink-0">
           <button onClick={() => openEdit(item)} className="p-2 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
-          <button onClick={() => handleDelete(item.id)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+          <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive disabled:opacity-50">
+            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
         </div>
       </CardContent>
     </Card>
