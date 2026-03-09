@@ -1,6 +1,6 @@
 import { useOrcamentos } from '@/hooks/useSupabaseData';
 import { Orcamento, StatusOrcamento } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, FileText, Search, Loader2 } from 'lucide-react';
@@ -46,16 +46,24 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento }: OrcamentosProps)
   }
 
   return (
-    <div className="px-4 pb-24 lg:pb-8 pt-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-primary">Orçamentos</h1>
-        <p className="text-sm text-muted-foreground">Gerencie seus orçamentos de calhas e rufos</p>
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Orçamentos</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie seus orçamentos de calhas e rufos</p>
+        </div>
+        {canCreateEditBudget && orcamentos.length > 0 && (
+          <Button onClick={onNewOrcamento} className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
+            <Plus className="mr-1.5 h-4 w-4" /> Novo Orçamento
+          </Button>
+        )}
       </div>
 
       {orcamentos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <FileText className="mb-4 h-16 w-16 text-muted-foreground/40" />
-          <h2 className="mb-2 text-lg font-semibold text-muted-foreground">Nenhum orçamento ainda</h2>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <FileText className="mb-4 h-12 w-12 text-muted-foreground/40" />
+          <h2 className="mb-2 text-lg font-semibold text-foreground">Nenhum orçamento ainda</h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
             {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
           </p>
@@ -67,16 +75,18 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento }: OrcamentosProps)
         </div>
       ) : (
         <div className="space-y-3">
-          {canCreateEditBudget && (
-            <Button onClick={onNewOrcamento} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-base">
-              <Plus className="mr-2 h-5 w-5" /> Novo Orçamento
-            </Button>
-          )}
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por nome ou número..." value={search}
-              onChange={e => setSearch(e.target.value)} className="pl-9" />
+          {/* Search + mobile CTA */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por nome ou número..." value={search}
+                onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            {canCreateEditBudget && (
+              <Button onClick={onNewOrcamento} className="sm:hidden bg-accent text-accent-foreground hover:bg-accent/90 shrink-0">
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {filtered.map(o => {
@@ -84,31 +94,22 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento }: OrcamentosProps)
             const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
             return (
               <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onViewOrcamento(o)}>
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <div className="flex items-start justify-between">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base font-bold text-accent">#{o.numeroOrcamento ?? '—'}</span>
                         <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
                           {st.label}
                         </span>
                       </div>
-                      <CardTitle className="text-base">
-                        <span className="font-bold text-accent">#{o.numeroOrcamento ?? '—'}</span>
-                        {' - '}
-                        {o.nomeCliente}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground">
-                        {o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}
-                      </p>
+                      <p className="text-sm font-medium text-foreground truncate">{o.nomeCliente}</p>
                     </div>
+                    <p className="text-lg font-bold text-accent shrink-0 ml-3">{formatCurrency(displayValue)}</p>
                   </div>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 pt-0">
-                  <div className="flex items-end justify-between">
-                    <p className="text-[10px] text-muted-foreground">
-                      {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
-                    </p>
-                    <p className="text-lg font-bold text-accent">{formatCurrency(displayValue)}</p>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                    <span>{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </CardContent>
               </Card>
