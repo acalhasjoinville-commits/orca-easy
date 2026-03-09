@@ -244,8 +244,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSave = async () => {
+    if (isSaving) return;
     if (itens.length === 0 || !selectedCliente) return;
+    setIsSaving(true);
     // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
@@ -288,7 +292,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       onDone();
     } catch {
       toast.error('Erro ao salvar orçamento.');
-
+    } finally {
+      setIsSaving(false);
     }
   };
 
