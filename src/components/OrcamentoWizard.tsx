@@ -220,7 +220,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const handleSave = async () => {
     if (itens.length === 0 || !selectedCliente) return;
-    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
+    // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -236,13 +236,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
-      // Snapshots — exact final form values at save time
+      // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
       tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
+      termoRecebimentoOsSnapshot: termoRecebimentoOs, // always has value, never null
     };
     try {
       if (isEditing && editingOrcamento) {
