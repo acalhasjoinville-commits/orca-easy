@@ -14,6 +14,7 @@ export function Clientes() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = clientes.filter(c =>
     c.nomeRazaoSocial.toLowerCase().includes(search.toLowerCase()) ||
