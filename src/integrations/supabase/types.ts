@@ -260,16 +260,22 @@ export type Database = {
           descricao_geral: string | null
           empresa_id: string
           formas_pagamento: string | null
+          formas_pagamento_snapshot: string | null
           garantia: string | null
+          garantia_snapshot: string | null
           id: string
           itens_servico: Json
           motor_type: string | null
           nome_cliente: string
           numero_orcamento: number
+          politica_comercial_id: string | null
           status: string
           tempo_garantia: string | null
+          tempo_garantia_snapshot: string | null
+          termo_recebimento_os_snapshot: string | null
           updated_at: string
           validade: string | null
+          validade_snapshot: string | null
           valor_final: number
           valor_venda: number
         }
@@ -282,16 +288,22 @@ export type Database = {
           descricao_geral?: string | null
           empresa_id: string
           formas_pagamento?: string | null
+          formas_pagamento_snapshot?: string | null
           garantia?: string | null
+          garantia_snapshot?: string | null
           id?: string
           itens_servico?: Json
           motor_type?: string | null
           nome_cliente: string
           numero_orcamento: number
+          politica_comercial_id?: string | null
           status?: string
           tempo_garantia?: string | null
+          tempo_garantia_snapshot?: string | null
+          termo_recebimento_os_snapshot?: string | null
           updated_at?: string
           validade?: string | null
+          validade_snapshot?: string | null
           valor_final?: number
           valor_venda?: number
         }
@@ -304,16 +316,22 @@ export type Database = {
           descricao_geral?: string | null
           empresa_id?: string
           formas_pagamento?: string | null
+          formas_pagamento_snapshot?: string | null
           garantia?: string | null
+          garantia_snapshot?: string | null
           id?: string
           itens_servico?: Json
           motor_type?: string | null
           nome_cliente?: string
           numero_orcamento?: number
+          politica_comercial_id?: string | null
           status?: string
           tempo_garantia?: string | null
+          tempo_garantia_snapshot?: string | null
+          termo_recebimento_os_snapshot?: string | null
           updated_at?: string
           validade?: string | null
+          validade_snapshot?: string | null
           valor_final?: number
           valor_venda?: number
         }
@@ -330,6 +348,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_politica_comercial_id_fkey"
+            columns: ["politica_comercial_id"]
+            isOneToOne: false
+            referencedRelation: "politicas_comerciais"
             referencedColumns: ["id"]
           },
         ]

@@ -94,6 +94,13 @@ function dbToOrcamento(row: any): Orcamento {
     formasPagamento: row.formas_pagamento || '',
     garantia: row.garantia || '',
     tempoGarantia: row.tempo_garantia || '',
+    // Snapshot fields — read as-is (null means legacy record)
+    politicaComercialId: row.politica_comercial_id ?? null,
+    validadeSnapshot: row.validade_snapshot ?? null,
+    formasPagamentoSnapshot: row.formas_pagamento_snapshot ?? null,
+    garantiaSnapshot: row.garantia_snapshot ?? null,
+    tempoGarantiaSnapshot: row.tempo_garantia_snapshot ?? null,
+    termoRecebimentoOsSnapshot: row.termo_recebimento_os_snapshot ?? null,
   };
 }
 
@@ -117,6 +124,13 @@ function orcamentoToDb(o: Orcamento, empresaId: string) {
     garantia: o.garantia,
     tempo_garantia: o.tempoGarantia,
     empresa_id: empresaId,
+    // Snapshot fields — persist final form state at save time
+    politica_comercial_id: o.politicaComercialId ?? null,
+    validade_snapshot: o.validadeSnapshot ?? null,
+    formas_pagamento_snapshot: o.formasPagamentoSnapshot ?? null,
+    garantia_snapshot: o.garantiaSnapshot ?? null,
+    tempo_garantia_snapshot: o.tempoGarantiaSnapshot ?? null,
+    termo_recebimento_os_snapshot: o.termoRecebimentoOsSnapshot ?? null,
   };
 }
 
