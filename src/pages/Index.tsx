@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar, Tab } from '@/components/AppSidebar';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Dashboard } from '@/components/Dashboard';
+import { Orcamentos } from '@/components/Orcamentos';
 import { OrcamentoWizard } from '@/components/OrcamentoWizard';
 import { OrcamentoDetails } from '@/components/OrcamentoDetails';
 import { Configuracoes } from '@/components/Configuracoes';
@@ -143,8 +144,8 @@ const Index = () => {
 
   const content = (
     <>
-      {tab === 'dashboard' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
-      {tab === 'orcamentos' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
+      {tab === 'dashboard' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />}
+      {tab === 'orcamentos' && <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
       {tab === 'orcamento-detalhes' && selectedOrcamento && (
         <OrcamentoDetails
           orcamento={selectedOrcamento}
