@@ -145,17 +145,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const insumosBase = calcInsumosDinamicos(m, regra, insumosList);
     const fator = getFatorDificuldade(servico, editDificuldade);
 
-    // Reapply saved overrides — only for insumos that still exist in the calculation
-    const existingOverrides = item.insumosOverrides;
-    const insumosCalc = insumosBase.map(ic => {
-      const override = existingOverrides?.[ic.insumoId];
-      if (override !== undefined) {
-        return { ...ic, quantidade: override, custoTotal: override * ic.custoUnitario };
-      }
-      return ic;
-    });
-
     // Clean overrides: remove orphans (insumo no longer in base) AND non-real (override === new base qty)
+    const existingOverrides = item.insumosOverrides;
     let cleanedOverrides: Record<string, number> | undefined = undefined;
     if (existingOverrides) {
       const filtered: Record<string, number> = {};
@@ -168,6 +159,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       }
       cleanedOverrides = Object.keys(filtered).length > 0 ? filtered : undefined;
     }
+
+    // Reapply cleaned overrides — only for insumos that still exist AND still differ from base
+    const insumosCalc = insumosBase.map(ic => {
+      const override = cleanedOverrides?.[ic.insumoId];
+      if (override !== undefined) {
+        return { ...ic, quantidade: override, custoTotal: override * ic.custoUnitario };
+      }
+      return ic;
+    });
 
     const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
     const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
