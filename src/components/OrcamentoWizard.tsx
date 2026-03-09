@@ -192,6 +192,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
     setLoadedPoliticaId(pol.id);
+    setPoliticaNomeSnapshot(pol.nomePolitica);
     setValidade(`${pol.validadeDias} dias`);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
