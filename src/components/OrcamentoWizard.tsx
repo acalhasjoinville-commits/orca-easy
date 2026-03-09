@@ -28,6 +28,8 @@ const statusOptions: { value: StatusOrcamento; label: string; color: string }[] 
   { value: 'executado', label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
 ];
 
+const FALLBACK_TERMO = 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.';
+
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
   const [phase, setPhase] = useState<'cliente' | 'motor' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
