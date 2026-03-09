@@ -177,8 +177,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
     if (itens.length === 0 || !selectedCliente) return null;
     // Snapshot captures the exact final form values at save time.
-    // If user loaded a policy then manually edited fields, the edited values win.
-    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
+    // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -194,13 +193,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
-      // Snapshots — always the final saved form values, not the policy directly
+      // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
       tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
+      termoRecebimentoOsSnapshot: termoRecebimentoOs, // always has value, never null
     };
     if (isEditing && editingOrcamento) {
       const orc = { ...editingOrcamento, ...base };
