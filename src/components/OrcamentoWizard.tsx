@@ -519,6 +519,23 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             )}
 
+            {/* Campo de edição do termo — visível após carregar política */}
+            {loadedPoliticaId && (
+              <div>
+                <Label className="text-xs">Termo de Recebimento (OS)</Label>
+                <Textarea
+                  value={termoRecebimentoOs}
+                  onChange={e => setTermoRecebimentoOs(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                  placeholder="Texto do canhoto de entrega da OS..."
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Este texto aparece no canhoto de entrega da Ordem de Serviço.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Validade</Label>
