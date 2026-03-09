@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Users, Pencil, Trash2, Phone, Loader2 } from 'lucide-react';
+
 import { ClienteFormModal } from './ClienteFormModal';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ export function Clientes() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = clientes.filter(c =>
     c.nomeRazaoSocial.toLowerCase().includes(search.toLowerCase()) ||
@@ -36,11 +38,15 @@ export function Clientes() {
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       await deleteCliente.mutateAsync(id);
       toast.success('Cliente removido.');
     } catch {
       toast.error('Erro ao remover cliente.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -104,8 +110,8 @@ export function Clientes() {
                     <button onClick={() => handleEdit(c)} className="text-muted-foreground hover:text-primary p-1">
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} className="text-muted-foreground hover:text-destructive p-1">
-                      <Trash2 className="h-4 w-4" />
+                    <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1 disabled:opacity-50">
+                      {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>

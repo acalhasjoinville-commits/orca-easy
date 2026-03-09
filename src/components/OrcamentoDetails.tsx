@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
+import { Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +27,7 @@ interface OrcamentoDetailsProps {
   empresa?: MinhaEmpresa;
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void | Promise<void>;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -46,6 +48,7 @@ const formatCurrency = (v: number) =>
 
 export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDelete }: OrcamentoDetailsProps) {
   const { canCreateEditBudget, canDeleteBudget } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
 
@@ -245,12 +248,22 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => onDelete(orcamento.id)}
+                  disabled={isDeleting}
+                  onClick={async (e) => {
+                    if (isDeleting) return;
+                    e.preventDefault();
+                    setIsDeleting(true);
+                    try {
+                      await Promise.resolve(onDelete(orcamento.id));
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Excluir
+                  {isDeleting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Excluindo...</> : 'Excluir'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

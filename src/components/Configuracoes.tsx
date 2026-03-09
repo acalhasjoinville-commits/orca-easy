@@ -219,6 +219,8 @@ export function Configuracoes() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
@@ -245,6 +247,8 @@ export function Configuracoes() {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     const id = editItem?.id || crypto.randomUUID();
 
     try {
@@ -296,10 +300,14 @@ export function Configuracoes() {
       toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
     } catch {
       toast.error('Erro ao salvar.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
     try {
       if (tab === 'motor1') await deleteMotor1.mutateAsync(id);
       else if (tab === 'motor2') await deleteMotor2.mutateAsync(id);
@@ -310,6 +318,8 @@ export function Configuracoes() {
       toast.success('Removido!');
     } catch {
       toast.error('Erro ao remover.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -324,7 +334,9 @@ export function Configuracoes() {
         </div>
         <div className="flex gap-1 shrink-0">
           <button onClick={() => openEdit(item)} className="p-2 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
-          <button onClick={() => handleDelete(item.id)} className="p-2 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+          <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive disabled:opacity-50">
+            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
         </div>
       </CardContent>
     </Card>
@@ -607,7 +619,9 @@ export function Configuracoes() {
           </DialogHeader>
           {renderFormContent()}
           <DialogFooter>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="bg-primary text-primary-foreground">
+              {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 'Salvar'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

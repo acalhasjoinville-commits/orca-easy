@@ -201,6 +201,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
+    if (isSaving) return null;
     if (itens.length === 0 || !selectedCliente) return null;
     // Snapshot captures the exact final form values at save time.
     // termoRecebimentoOs state always has a value (edited or fallback), never null.
@@ -244,8 +245,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     }
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSave = async () => {
+    if (isSaving) return;
     if (itens.length === 0 || !selectedCliente) return;
+    setIsSaving(true);
     // termoRecebimentoOs state always has a value (edited or fallback), never null.
     const base = {
       clienteId: selectedCliente.id,
@@ -288,7 +293,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       onDone();
     } catch {
       toast.error('Erro ao salvar orçamento.');
-
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -629,8 +635,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <span className="text-xl font-bold" style={{ color: corDestaque }}>{fmt(valorFinal)}</span>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="flex-1 h-11" style={{ backgroundColor: corDestaque, color: '#fff' }}>
-                {isEditing ? (
+              <Button onClick={handleSave} disabled={isSaving} className="flex-1 h-11" style={{ backgroundColor: corDestaque, color: '#fff' }}>
+                {isSaving ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Salvando...</>
+                ) : isEditing ? (
                   <><Save className="mr-2 h-5 w-5" /> Salvar</>
                 ) : (
                   <><Check className="mr-2 h-5 w-5" /> Salvar ({itens.length})</>
