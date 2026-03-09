@@ -110,8 +110,8 @@ export function Clientes() {
                     <button onClick={() => handleEdit(c)} className="text-muted-foreground hover:text-primary p-1">
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} className="text-muted-foreground hover:text-destructive p-1">
-                      <Trash2 className="h-4 w-4" />
+                    <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1 disabled:opacity-50">
+                      {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>

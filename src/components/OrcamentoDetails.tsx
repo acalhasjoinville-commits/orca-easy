@@ -248,12 +248,22 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => onDelete(orcamento.id)}
+                  disabled={isDeleting}
+                  onClick={async (e) => {
+                    if (isDeleting) return;
+                    e.preventDefault();
+                    setIsDeleting(true);
+                    try {
+                      await Promise.resolve(onDelete(orcamento.id));
+                    } finally {
+                      setIsDeleting(false);
+                    }
+                  }}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Excluir
+                  {isDeleting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Excluindo...</> : 'Excluir'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

@@ -619,7 +619,9 @@ export function Configuracoes() {
           </DialogHeader>
           {renderFormContent()}
           <DialogFooter>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="bg-primary text-primary-foreground">
+              {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 'Salvar'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

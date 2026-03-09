@@ -251,8 +251,8 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
             </div>
           </div>
 
-          <Button onClick={handleSave} disabled={!canSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
-            {editing ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+          <Button onClick={handleSave} disabled={!canSave || isSaving} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
+            {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : editing ? 'Salvar Alterações' : 'Cadastrar Cliente'}
           </Button>
         </div>
       </DialogContent>
