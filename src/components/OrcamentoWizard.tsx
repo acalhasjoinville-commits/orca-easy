@@ -169,6 +169,9 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
     if (itens.length === 0 || !selectedCliente) return null;
+    // Snapshot captures the exact final form values at save time.
+    // If user loaded a policy then manually edited fields, the edited values win.
+    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -184,6 +187,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
+      // Snapshots — always the final saved form values, not the policy directly
+      politicaComercialId: loadedPoliticaId ?? null,
+      validadeSnapshot: validade,
+      formasPagamentoSnapshot: formasPagamento,
+      garantiaSnapshot: garantia,
+      tempoGarantiaSnapshot: tempoGarantia,
+      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
     };
     if (isEditing && editingOrcamento) {
       const orc = { ...editingOrcamento, ...base };
@@ -204,6 +214,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const handleSave = async () => {
     if (itens.length === 0 || !selectedCliente) return;
+    const loadedPolitica = loadedPoliticaId ? politicas.find(p => p.id === loadedPoliticaId) : null;
     const base = {
       clienteId: selectedCliente.id,
       nomeCliente: selectedCliente.nomeRazaoSocial,
@@ -219,6 +230,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       formasPagamento,
       garantia,
       tempoGarantia,
+      // Snapshots — exact final form values at save time
+      politicaComercialId: loadedPoliticaId ?? null,
+      validadeSnapshot: validade,
+      formasPagamentoSnapshot: formasPagamento,
+      garantiaSnapshot: garantia,
+      tempoGarantiaSnapshot: tempoGarantia,
+      termoRecebimentoOsSnapshot: loadedPolitica?.termoRecebimentoOs ?? null,
     };
     try {
       if (isEditing && editingOrcamento) {
@@ -238,6 +256,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       onDone();
     } catch {
       toast.error('Erro ao salvar orçamento.');
+
     }
   };
 
