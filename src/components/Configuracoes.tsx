@@ -247,6 +247,8 @@ export function Configuracoes() {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     const id = editItem?.id || crypto.randomUUID();
 
     try {
@@ -298,6 +300,8 @@ export function Configuracoes() {
       toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
     } catch {
       toast.error('Erro ao salvar.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
