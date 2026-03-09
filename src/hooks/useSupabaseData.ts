@@ -96,6 +96,7 @@ function dbToOrcamento(row: any): Orcamento {
     tempoGarantia: row.tempo_garantia || '',
     // Snapshot fields — read as-is (null means legacy record)
     politicaComercialId: row.politica_comercial_id ?? null,
+    politicaNomeSnapshot: row.politica_nome_snapshot ?? null,
     validadeSnapshot: row.validade_snapshot ?? null,
     formasPagamentoSnapshot: row.formas_pagamento_snapshot ?? null,
     garantiaSnapshot: row.garantia_snapshot ?? null,
