@@ -144,8 +144,8 @@ const Index = () => {
 
   const content = (
     <>
-      {tab === 'dashboard' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
-      {tab === 'orcamentos' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
+      {tab === 'dashboard' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />}
+      {tab === 'orcamentos' && <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} />}
       {tab === 'orcamento-detalhes' && selectedOrcamento && (
         <OrcamentoDetails
           orcamento={selectedOrcamento}

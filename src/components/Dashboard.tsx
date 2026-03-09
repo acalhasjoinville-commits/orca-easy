@@ -122,7 +122,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-yellow-600" />
+                <Clock className="h-4 w-4 text-yellow-700" />
                 <p className="text-xs font-medium text-muted-foreground">Valor Pendente</p>
               </div>
               <p className="text-lg font-bold text-foreground">{formatCurrency(valorPendente)}</p>
@@ -131,7 +131,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle className="h-4 w-4 text-green-700" />
                 <p className="text-xs font-medium text-muted-foreground">Valor Aprovado</p>
               </div>
               <p className="text-lg font-bold text-foreground">{formatCurrency(valorAprovado)}</p>
@@ -140,7 +140,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="h-4 w-4 text-blue-600" />
+                <DollarSign className="h-4 w-4 text-blue-700" />
                 <p className="text-xs font-medium text-muted-foreground">Faturamento</p>
               </div>
               <p className="text-lg font-bold text-foreground">{formatCurrency(faturamentoExecutado)}</p>
