@@ -53,6 +53,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
     editingOrcamento?.politicaComercialId ?? null
   );
+  // Nome da política carregada (snapshot histórico) — pode ser null em legado
+  const [politicaNomeSnapshot, setPoliticaNomeSnapshot] = useState<string | null>(
+    editingOrcamento?.politicaNomeSnapshot ?? null
+  );
   // Termo de recebimento da OS — always has value (snapshot or fallback)
   const [termoRecebimentoOs, setTermoRecebimentoOs] = useState<string>(
     editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
@@ -188,6 +192,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
     setLoadedPoliticaId(pol.id);
+    setPoliticaNomeSnapshot(pol.nomePolitica);
     setValidade(`${pol.validadeDias} dias`);
     setFormasPagamento(pol.formasPagamento);
     setGarantia(pol.garantia);
@@ -222,6 +227,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       tempoGarantia,
       // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
+      politicaNomeSnapshot: politicaNomeSnapshot ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,
@@ -269,6 +275,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       tempoGarantia,
       // Snapshots — always the final saved form values
       politicaComercialId: loadedPoliticaId ?? null,
+      politicaNomeSnapshot: politicaNomeSnapshot ?? null,
       validadeSnapshot: validade,
       formasPagamentoSnapshot: formasPagamento,
       garantiaSnapshot: garantia,

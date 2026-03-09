@@ -150,6 +150,7 @@ export interface Orcamento {
   tempoGarantia: string;
   // Commercial snapshot fields — frozen at save time, never recalculated
   politicaComercialId?: string | null;
+  politicaNomeSnapshot?: string | null;
   validadeSnapshot?: string | null;
   formasPagamentoSnapshot?: string | null;
   garantiaSnapshot?: string | null;
