@@ -130,6 +130,29 @@ export type Database = {
         }
         Relationships: []
       }
+      empresa_orcamento_counters: {
+        Row: {
+          empresa_id: string
+          ultimo_numero: number
+        }
+        Insert: {
+          empresa_id: string
+          ultimo_numero?: number
+        }
+        Update: {
+          empresa_id?: string
+          ultimo_numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_orcamento_counters_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insumos: {
         Row: {
           created_at: string
@@ -574,6 +597,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_orcamento_number: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "vendedor" | "financeiro"
