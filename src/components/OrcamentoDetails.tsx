@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
+import { Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
