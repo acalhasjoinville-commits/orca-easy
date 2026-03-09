@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Cliente, TipoPessoa } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,44 @@ interface Props {
   onClose: () => void;
   onSave: (cliente: Cliente) => void;
   editing?: Cliente | null;
+}
+
+interface FormState {
+  tipo: TipoPessoa;
+  nome: string;
+  documento: string;
+  whatsapp: string;
+  cep: string;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+}
+
+const EMPTY_FORM: FormState = {
+  tipo: 'PF',
+  nome: '',
+  documento: '',
+  whatsapp: '',
+  cep: '',
+  endereco: '',
+  numero: '',
+  bairro: '',
+  cidade: '',
+};
+
+function formFromCliente(c: Cliente): FormState {
+  return {
+    tipo: c.tipo,
+    nome: c.nomeRazaoSocial,
+    documento: c.documento,
+    whatsapp: c.whatsapp,
+    cep: c.cep,
+    endereco: c.endereco,
+    numero: c.numero,
+    bairro: c.bairro,
+    cidade: c.cidade,
+  };
 }
 
 function formatCPF(v: string) {
@@ -37,17 +75,34 @@ function formatCEP(v: string) {
 }
 
 export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
-  const [tipo, setTipo] = useState<TipoPessoa>(editing?.tipo ?? 'PF');
-  const [nome, setNome] = useState(editing?.nomeRazaoSocial ?? '');
-  const [documento, setDocumento] = useState(editing?.documento ?? '');
-  const [whatsapp, setWhatsapp] = useState(editing?.whatsapp ?? '');
-  const [cep, setCep] = useState(editing?.cep ?? '');
-  const [endereco, setEndereco] = useState(editing?.endereco ?? '');
-  const [numero, setNumero] = useState(editing?.numero ?? '');
-  const [bairro, setBairro] = useState(editing?.bairro ?? '');
-  const [cidade, setCidade] = useState(editing?.cidade ?? '');
+  const [tipo, setTipo] = useState<TipoPessoa>(EMPTY_FORM.tipo);
+  const [nome, setNome] = useState(EMPTY_FORM.nome);
+  const [documento, setDocumento] = useState(EMPTY_FORM.documento);
+  const [whatsapp, setWhatsapp] = useState(EMPTY_FORM.whatsapp);
+  const [cep, setCep] = useState(EMPTY_FORM.cep);
+  const [endereco, setEndereco] = useState(EMPTY_FORM.endereco);
+  const [numero, setNumero] = useState(EMPTY_FORM.numero);
+  const [bairro, setBairro] = useState(EMPTY_FORM.bairro);
+  const [cidade, setCidade] = useState(EMPTY_FORM.cidade);
   const [loadingCNPJ, setLoadingCNPJ] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
+
+  // Sync form state whenever the modal opens or the editing target changes
+  useEffect(() => {
+    if (!open) return;
+    const src = editing ? formFromCliente(editing) : EMPTY_FORM;
+    setTipo(src.tipo);
+    setNome(src.nome);
+    setDocumento(src.documento);
+    setWhatsapp(src.whatsapp);
+    setCep(src.cep);
+    setEndereco(src.endereco);
+    setNumero(src.numero);
+    setBairro(src.bairro);
+    setCidade(src.cidade);
+    setLoadingCNPJ(false);
+    setLoadingCEP(false);
+  }, [open, editing]);
 
   const rawDoc = documento.replace(/\D/g, '');
   const rawCep = cep.replace(/\D/g, '');
