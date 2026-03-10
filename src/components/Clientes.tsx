@@ -5,6 +5,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Users, Pencil, Trash2, Phone, Loader2, MapPin } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 import { ClienteFormModal } from './ClienteFormModal';
 import { toast } from 'sonner';
