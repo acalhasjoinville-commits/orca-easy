@@ -33,7 +33,7 @@ export function LoginPage() {
     e.preventDefault();
     if (!email || !password || !fullName) return;
     if (password.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      toast.error('A senha deve ter no mínimo 6 caracteres.', { duration: 5000 });
       return;
     }
     setLoading(true);
