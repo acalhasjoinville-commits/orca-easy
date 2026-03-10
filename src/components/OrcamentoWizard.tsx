@@ -316,7 +316,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     try {
       if (isEditing && editingOrcamento) {
         await updateOrcamento.mutateAsync({ ...editingOrcamento, ...base });
-        toast.success('Orçamento atualizado!');
+        toast.success('Orçamento atualizado!', { duration: 2500 });
       } else {
         const nextNum = await getNextNumero();
         const orcamento: Orcamento = {
