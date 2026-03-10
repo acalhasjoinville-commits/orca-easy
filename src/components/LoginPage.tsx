@@ -25,7 +25,7 @@ export function LoginPage() {
     if (error) {
       toast.error(error.message === 'Invalid login credentials'
         ? 'Email ou senha inválidos.'
-        : error.message);
+        : error.message, { duration: 5000 });
     }
   };
 
