@@ -376,9 +376,9 @@ export function Configuracoes() {
       else if (section === 'regras') await deleteRegra.mutateAsync(id);
       else if (section === 'catalogo') await deleteServico.mutateAsync(id);
       else if (section === 'politicas') await deletePolitica.mutateAsync(id);
-      toast.success('Removido!');
+      toast.success('Removido!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao remover.');
+      toast.error('Erro ao remover.', { duration: 5000 });
     } finally {
       setDeletingId(null);
     }

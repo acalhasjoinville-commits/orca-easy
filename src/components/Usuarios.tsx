@@ -110,10 +110,10 @@ export function Usuarios() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['empresa-users'] });
-      toast.success('Role removida.');
+      toast.success('Role removida.', { duration: 2500 });
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Erro ao remover role.');
+      toast.error(err?.message || 'Erro ao remover role.', { duration: 5000 });
     },
   });
 

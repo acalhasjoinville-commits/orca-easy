@@ -141,9 +141,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
       setEndereco(data.logradouro || '');
       setBairro(data.bairro || '');
       setCidade(`${data.localidade || ''} - ${data.uf || ''}`);
-      toast.success('Endereço carregado!');
+      toast.success('Endereço carregado!', { duration: 2500 });
     } catch {
-      toast.error('CEP não encontrado.');
+      toast.error('CEP não encontrado.', { duration: 5000 });
     } finally {
       setLoadingCEP(false);
     }

@@ -330,7 +330,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       }
       onDone();
     } catch {
-      toast.error('Erro ao salvar orçamento.');
+      toast.error('Erro ao salvar orçamento.', { duration: 5000 });
     } finally {
       setIsSaving(false);
     }

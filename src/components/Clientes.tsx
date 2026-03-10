@@ -43,9 +43,9 @@ export function Clientes() {
     setDeletingId(id);
     try {
       await deleteCliente.mutateAsync(id);
-      toast.success('Cliente removido.');
+      toast.success('Cliente removido.', { duration: 2500 });
     } catch {
-      toast.error('Erro ao remover cliente.');
+      toast.error('Erro ao remover cliente.', { duration: 5000 });
     } finally {
       setDeletingId(null);
     }

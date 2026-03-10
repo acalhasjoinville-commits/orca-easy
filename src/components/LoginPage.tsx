@@ -40,9 +40,9 @@ export function LoginPage() {
     const { error } = await signUp(email, password, fullName);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 5000 });
     } else {
-      toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+      toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.', { duration: 2500 });
       setTab('login');
     }
   };
