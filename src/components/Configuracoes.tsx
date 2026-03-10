@@ -357,9 +357,9 @@ export function Configuracoes() {
       }
 
       setDialogOpen(false);
-      toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
+      toast.success(editItem ? 'Atualizado!' : 'Adicionado!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao salvar.');
+      toast.error('Erro ao salvar.', { duration: 5000 });
     } finally {
       setIsSaving(false);
     }
