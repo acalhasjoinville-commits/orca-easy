@@ -57,10 +57,10 @@ function MinhaEmpresaForm() {
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path);
       set('logoUrl', urlData.publicUrl);
-      toast.success('Logo enviada!');
+      toast.success('Logo enviada!', { duration: 2500 });
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao enviar logo.');
+      toast.error('Erro ao enviar logo.', { duration: 5000 });
     } finally {
       setUploading(false);
     }
