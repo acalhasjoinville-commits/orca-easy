@@ -135,7 +135,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       return;
     }
     if (hasItems) {
-      toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.');
+      toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.', { duration: 5000 });
       return;
     }
     setPhase('motor');
@@ -143,7 +143,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const handleMotorSelect = (nextMotor: MotorType) => {
     if (hasItems && nextMotor !== motorType) {
-      toast.error('Motor travado após adicionar item.');
+      toast.error('Motor travado após adicionar item.', { duration: 5000 });
       return;
     }
     setMotorType(nextMotor);
@@ -234,7 +234,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setGarantia(pol.garantia);
     setTempoGarantia(pol.tempoGarantia || '');
     setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
-    toast.success(`Política "${pol.nomePolitica}" carregada!`);
+    toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
   };
 
   const dificuldadeLabel: Record<Dificuldade, string> = {
@@ -316,7 +316,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     try {
       if (isEditing && editingOrcamento) {
         await updateOrcamento.mutateAsync({ ...editingOrcamento, ...base });
-        toast.success('Orçamento atualizado!');
+        toast.success('Orçamento atualizado!', { duration: 2500 });
       } else {
         const nextNum = await getNextNumero();
         const orcamento: Orcamento = {
@@ -326,11 +326,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
           ...base,
         };
         await addOrcamento.mutateAsync(orcamento);
-        toast.success('Orçamento salvo com sucesso!');
+        toast.success('Orçamento salvo com sucesso!', { duration: 2500 });
       }
       onDone();
     } catch {
-      toast.error('Erro ao salvar orçamento.');
+      toast.error('Erro ao salvar orçamento.', { duration: 5000 });
     } finally {
       setIsSaving(false);
     }

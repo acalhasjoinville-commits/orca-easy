@@ -109,7 +109,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const rawPhone = whatsapp.replace(/\D/g, '');
 
   const buscarCNPJ = async () => {
-    if (rawDoc.length !== 14) { toast.error('CNPJ inválido'); return; }
+    if (rawDoc.length !== 14) { toast.error('CNPJ inválido', { duration: 5000 }); return; }
     setLoadingCNPJ(true);
     try {
       const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${rawDoc}`);
@@ -123,16 +123,16 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
         setBairro(data.bairro || '');
         setCidade(`${data.municipio || ''} - ${data.uf || ''}`);
       }
-      toast.success('Dados do CNPJ carregados!');
+      toast.success('Dados do CNPJ carregados!', { duration: 2500 });
     } catch {
-      toast.error('Não foi possível buscar o CNPJ.');
+      toast.error('Não foi possível buscar o CNPJ.', { duration: 5000 });
     } finally {
       setLoadingCNPJ(false);
     }
   };
 
   const buscarCEP = async () => {
-    if (rawCep.length !== 8) { toast.error('CEP inválido'); return; }
+    if (rawCep.length !== 8) { toast.error('CEP inválido', { duration: 5000 }); return; }
     setLoadingCEP(true);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
@@ -141,9 +141,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
       setEndereco(data.logradouro || '');
       setBairro(data.bairro || '');
       setCidade(`${data.localidade || ''} - ${data.uf || ''}`);
-      toast.success('Endereço carregado!');
+      toast.success('Endereço carregado!', { duration: 2500 });
     } catch {
-      toast.error('CEP não encontrado.');
+      toast.error('CEP não encontrado.', { duration: 5000 });
     } finally {
       setLoadingCEP(false);
     }

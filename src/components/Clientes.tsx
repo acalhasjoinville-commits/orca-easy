@@ -5,6 +5,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Search, Users, Pencil, Trash2, Phone, Loader2, MapPin } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 import { ClienteFormModal } from './ClienteFormModal';
 import { toast } from 'sonner';
@@ -26,15 +37,15 @@ export function Clientes() {
     try {
       if (editing) {
         await updateCliente.mutateAsync(c);
-        toast.success('Cliente atualizado!');
+        toast.success('Cliente atualizado!', { duration: 2500 });
       } else {
         await addCliente.mutateAsync(c);
-        toast.success('Cliente cadastrado!');
+        toast.success('Cliente cadastrado!', { duration: 2500 });
       }
       setModalOpen(false);
       setEditing(null);
     } catch {
-      toast.error('Erro ao salvar cliente.');
+      toast.error('Erro ao salvar cliente.', { duration: 5000 });
     }
   };
 
@@ -43,9 +54,9 @@ export function Clientes() {
     setDeletingId(id);
     try {
       await deleteCliente.mutateAsync(id);
-      toast.success('Cliente removido.');
+      toast.success('Cliente removido.', { duration: 2500 });
     } catch {
-      toast.error('Erro ao remover cliente.');
+      toast.error('Erro ao remover cliente.', { duration: 5000 });
     } finally {
       setDeletingId(null);
     }
@@ -138,9 +149,27 @@ export function Clientes() {
                     <button onClick={() => handleEdit(c)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50">
-                      {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50">
+                          {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Deseja remover o cliente <strong>{c.nomeRazaoSocial}</strong>? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>

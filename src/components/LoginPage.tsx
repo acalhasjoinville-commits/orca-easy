@@ -25,7 +25,7 @@ export function LoginPage() {
     if (error) {
       toast.error(error.message === 'Invalid login credentials'
         ? 'Email ou senha inválidos.'
-        : error.message);
+        : error.message, { duration: 5000 });
     }
   };
 
@@ -33,16 +33,16 @@ export function LoginPage() {
     e.preventDefault();
     if (!email || !password || !fullName) return;
     if (password.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres.');
+      toast.error('A senha deve ter no mínimo 6 caracteres.', { duration: 5000 });
       return;
     }
     setLoading(true);
     const { error } = await signUp(email, password, fullName);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message, { duration: 5000 });
     } else {
-      toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+      toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.', { duration: 2500 });
       setTab('login');
     }
   };

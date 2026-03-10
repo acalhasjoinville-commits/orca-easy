@@ -10,6 +10,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2, Layers, Calculator, BookOpen, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -42,7 +53,7 @@ function MinhaEmpresaForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Máximo 2MB.');
+      toast.error('Arquivo muito grande. Máximo 2MB.', { duration: 5000 });
       return;
     }
     setUploading(true);
@@ -57,10 +68,10 @@ function MinhaEmpresaForm() {
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path);
       set('logoUrl', urlData.publicUrl);
-      toast.success('Logo enviada!');
+      toast.success('Logo enviada!', { duration: 2500 });
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao enviar logo.');
+      toast.error('Erro ao enviar logo.', { duration: 5000 });
     } finally {
       setUploading(false);
     }
@@ -69,9 +80,9 @@ function MinhaEmpresaForm() {
   const handleSave = async () => {
     try {
       await saveEmpresa.mutateAsync(form);
-      toast.success('Dados da empresa salvos!');
+      toast.success('Dados da empresa salvos!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao salvar dados da empresa.');
+      toast.error('Erro ao salvar dados da empresa.', { duration: 5000 });
     }
   };
 
@@ -357,9 +368,9 @@ export function Configuracoes() {
       }
 
       setDialogOpen(false);
-      toast.success(editItem ? 'Atualizado!' : 'Adicionado!');
+      toast.success(editItem ? 'Atualizado!' : 'Adicionado!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao salvar.');
+      toast.error('Erro ao salvar.', { duration: 5000 });
     } finally {
       setIsSaving(false);
     }
@@ -376,9 +387,9 @@ export function Configuracoes() {
       else if (section === 'regras') await deleteRegra.mutateAsync(id);
       else if (section === 'catalogo') await deleteServico.mutateAsync(id);
       else if (section === 'politicas') await deletePolitica.mutateAsync(id);
-      toast.success('Removido!');
+      toast.success('Removido!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao remover.');
+      toast.error('Erro ao remover.', { duration: 5000 });
     } finally {
       setDeletingId(null);
     }
@@ -397,9 +408,27 @@ export function Configuracoes() {
           <button onClick={() => openEdit(item, section)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
             <Pencil className="h-4 w-4" />
           </button>
-          <button onClick={() => handleDelete(item.id, section)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
-            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
+                {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Deseja remover este item? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDelete(item.id, section)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>
