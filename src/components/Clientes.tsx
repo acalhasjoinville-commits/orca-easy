@@ -149,9 +149,27 @@ export function Clientes() {
                     <button onClick={() => handleEdit(c)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button onClick={() => handleDelete(c.id)} disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50">
-                      {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button disabled={deletingId === c.id} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50">
+                          {deletingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Deseja remover o cliente <strong>{c.nomeRazaoSocial}</strong>? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(c.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>

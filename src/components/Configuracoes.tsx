@@ -397,9 +397,27 @@ export function Configuracoes() {
           <button onClick={() => openEdit(item, section)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
             <Pencil className="h-4 w-4" />
           </button>
-          <button onClick={() => handleDelete(item.id, section)} disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
-            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
+                {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Deseja remover este item? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => handleDelete(item.id, section)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>
