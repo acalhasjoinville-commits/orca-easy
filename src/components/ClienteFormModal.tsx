@@ -109,7 +109,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const rawPhone = whatsapp.replace(/\D/g, '');
 
   const buscarCNPJ = async () => {
-    if (rawDoc.length !== 14) { toast.error('CNPJ inválido'); return; }
+    if (rawDoc.length !== 14) { toast.error('CNPJ inválido', { duration: 5000 }); return; }
     setLoadingCNPJ(true);
     try {
       const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${rawDoc}`);
