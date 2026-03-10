@@ -234,7 +234,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setGarantia(pol.garantia);
     setTempoGarantia(pol.tempoGarantia || '');
     setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
-    toast.success(`Política "${pol.nomePolitica}" carregada!`);
+    toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
   };
 
   const dificuldadeLabel: Record<Dificuldade, string> = {
