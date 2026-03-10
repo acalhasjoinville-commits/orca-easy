@@ -26,15 +26,15 @@ export function Clientes() {
     try {
       if (editing) {
         await updateCliente.mutateAsync(c);
-        toast.success('Cliente atualizado!');
+        toast.success('Cliente atualizado!', { duration: 2500 });
       } else {
         await addCliente.mutateAsync(c);
-        toast.success('Cliente cadastrado!');
+        toast.success('Cliente cadastrado!', { duration: 2500 });
       }
       setModalOpen(false);
       setEditing(null);
     } catch {
-      toast.error('Erro ao salvar cliente.');
+      toast.error('Erro ao salvar cliente.', { duration: 5000 });
     }
   };
 
