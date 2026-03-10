@@ -132,7 +132,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   };
 
   const buscarCEP = async () => {
-    if (rawCep.length !== 8) { toast.error('CEP inválido'); return; }
+    if (rawCep.length !== 8) { toast.error('CEP inválido', { duration: 5000 }); return; }
     setLoadingCEP(true);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
