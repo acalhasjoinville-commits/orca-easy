@@ -42,7 +42,7 @@ function MinhaEmpresaForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('Arquivo muito grande. Máximo 2MB.');
+      toast.error('Arquivo muito grande. Máximo 2MB.', { duration: 5000 });
       return;
     }
     setUploading(true);
