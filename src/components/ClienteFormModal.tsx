@@ -123,9 +123,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
         setBairro(data.bairro || '');
         setCidade(`${data.municipio || ''} - ${data.uf || ''}`);
       }
-      toast.success('Dados do CNPJ carregados!');
+      toast.success('Dados do CNPJ carregados!', { duration: 2500 });
     } catch {
-      toast.error('Não foi possível buscar o CNPJ.');
+      toast.error('Não foi possível buscar o CNPJ.', { duration: 5000 });
     } finally {
       setLoadingCNPJ(false);
     }
