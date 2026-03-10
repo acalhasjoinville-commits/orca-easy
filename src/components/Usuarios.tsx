@@ -81,13 +81,13 @@ export function Usuarios() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['empresa-users'] });
       setAddingRoleFor(null);
-      toast.success('Role adicionada!');
+      toast.success('Role adicionada!', { duration: 2500 });
     },
     onError: (err: any) => {
       if (err?.message?.includes('duplicate')) {
-        toast.error('Usuário já possui essa role.');
+        toast.error('Usuário já possui essa role.', { duration: 5000 });
       } else {
-        toast.error('Erro ao adicionar role.');
+        toast.error('Erro ao adicionar role.', { duration: 5000 });
       }
     },
   });
