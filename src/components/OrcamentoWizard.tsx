@@ -143,7 +143,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const handleMotorSelect = (nextMotor: MotorType) => {
     if (hasItems && nextMotor !== motorType) {
-      toast.error('Motor travado após adicionar item.');
+      toast.error('Motor travado após adicionar item.', { duration: 5000 });
       return;
     }
     setMotorType(nextMotor);
