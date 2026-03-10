@@ -326,7 +326,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
           ...base,
         };
         await addOrcamento.mutateAsync(orcamento);
-        toast.success('Orçamento salvo com sucesso!');
+        toast.success('Orçamento salvo com sucesso!', { duration: 2500 });
       }
       onDone();
     } catch {
