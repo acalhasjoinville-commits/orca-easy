@@ -69,9 +69,9 @@ function MinhaEmpresaForm() {
   const handleSave = async () => {
     try {
       await saveEmpresa.mutateAsync(form);
-      toast.success('Dados da empresa salvos!');
+      toast.success('Dados da empresa salvos!', { duration: 2500 });
     } catch {
-      toast.error('Erro ao salvar dados da empresa.');
+      toast.error('Erro ao salvar dados da empresa.', { duration: 5000 });
     }
   };
 
