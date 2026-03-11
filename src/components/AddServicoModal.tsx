@@ -38,6 +38,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
   );
 
   const [servicoId, setServicoId] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
