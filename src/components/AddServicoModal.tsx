@@ -151,6 +151,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
     setMetragem('');
     setDificuldade('facil');
     setEditQtds({});
+    setPopoverOpen(false);
   };
 
   return (
