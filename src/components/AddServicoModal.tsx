@@ -1,15 +1,21 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Dificuldade, ItemServico, InsumoCalculado, MotorType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Factory, Truck } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Loader2, Factory, Truck, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+
+/** Strip diacritics for accent-tolerant search */
+function normalizeStr(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 interface Props {
   open: boolean;
@@ -32,6 +38,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
   );
 
   const [servicoId, setServicoId] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
@@ -144,6 +151,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
     setMetragem('');
     setDificuldade('facil');
     setEditQtds({});
+    setPopoverOpen(false);
   };
 
   return (
@@ -168,20 +176,67 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
           <div className="space-y-4">
             <div>
               <Label>Serviço</Label>
-              <Select value={servicoId} onValueChange={v => { setServicoId(v); setEditQtds({}); }}>
-                <SelectTrigger><SelectValue placeholder="Selecione do catálogo" /></SelectTrigger>
-                <SelectContent>
-                  {servicosList.length === 0 ? (
-                    <div className="px-3 py-2 text-xs text-muted-foreground">
-                      Nenhum serviço cadastrado para {motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}.
-                    </div>
-                  ) : (
-                    servicosList.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.nomeServico}</SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={popoverOpen}
+                    className="w-full justify-between h-auto min-h-10 font-normal"
+                  >
+                    {servico ? (
+                      <div className="flex flex-col items-start text-left">
+                        <span className="text-sm">{servico.nomeServico}</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Buscar serviço...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command filter={(value, search, keywords) => {
+                    if (!search) return 1;
+                    const norm = normalizeStr(search);
+                    const target = normalizeStr((keywords ?? []).join(' '));
+                    return target.includes(norm) ? 1 : 0;
+                  }}>
+                    <CommandInput placeholder="Nome, material, espessura, corte..." />
+                    <CommandList className="max-h-[220px]">
+                      <CommandEmpty>
+                        {servicosList.length === 0
+                          ? `Nenhum serviço cadastrado para ${motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}.`
+                          : 'Nenhum serviço encontrado.'}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {servicosList.map(s => (
+                          <CommandItem
+                            key={s.id}
+                            value={s.id}
+                            keywords={[s.nomeServico, s.materialPadrao, String(s.espessuraPadrao), String(s.cortePadrao)]}
+                            onSelect={(val) => {
+                              setServicoId(val === servicoId ? '' : val);
+                              setEditQtds({});
+                              setPopoverOpen(false);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4 shrink-0', servicoId === s.id ? 'opacity-100' : 'opacity-0')} />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{s.nomeServico}</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {s.materialPadrao} · {s.espessuraPadrao}mm · {s.cortePadrao}mm
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {servico && regra && (
