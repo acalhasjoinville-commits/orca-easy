@@ -13,137 +13,244 @@ const fmtDate = (d: string) => {
   try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
 };
 
+const fmtNum = (v: number) =>
+  v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const dificuldadeLabel: Record<string, string> = {
-  facil: 'Fácil',
+  facil: 'Baixa',
   medio: 'Média',
-  dificil: 'Difícil',
+  dificil: 'Alta',
+};
+
+const dificuldadeColor: Record<string, { bg: string; text: string }> = {
+  facil: { bg: '#e8f5e9', text: '#2e7d32' },
+  medio: { bg: '#fff8e1', text: '#f57f17' },
+  dificil: { bg: '#ffebee', text: '#c62828' },
+};
+
+const statusLabel: Record<string, string> = {
+  pendente: 'Pendente',
+  aprovado: 'Aprovado',
+  rejeitado: 'Rejeitado',
+  executado: 'Executado',
 };
 
 export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
   const corPrimaria = empresa?.corPrimaria || '#0B1B32';
   const corDestaque = empresa?.corDestaque || '#F57C00';
   const nomeEmpresa = empresa?.nomeFantasia || 'Minha Empresa';
-  const slogan = empresa?.slogan || '';
+  const cnpjCpf = empresa?.cnpjCpf || '';
   const telefone = empresa?.telefoneWhatsApp || '';
   const email = empresa?.emailContato || '';
-  const enderecoEmpresa = [empresa?.endereco, empresa?.numero, empresa?.bairro, empresa?.cidade, empresa?.estado]
-    .filter(Boolean).join(', ');
-
-  const clienteEndereco = [cliente?.endereco, cliente?.numero, cliente?.bairro, cliente?.cidade]
-    .filter(Boolean).join(', ');
-  const clienteCep = cliente?.cep ? `CEP: ${cliente.cep}` : '';
-  const enderecoCompleto = [clienteEndereco, clienteCep].filter(Boolean).join(' — ');
 
   const s = StyleSheet.create({
-    page: { paddingTop: 30, paddingBottom: 80, paddingHorizontal: 30, fontSize: 9, fontFamily: 'Helvetica', color: '#333' },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, borderBottomWidth: 2, borderBottomColor: corPrimaria, paddingBottom: 10 },
-    logo: { width: 60, height: 60, marginRight: 12, objectFit: 'contain' },
-    headerText: { flex: 1 },
-    companyName: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: corPrimaria },
-    sloganText: { fontSize: 8, color: '#666', marginTop: 2 },
-    contactLine: { fontSize: 7, color: '#666', marginTop: 3 },
-    titleBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: corDestaque, borderRadius: 4, padding: 10, marginBottom: 12 },
-    titleText: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#fff' },
-    titleNumber: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#fff' },
-    titleDate: { fontSize: 9, color: '#fff' },
-    sectionTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corPrimaria, marginBottom: 6, marginTop: 14, textTransform: 'uppercase', borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 3 },
-    infoBox: { backgroundColor: '#f8f8f8', borderRadius: 4, padding: 10, marginBottom: 4 },
-    infoRow: { flexDirection: 'row', marginBottom: 3 },
-    infoLabel: { width: 100, fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#555' },
-    infoValue: { flex: 1, fontSize: 9, color: '#333' },
-    tableHeader: { flexDirection: 'row', backgroundColor: corPrimaria, borderTopLeftRadius: 4, borderTopRightRadius: 4, paddingVertical: 6, paddingHorizontal: 8 },
-    tableHeaderText: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#fff' },
-    tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 8, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+    page: { paddingTop: 28, paddingBottom: 70, paddingHorizontal: 28, fontSize: 8, fontFamily: 'Helvetica', color: '#222' },
+
+    /* ── Header ── */
+    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, borderBottomWidth: 2, borderBottomColor: corPrimaria, paddingBottom: 10 },
+    logo: { width: 50, height: 50, marginRight: 10, objectFit: 'contain' as const },
+    headerLeft: { flex: 1 },
+    companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: corPrimaria },
+    headerContact: { fontSize: 6.5, color: '#555', marginTop: 2 },
+    headerBadge: { backgroundColor: corDestaque, borderRadius: 4, paddingVertical: 8, paddingHorizontal: 14, alignItems: 'center' as const },
+    badgeSmall: { fontSize: 6, color: '#fff', opacity: 0.85, textTransform: 'uppercase' as const, marginBottom: 2 },
+    badgeLarge: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#fff' },
+
+    /* ── Identification bar ── */
+    idBar: { flexDirection: 'row', backgroundColor: '#f5f5f5', borderRadius: 4, marginBottom: 14, borderWidth: 0.5, borderColor: '#e0e0e0' },
+    idCell: { flex: 1, paddingVertical: 6, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: '#e0e0e0' },
+    idCellLast: { flex: 1, paddingVertical: 6, paddingHorizontal: 6 },
+    idLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const, marginBottom: 2, letterSpacing: 0.3 },
+    idValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#222' },
+    idValueAccent: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: corDestaque },
+
+    /* ── Section titles ── */
+    sectionTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corPrimaria, marginBottom: 6, marginTop: 14, textTransform: 'uppercase' as const, borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 3 },
+
+    /* ── Grid (client/job data) ── */
+    gridRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#e8e8e8' },
+    gridCell: { paddingVertical: 5, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: '#e8e8e8' },
+    gridCellLast: { paddingVertical: 5, paddingHorizontal: 6 },
+    gridLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const, marginBottom: 2 },
+    gridValue: { fontSize: 8, color: '#222' },
+
+    /* ── Execution table ── */
+    tableHeader: { flexDirection: 'row', backgroundColor: corPrimaria, borderTopLeftRadius: 4, borderTopRightRadius: 4, paddingVertical: 5, paddingHorizontal: 4 },
+    tableHeaderText: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: '#fff' },
+    tableRow: { flexDirection: 'row', paddingVertical: 4, paddingHorizontal: 4, borderBottomWidth: 0.5, borderBottomColor: '#eee', alignItems: 'center' as const },
     tableRowAlt: { backgroundColor: '#f9f9f9' },
-    tableCell: { fontSize: 8, color: '#333' },
-    colNum: { width: 22 },
-    colDesc: { flex: 1 },
-    colMaterial: { width: 90 },
-    colMetragem: { width: 55, textAlign: 'center' as const },
-    colDificuldade: { width: 60, textAlign: 'center' as const },
-    obsBox: { backgroundColor: '#fffde7', borderRadius: 4, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: '#ffe082' },
-    obsText: { fontSize: 9, color: '#333', lineHeight: 1.5 },
-    termoBox: { backgroundColor: '#f1f8e9', borderRadius: 4, padding: 12, marginTop: 14, borderWidth: 1, borderColor: '#c5e1a5' },
-    termoText: { fontSize: 9, color: '#333', lineHeight: 1.5, textAlign: 'justify' as const },
-    signaturesRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 50, paddingTop: 10 },
-    signatureBlock: { alignItems: 'center' as const, width: 210 },
-    signatureLine: { width: 190, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 5 },
-    signatureName: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#333', textAlign: 'center' as const },
-    footer: { position: 'absolute' as const, bottom: 20, left: 30, right: 30, borderTopWidth: 1, borderTopColor: corPrimaria, paddingTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    footerLogo: { width: 24, height: 24, marginRight: 6, objectFit: 'contain' as const },
-    footerLeft: { flexDirection: 'row', alignItems: 'center' },
-    footerText: { fontSize: 6, color: '#888' },
-    footerRight: { fontSize: 6, color: '#888' },
+    tableCell: { fontSize: 7, color: '#333' },
+    tColNum: { width: 18 },
+    tColServ: { flex: 1 },
+    tColQtd: { width: 30, textAlign: 'center' as const },
+    tColMat: { width: 60 },
+    tColEsp: { width: 30, textAlign: 'center' as const },
+    tColCorte: { width: 34, textAlign: 'center' as const },
+    tColDif: { width: 44, textAlign: 'center' as const },
+    tColObs: { width: 70 },
+
+    /* ── Difficulty badge ── */
+    diffBadge: { borderRadius: 3, paddingVertical: 2, paddingHorizontal: 5, alignSelf: 'center' as const },
+    diffText: { fontSize: 6, fontFamily: 'Helvetica-Bold', textAlign: 'center' as const },
+
+    /* ── Observations ── */
+    obsBox: { backgroundColor: '#fffde7', borderRadius: 4, padding: 10, borderWidth: 1, borderColor: '#ffe082' },
+    obsText: { fontSize: 8, color: '#333', lineHeight: 1.5 },
+
+    /* ── Canhoto ── */
+    canhotoDivider: { borderTopWidth: 1, borderTopColor: '#999', borderStyle: 'dashed' as const, marginTop: 20, marginBottom: 4, position: 'relative' as const },
+    canhotoCutLabel: { fontSize: 6, color: '#999', textAlign: 'center' as const, marginBottom: 6 },
+    canhotoBorder: { borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10 },
+    canhotoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' as const, marginBottom: 8 },
+    canhotoTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corPrimaria },
+    canhotoSubtitle: { fontSize: 7, color: '#666', marginTop: 1 },
+    canhotoRefBadge: { backgroundColor: '#f5f5f5', borderRadius: 3, paddingVertical: 3, paddingHorizontal: 8, borderWidth: 0.5, borderColor: '#ddd' },
+    canhotoRefLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const },
+    canhotoRefValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: corDestaque },
+    canhotoMetaRow: { flexDirection: 'row', gap: 10, marginBottom: 8, paddingBottom: 6, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+    canhotoMetaCell: { flex: 1 },
+    canhotoMetaLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const, marginBottom: 1 },
+    canhotoMetaValue: { fontSize: 7.5, color: '#222' },
+    canhotoTermText: { fontSize: 7.5, color: '#333', lineHeight: 1.5, marginBottom: 12, textAlign: 'justify' as const },
+    canhotoSigRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 6 },
+    canhotoSigBlock: { alignItems: 'center' as const, width: 145 },
+    canhotoSigLine: { width: 130, borderBottomWidth: 1, borderBottomColor: '#555', marginBottom: 3 },
+    canhotoSigLabel: { fontSize: 6, color: '#666', textAlign: 'center' as const },
+
+    /* ── Footer ── */
+    footer: { position: 'absolute' as const, bottom: 16, left: 28, right: 28, backgroundColor: corPrimaria, borderRadius: 4, paddingVertical: 7, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    footerCompany: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#fff' },
+    footerContact: { fontSize: 5.5, color: '#ccc', marginTop: 1 },
+    footerRight: { fontSize: 5.5, color: '#ccc', textAlign: 'right' as const },
   });
+
+  const osNumero = `OS-${orcamento.numeroOrcamento}`;
+  const orcNumero = `ORC-${orcamento.numeroOrcamento}`;
 
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        {/* HEADER */}
+        {/* ═══ HEADER ═══ */}
         <View style={s.header}>
           {logoBase64 && <Image src={logoBase64} style={s.logo} />}
-          <View style={s.headerText}>
+          <View style={s.headerLeft}>
             <Text style={s.companyName}>{nomeEmpresa}</Text>
-            {slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
-            <Text style={s.contactLine}>
+            {cnpjCpf ? <Text style={s.headerContact}>{cnpjCpf}</Text> : null}
+            <Text style={s.headerContact}>
               {[telefone, email].filter(Boolean).join(' · ')}
             </Text>
-            {enderecoEmpresa ? <Text style={s.contactLine}>{enderecoEmpresa}</Text> : null}
+          </View>
+          <View style={s.headerBadge}>
+            <Text style={s.badgeSmall}>Documento</Text>
+            <Text style={s.badgeLarge}>ORDEM DE SERVIÇO</Text>
           </View>
         </View>
 
-        {/* TITLE BAR - Orange for OS */}
-        <View style={s.titleBar}>
-          <View>
-            <Text style={s.titleText}>ORDEM DE SERVIÇO</Text>
-            <Text style={s.titleNumber}>#{orcamento.numeroOrcamento}</Text>
+        {/* ═══ IDENTIFICATION BAR ═══ */}
+        <View style={s.idBar}>
+          <View style={s.idCell}>
+            <Text style={s.idLabel}>Nº da OS</Text>
+            <Text style={s.idValueAccent}>{osNumero}</Text>
           </View>
-          <View style={{ alignItems: 'flex-end' as const }}>
-            <Text style={s.titleDate}>Data: {fmtDate(orcamento.dataCriacao)}</Text>
+          <View style={s.idCell}>
+            <Text style={s.idLabel}>Data</Text>
+            <Text style={s.idValue}>{fmtDate(orcamento.dataCriacao)}</Text>
+          </View>
+          <View style={s.idCell}>
+            <Text style={s.idLabel}>Nº do Orçamento</Text>
+            <Text style={s.idValue}>{orcNumero}</Text>
+          </View>
+          <View style={s.idCell}>
+            <Text style={s.idLabel}>Técnico Responsável</Text>
+            <Text style={s.idValue}>{nomeEmpresa}</Text>
+          </View>
+          <View style={s.idCellLast}>
+            <Text style={s.idLabel}>Status</Text>
+            <Text style={s.idValue}>{statusLabel[orcamento.status] || orcamento.status}</Text>
           </View>
         </View>
 
-        {/* DADOS DA OBRA */}
+        {/* ═══ JOB DATA GRID ═══ */}
         <Text style={s.sectionTitle}>Dados da Obra</Text>
-        <View style={s.infoBox}>
-          <View style={s.infoRow}>
-            <Text style={s.infoLabel}>Cliente</Text>
-            <Text style={s.infoValue}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
+        <View style={{ borderWidth: 0.5, borderColor: '#e8e8e8', borderRadius: 4 }}>
+          {/* Row 1 */}
+          <View style={s.gridRow}>
+            <View style={[s.gridCell, { flex: 2 }]}>
+              <Text style={s.gridLabel}>Cliente / Responsável</Text>
+              <Text style={s.gridValue}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
+            </View>
+            <View style={[s.gridCell, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Telefone / Contato</Text>
+              <Text style={s.gridValue}>{cliente?.whatsapp || '—'}</Text>
+            </View>
+            <View style={[s.gridCellLast, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Documento</Text>
+              <Text style={s.gridValue}>{cliente?.documento || '—'}</Text>
+            </View>
           </View>
-          {cliente?.whatsapp ? (
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Contato</Text>
-              <Text style={s.infoValue}>{cliente.whatsapp}</Text>
+          {/* Row 2 */}
+          <View style={s.gridRow}>
+            <View style={[s.gridCell, { width: '16%' }]}>
+              <Text style={s.gridLabel}>CEP</Text>
+              <Text style={s.gridValue}>{cliente?.cep || '—'}</Text>
             </View>
-          ) : null}
-          {enderecoCompleto ? (
-            <View style={s.infoRow}>
-              <Text style={s.infoLabel}>Endereço da Obra</Text>
-              <Text style={s.infoValue}>{enderecoCompleto}</Text>
+            <View style={[s.gridCell, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Endereço</Text>
+              <Text style={s.gridValue}>{cliente?.endereco || '—'}</Text>
             </View>
-          ) : null}
+            <View style={[s.gridCellLast, { width: '14%' }]}>
+              <Text style={s.gridLabel}>Número</Text>
+              <Text style={s.gridValue}>{cliente?.numero || '—'}</Text>
+            </View>
+          </View>
+          {/* Row 3 */}
+          <View style={{ flexDirection: 'row' }}>
+            <View style={[s.gridCell, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Bairro</Text>
+              <Text style={s.gridValue}>{cliente?.bairro || '—'}</Text>
+            </View>
+            <View style={[s.gridCell, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Cidade / UF</Text>
+              <Text style={s.gridValue}>{cliente?.cidade || '—'}</Text>
+            </View>
+            <View style={[s.gridCellLast, { flex: 1 }]}>
+              <Text style={s.gridLabel}>Observações Iniciais</Text>
+              <Text style={s.gridValue}>—</Text>
+            </View>
+          </View>
         </View>
 
-        {/* SERVIÇOS - sem preços */}
-        <Text style={s.sectionTitle}>Descrição de Execução</Text>
+        {/* ═══ EXECUTION TABLE ═══ */}
+        <Text style={s.sectionTitle}>Serviços a Executar</Text>
         <View style={s.tableHeader}>
-          <Text style={[s.tableHeaderText, s.colNum]}>#</Text>
-          <Text style={[s.tableHeaderText, s.colDesc]}>Descrição</Text>
-          <Text style={[s.tableHeaderText, s.colMaterial]}>Material</Text>
-          <Text style={[s.tableHeaderText, s.colMetragem]}>Metragem</Text>
-          <Text style={[s.tableHeaderText, s.colDificuldade]}>Dificuldade</Text>
+          <Text style={[s.tableHeaderText, s.tColNum]}>#</Text>
+          <Text style={[s.tableHeaderText, s.tColServ]}>Serviço</Text>
+          <Text style={[s.tableHeaderText, s.tColQtd]}>Qtd.</Text>
+          <Text style={[s.tableHeaderText, s.tColMat]}>Material</Text>
+          <Text style={[s.tableHeaderText, s.tColEsp]}>Esp.</Text>
+          <Text style={[s.tableHeaderText, s.tColCorte]}>Corte</Text>
+          <Text style={[s.tableHeaderText, s.tColDif]}>Dific.</Text>
+          <Text style={[s.tableHeaderText, s.tColObs]}>Observações</Text>
         </View>
-        {orcamento.itensServico.map((item, idx) => (
-          <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
-            <Text style={[s.tableCell, s.colNum]}>{idx + 1}</Text>
-            <Text style={[s.tableCell, s.colDesc]}>{item.nomeServico}</Text>
-            <Text style={[s.tableCell, s.colMaterial]}>{item.materialId || '—'}</Text>
-            <Text style={[s.tableCell, s.colMetragem]}>{item.metragem} m</Text>
-            <Text style={[s.tableCell, s.colDificuldade]}>{dificuldadeLabel[item.dificuldade] || item.dificuldade}</Text>
-          </View>
-        ))}
+        {orcamento.itensServico.map((item, idx) => {
+          const dc = dificuldadeColor[item.dificuldade] || dificuldadeColor.facil;
+          return (
+            <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
+              <Text style={[s.tableCell, s.tColNum]}>{String(idx + 1).padStart(2, '0')}</Text>
+              <Text style={[s.tableCell, s.tColServ]}>{item.nomeServico}</Text>
+              <Text style={[s.tableCell, s.tColQtd]}>{fmtNum(item.metragem)}</Text>
+              <Text style={[s.tableCell, s.tColMat]}>{item.materialId || '—'}</Text>
+              <Text style={[s.tableCell, s.tColEsp]}>{item.espessura || '—'}</Text>
+              <Text style={[s.tableCell, s.tColCorte]}>{item.corte || '—'}</Text>
+              <View style={[s.diffBadge, { backgroundColor: dc.bg }]}>
+                <Text style={[s.diffText, { color: dc.text }]}>{dificuldadeLabel[item.dificuldade] || item.dificuldade}</Text>
+              </View>
+              <Text style={[s.tableCell, s.tColObs]}>—</Text>
+            </View>
+          );
+        })}
 
-        {/* OBSERVAÇÕES DE OBRA */}
+        {/* ═══ OBSERVATIONS ═══ */}
         {orcamento.descricaoGeral ? (
           <>
             <Text style={s.sectionTitle}>Observações de Obra</Text>
@@ -153,36 +260,75 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
           </>
         ) : null}
 
-        {/* CANHOTO DE ENTREGA */}
-        <Text style={s.sectionTitle}>Canhoto de Entrega (Assinar somente após a execução)</Text>
-        <View style={s.termoBox}>
-          <Text style={s.termoText}>
-            {termoRecebimento || 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.'}
-          </Text>
-        </View>
+        {/* ═══ CANHOTO ═══ */}
+        <View wrap={false} style={{ marginTop: 16 }}>
+          <View style={s.canhotoDivider} />
+          <Text style={s.canhotoCutLabel}>✂  Destacar canhoto</Text>
 
-        {/* ASSINATURAS */}
-        <View style={s.signaturesRow}>
-          <View style={s.signatureBlock}>
-            <View style={s.signatureLine} />
-            <Text style={s.signatureName}>Técnico Responsável</Text>
-          </View>
-          <View style={s.signatureBlock}>
-            <View style={s.signatureLine} />
-            <Text style={s.signatureName}>Cliente (Recebimento)</Text>
-          </View>
-        </View>
+          <View style={s.canhotoBorder}>
+            {/* Header with title + ref badge */}
+            <View style={s.canhotoHeader}>
+              <View>
+                <Text style={s.canhotoTitle}>Canhoto de Recebimento / Conclusão</Text>
+                <Text style={s.canhotoSubtitle}>Confirmação de conclusão e aceite do serviço executado.</Text>
+              </View>
+              <View style={s.canhotoRefBadge}>
+                <Text style={s.canhotoRefLabel}>Ref. da OS</Text>
+                <Text style={s.canhotoRefValue}>{osNumero}</Text>
+              </View>
+            </View>
 
-        {/* FOOTER */}
-        <View style={s.footer} fixed>
-          <View style={s.footerLeft}>
-            {logoBase64 && <Image src={logoBase64} style={s.footerLogo} />}
-            <View>
-              <Text style={s.footerText}>{nomeEmpresa}{slogan ? ` · ${slogan}` : ''}</Text>
-              <Text style={s.footerText}>{[telefone, email].filter(Boolean).join(' · ')}</Text>
+            {/* Meta row */}
+            <View style={s.canhotoMetaRow}>
+              <View style={s.canhotoMetaCell}>
+                <Text style={s.canhotoMetaLabel}>Cliente</Text>
+                <Text style={s.canhotoMetaValue}>{cliente?.nomeRazaoSocial || orcamento.nomeCliente}</Text>
+              </View>
+              <View style={s.canhotoMetaCell}>
+                <Text style={s.canhotoMetaLabel}>Data</Text>
+                <Text style={s.canhotoMetaValue}>{fmtDate(orcamento.dataCriacao)}</Text>
+              </View>
+              <View style={s.canhotoMetaCell}>
+                <Text style={s.canhotoMetaLabel}>Orçamento</Text>
+                <Text style={s.canhotoMetaValue}>{orcNumero}</Text>
+              </View>
+            </View>
+
+            {/* Term text */}
+            <Text style={s.canhotoTermText}>
+              {termoRecebimento || 'Declaro que os serviços descritos nesta Ordem de Serviço foram executados de forma satisfatória e em conformidade com o combinado, sem ressalvas quanto ao prazo e qualidade da entrega.'}
+            </Text>
+
+            {/* Signatures */}
+            <View style={s.canhotoSigRow}>
+              <View style={s.canhotoSigBlock}>
+                <View style={s.canhotoSigLine} />
+                <Text style={s.canhotoSigLabel}>Data de Conclusão</Text>
+              </View>
+              <View style={s.canhotoSigBlock}>
+                <View style={s.canhotoSigLine} />
+                <Text style={s.canhotoSigLabel}>Assinatura do Cliente</Text>
+              </View>
+              <View style={s.canhotoSigBlock}>
+                <View style={s.canhotoSigLine} />
+                <Text style={s.canhotoSigLabel}>Assinatura do Técnico</Text>
+              </View>
             </View>
           </View>
-          <Text style={s.footerRight} render={({ pageNumber, totalPages }) => `${pageNumber}/${totalPages}`} />
+        </View>
+
+        {/* ═══ FOOTER ═══ */}
+        <View style={s.footer} fixed>
+          <View>
+            <Text style={s.footerCompany}>{nomeEmpresa.toUpperCase()}</Text>
+            <Text style={s.footerContact}>
+              {[cnpjCpf, telefone, email].filter(Boolean).join(' · ')}
+            </Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' as const }}>
+            <Text style={s.footerRight}>{osNumero}</Text>
+            <Text style={s.footerRight} render={({ pageNumber, totalPages }) => `Página ${pageNumber}/${totalPages}`} />
+          </View>
         </View>
       </Page>
     </Document>
