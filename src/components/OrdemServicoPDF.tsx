@@ -16,18 +16,6 @@ const fmtDate = (d: string) => {
 const fmtNum = (v: number) =>
   v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const dificuldadeLabel: Record<string, string> = {
-  facil: 'Baixa',
-  medio: 'Média',
-  dificil: 'Alta',
-};
-
-const dificuldadeColor: Record<string, { bg: string; text: string }> = {
-  facil: { bg: '#e8f5e9', text: '#2e7d32' },
-  medio: { bg: '#fff8e1', text: '#f57f17' },
-  dificil: { bg: '#ffebee', text: '#c62828' },
-};
-
 const statusLabel: Record<string, string> = {
   pendente: 'Pendente',
   aprovado: 'Aprovado',
@@ -75,46 +63,40 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
     gridValue: { fontSize: 8, color: '#222' },
 
     /* ── Execution table ── */
-    tableHeader: { flexDirection: 'row', backgroundColor: corPrimaria, borderTopLeftRadius: 4, borderTopRightRadius: 4, paddingVertical: 5, paddingHorizontal: 4 },
+    tableHeader: { flexDirection: 'row', backgroundColor: corPrimaria, borderTopLeftRadius: 4, borderTopRightRadius: 4, paddingVertical: 6, paddingHorizontal: 6 },
     tableHeaderText: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: '#fff' },
-    tableRow: { flexDirection: 'row', paddingVertical: 4, paddingHorizontal: 4, borderBottomWidth: 0.5, borderBottomColor: '#eee', alignItems: 'center' as const },
+    tableRow: { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: '#eee', alignItems: 'center' as const, minHeight: 18 },
     tableRowAlt: { backgroundColor: '#f9f9f9' },
     tableCell: { fontSize: 7, color: '#333' },
-    tColNum: { width: 18 },
+    tColNum: { width: 22 },
     tColServ: { flex: 1 },
-    tColQtd: { width: 30, textAlign: 'center' as const },
-    tColMat: { width: 60 },
-    tColEsp: { width: 30, textAlign: 'center' as const },
-    tColCorte: { width: 34, textAlign: 'center' as const },
-    tColDif: { width: 44, textAlign: 'center' as const },
-    tColObs: { width: 70 },
-
-    /* ── Difficulty badge ── */
-    diffBadge: { borderRadius: 3, paddingVertical: 2, paddingHorizontal: 5, alignSelf: 'center' as const },
-    diffText: { fontSize: 6, fontFamily: 'Helvetica-Bold', textAlign: 'center' as const },
+    tColQtd: { width: 45, textAlign: 'center' as const },
+    tColMat: { width: 80 },
+    tColEsp: { width: 42, textAlign: 'center' as const },
+    tColCorte: { width: 48, textAlign: 'center' as const },
 
     /* ── Observations ── */
     obsBox: { backgroundColor: '#fffde7', borderRadius: 4, padding: 10, borderWidth: 1, borderColor: '#ffe082' },
     obsText: { fontSize: 8, color: '#333', lineHeight: 1.5 },
 
     /* ── Canhoto ── */
-    canhotoDivider: { borderTopWidth: 1, borderTopColor: '#999', borderStyle: 'dashed' as const, marginTop: 20, marginBottom: 4, position: 'relative' as const },
-    canhotoCutLabel: { fontSize: 6, color: '#999', textAlign: 'center' as const, marginBottom: 6 },
-    canhotoBorder: { borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 10 },
-    canhotoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' as const, marginBottom: 8 },
+    canhotoDivider: { borderTopWidth: 1, borderTopColor: '#999', borderStyle: 'dashed' as const, marginBottom: 6 },
+    canhotoCutLabel: { fontSize: 6, color: '#999', textAlign: 'center' as const, marginBottom: 8 },
+    canhotoBorder: { borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: 12 },
+    canhotoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' as const, marginBottom: 10 },
     canhotoTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: corPrimaria },
     canhotoSubtitle: { fontSize: 7, color: '#666', marginTop: 1 },
     canhotoRefBadge: { backgroundColor: '#f5f5f5', borderRadius: 3, paddingVertical: 3, paddingHorizontal: 8, borderWidth: 0.5, borderColor: '#ddd' },
     canhotoRefLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const },
     canhotoRefValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: corDestaque },
-    canhotoMetaRow: { flexDirection: 'row', gap: 10, marginBottom: 8, paddingBottom: 6, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+    canhotoMetaRow: { flexDirection: 'row', gap: 10, marginBottom: 10, paddingBottom: 8, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
     canhotoMetaCell: { flex: 1 },
     canhotoMetaLabel: { fontSize: 5.5, color: '#888', textTransform: 'uppercase' as const, marginBottom: 1 },
     canhotoMetaValue: { fontSize: 7.5, color: '#222' },
-    canhotoTermText: { fontSize: 7.5, color: '#333', lineHeight: 1.5, marginBottom: 12, textAlign: 'justify' as const },
-    canhotoSigRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 6 },
-    canhotoSigBlock: { alignItems: 'center' as const, width: 145 },
-    canhotoSigLine: { width: 130, borderBottomWidth: 1, borderBottomColor: '#555', marginBottom: 3 },
+    canhotoTermText: { fontSize: 7.5, color: '#333', lineHeight: 1.5, marginBottom: 14, textAlign: 'justify' as const },
+    canhotoSigRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
+    canhotoSigBlock: { alignItems: 'center' as const, width: 150 },
+    canhotoSigLine: { width: 140, borderBottomWidth: 1, borderBottomColor: '#555', marginBottom: 3 },
     canhotoSigLabel: { fontSize: 6, color: '#666', textAlign: 'center' as const },
 
     /* ── Footer ── */
@@ -173,7 +155,6 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
         {/* ═══ JOB DATA GRID ═══ */}
         <Text style={s.sectionTitle}>Dados da Obra</Text>
         <View style={{ borderWidth: 0.5, borderColor: '#e8e8e8', borderRadius: 4 }}>
-          {/* Row 1 */}
           <View style={s.gridRow}>
             <View style={[s.gridCell, { flex: 2 }]}>
               <Text style={s.gridLabel}>Cliente / Responsável</Text>
@@ -188,7 +169,6 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
               <Text style={s.gridValue}>{cliente?.documento || '—'}</Text>
             </View>
           </View>
-          {/* Row 2 */}
           <View style={s.gridRow}>
             <View style={[s.gridCell, { width: '16%' }]}>
               <Text style={s.gridLabel}>CEP</Text>
@@ -203,7 +183,6 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
               <Text style={s.gridValue}>{cliente?.numero || '—'}</Text>
             </View>
           </View>
-          {/* Row 3 */}
           <View style={{ flexDirection: 'row' }}>
             <View style={[s.gridCell, { flex: 1 }]}>
               <Text style={s.gridLabel}>Bairro</Text>
@@ -229,26 +208,17 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
           <Text style={[s.tableHeaderText, s.tColMat]}>Material</Text>
           <Text style={[s.tableHeaderText, s.tColEsp]}>Esp.</Text>
           <Text style={[s.tableHeaderText, s.tColCorte]}>Corte</Text>
-          <Text style={[s.tableHeaderText, s.tColDif]}>Dific.</Text>
-          <Text style={[s.tableHeaderText, s.tColObs]}>Observações</Text>
         </View>
-        {orcamento.itensServico.map((item, idx) => {
-          const dc = dificuldadeColor[item.dificuldade] || dificuldadeColor.facil;
-          return (
-            <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
-              <Text style={[s.tableCell, s.tColNum]}>{String(idx + 1).padStart(2, '0')}</Text>
-              <Text style={[s.tableCell, s.tColServ]}>{item.nomeServico}</Text>
-              <Text style={[s.tableCell, s.tColQtd]}>{fmtNum(item.metragem)}</Text>
-              <Text style={[s.tableCell, s.tColMat]}>{item.materialId || '—'}</Text>
-              <Text style={[s.tableCell, s.tColEsp]}>{item.espessura || '—'}</Text>
-              <Text style={[s.tableCell, s.tColCorte]}>{item.corte || '—'}</Text>
-              <View style={[s.diffBadge, { backgroundColor: dc.bg }]}>
-                <Text style={[s.diffText, { color: dc.text }]}>{dificuldadeLabel[item.dificuldade] || item.dificuldade}</Text>
-              </View>
-              <Text style={[s.tableCell, s.tColObs]}>—</Text>
-            </View>
-          );
-        })}
+        {orcamento.itensServico.map((item, idx) => (
+          <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
+            <Text style={[s.tableCell, s.tColNum]}>{String(idx + 1).padStart(2, '0')}</Text>
+            <Text style={[s.tableCell, s.tColServ]}>{item.nomeServico}</Text>
+            <Text style={[s.tableCell, s.tColQtd]}>{fmtNum(item.metragem)}</Text>
+            <Text style={[s.tableCell, s.tColMat]}>{item.materialId || '—'}</Text>
+            <Text style={[s.tableCell, s.tColEsp]}>{item.espessura || '—'}</Text>
+            <Text style={[s.tableCell, s.tColCorte]}>{item.corte || '—'}</Text>
+          </View>
+        ))}
 
         {/* ═══ OBSERVATIONS ═══ */}
         {orcamento.descricaoGeral ? (
@@ -261,12 +231,11 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
         ) : null}
 
         {/* ═══ CANHOTO ═══ */}
-        <View wrap={false} style={{ marginTop: 16 }}>
+        <View wrap={false} style={{ marginTop: 24 }}>
           <View style={s.canhotoDivider} />
           <Text style={s.canhotoCutLabel}>✂  Destacar canhoto</Text>
 
           <View style={s.canhotoBorder}>
-            {/* Header with title + ref badge */}
             <View style={s.canhotoHeader}>
               <View>
                 <Text style={s.canhotoTitle}>Canhoto de Recebimento / Conclusão</Text>
@@ -278,7 +247,6 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
               </View>
             </View>
 
-            {/* Meta row */}
             <View style={s.canhotoMetaRow}>
               <View style={s.canhotoMetaCell}>
                 <Text style={s.canhotoMetaLabel}>Cliente</Text>
@@ -294,12 +262,10 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
               </View>
             </View>
 
-            {/* Term text */}
             <Text style={s.canhotoTermText}>
               {termoRecebimento || 'Declaro que os serviços descritos nesta Ordem de Serviço foram executados de forma satisfatória e em conformidade com o combinado, sem ressalvas quanto ao prazo e qualidade da entrega.'}
             </Text>
 
-            {/* Signatures */}
             <View style={s.canhotoSigRow}>
               <View style={s.canhotoSigBlock}>
                 <View style={s.canhotoSigLine} />
