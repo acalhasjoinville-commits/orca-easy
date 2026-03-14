@@ -699,6 +699,35 @@ export function Configuracoes() {
 
   // ─── Tab content renderers ───
 
+  // ─── Filtered lists ───
+  const filteredMotor2 = useMemo(() => {
+    if (!searchMotor2) return motor2;
+    const q = normalize(searchMotor2);
+    return motor2.filter(e => normalize(e.material).includes(q) || String(e.espessura).includes(q) || String(e.corte).includes(q));
+  }, [motor2, searchMotor2]);
+
+  const filteredInsumos = useMemo(() => {
+    if (!searchInsumos) return insumos;
+    const q = normalize(searchInsumos);
+    return insumos.filter(e => normalize(e.nomeUnidadeConsumo).includes(q) || normalize(e.nomeEmbalagemCompra).includes(q));
+  }, [insumos, searchInsumos]);
+
+  const filteredRegras = useMemo(() => {
+    if (!searchRegras) return regras;
+    const q = normalize(searchRegras);
+    return regras.filter(e => normalize(e.nomeRegra).includes(q));
+  }, [regras, searchRegras]);
+
+  const filteredCatalogo = useMemo(() => {
+    if (!searchCatalogo) return servicos;
+    const q = normalize(searchCatalogo);
+    return servicos.filter(e =>
+      normalize(e.nomeServico).includes(q) ||
+      normalize(e.materialPadrao).includes(q) ||
+      normalize(regraName(e.regraId)).includes(q)
+    );
+  }, [servicos, searchCatalogo, regras]);
+
   const renderMateriaisTab = () => (
     <div className="space-y-8">
       <SectionHeader
@@ -714,7 +743,17 @@ export function Configuracoes() {
         isEmpty={motor1.length === 0}
         emptyText="Nenhum material cadastrado no Motor 1."
       >
-        {motor1.map(e => renderItem(e, `${e.densidade} g/cm³ · ${fmt(e.precoQuilo)}/kg`, 'motor1'))}
+        {motor1.map(e => (
+          <Card key={e.id}>
+            <CardContent className="flex items-center justify-between px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{e.material}</p>
+                <p className="text-xs text-muted-foreground">{e.densidade} g/cm³ · {fmt(e.precoQuilo)}/kg</p>
+              </div>
+              {renderItemActions(e, 'motor1')}
+            </CardContent>
+          </Card>
+        ))}
       </SubSection>
 
       <div className="border-t border-border" />
@@ -724,10 +763,33 @@ export function Configuracoes() {
         title="Motor 2 — Material Dobrado"
         description="Materiais comprados já dobrados do fornecedor, com preço por metro linear."
         onAdd={() => openAdd('motor2')}
-        isEmpty={motor2.length === 0}
+        isEmpty={filteredMotor2.length === 0 && motor2.length === 0}
         emptyText="Nenhum material cadastrado no Motor 2."
+        searchValue={searchMotor2}
+        onSearchChange={setSearchMotor2}
+        totalCount={motor2.length}
+        filteredCount={filteredMotor2.length}
+        searchPlaceholder="Buscar por material, espessura..."
       >
-        {motor2.map(e => renderItem(e, `${e.espessura}mm · ${e.corte}mm · ${fmt(e.precoMetroLinear)}/m`, 'motor2'))}
+        {filteredMotor2.length === 0 && motor2.length > 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchMotor2}"</p>
+        ) : (
+          filteredMotor2.map(e => (
+            <Card key={e.id}>
+              <CardContent className="flex items-center justify-between px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{e.material}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[10px] font-medium bg-muted text-muted-foreground rounded px-1.5 py-0.5">{e.espessura}mm</span>
+                    <span className="text-[10px] font-medium bg-muted text-muted-foreground rounded px-1.5 py-0.5">{e.corte}mm</span>
+                    <span className="text-[10px] font-semibold text-accent">{fmt(e.precoMetroLinear)}/m</span>
+                  </div>
+                </div>
+                {renderItemActions(e, 'motor2')}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </SubSection>
 
       <div className="border-t border-border" />
@@ -737,14 +799,31 @@ export function Configuracoes() {
         title="Insumos"
         description="Materiais consumíveis usados nas regras de cálculo (parafusos, silicone, etc)."
         onAdd={() => openAdd('insumos')}
-        isEmpty={insumos.length === 0}
+        isEmpty={filteredInsumos.length === 0 && insumos.length === 0}
         emptyText="Nenhum insumo cadastrado."
+        searchValue={searchInsumos}
+        onSearchChange={setSearchInsumos}
+        totalCount={insumos.length}
+        filteredCount={filteredInsumos.length}
+        searchPlaceholder="Buscar por nome do insumo..."
       >
-        {insumos.map(e => {
-          const preco = e.precoEmbalagem ?? 0;
-          const qtd = e.qtdEmbalagem ?? 1;
-          return renderItem(e, `${fmt(preco)} / ${qtd} un = ${fmt(getCustoUnitario(e))}/un`, 'insumos');
-        })}
+        {filteredInsumos.length === 0 && insumos.length > 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchInsumos}"</p>
+        ) : (
+          filteredInsumos.map(e => (
+            <Card key={e.id}>
+              <CardContent className="flex items-center justify-between px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{e.nomeUnidadeConsumo}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {e.nomeEmbalagemCompra} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} un → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
+                  </p>
+                </div>
+                {renderItemActions(e, 'insumos')}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </SubSection>
     </div>
   );
@@ -755,10 +834,39 @@ export function Configuracoes() {
         title="Regras de Cálculo"
         description="Definem como os insumos entram no cálculo do orçamento. Cada regra pode ter vários insumos com métodos diferentes."
         onAdd={() => openAdd('regras')}
-        isEmpty={regras.length === 0}
+        isEmpty={filteredRegras.length === 0 && regras.length === 0}
         emptyText="Nenhuma regra cadastrada. Crie uma para vincular insumos aos serviços."
+        searchValue={searchRegras}
+        onSearchChange={setSearchRegras}
+        totalCount={regras.length}
+        filteredCount={filteredRegras.length}
+        searchPlaceholder="Buscar por nome da regra..."
       >
-        {regras.map(e => renderItem(e, `${e.itensRegra.length} insumo(s) vinculado(s)`, 'regras'))}
+        {filteredRegras.length === 0 && regras.length > 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchRegras}"</p>
+        ) : (
+          filteredRegras.map(e => {
+            const insNames = e.itensRegra
+              .map(ir => insumos.find(ins => ins.id === ir.insumoId)?.nomeUnidadeConsumo)
+              .filter(Boolean);
+            const displayNames = insNames.length <= 3
+              ? insNames.join(', ')
+              : `${insNames.slice(0, 3).join(', ')} +${insNames.length - 3}`;
+            return (
+              <Card key={e.id}>
+                <CardContent className="flex items-center justify-between px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{e.nomeRegra}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {insNames.length > 0 ? displayNames : 'Nenhum insumo vinculado'}
+                    </p>
+                  </div>
+                  {renderItemActions(e, 'regras')}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
       </SubSection>
     </div>
   );
@@ -769,10 +877,39 @@ export function Configuracoes() {
         title="Catálogo de Serviços"
         description="Serviços disponíveis para orçamento, com motor, material padrão e fatores de dificuldade."
         onAdd={() => openAdd('catalogo')}
-        isEmpty={servicos.length === 0}
+        isEmpty={filteredCatalogo.length === 0 && servicos.length === 0}
         emptyText="Nenhum serviço cadastrado. Adicione para usar nos orçamentos."
+        searchValue={searchCatalogo}
+        onSearchChange={setSearchCatalogo}
+        totalCount={servicos.length}
+        filteredCount={filteredCatalogo.length}
+        searchPlaceholder="Buscar por nome, material ou regra..."
       >
-        {servicos.map(e => renderItem(e, `${e.materialPadrao} · ${e.espessuraPadrao}mm · ${e.cortePadrao}mm · Regra: ${regraName(e.regraId)}`, 'catalogo'))}
+        {filteredCatalogo.length === 0 && servicos.length > 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchCatalogo}"</p>
+        ) : (
+          filteredCatalogo.map(e => (
+            <Card key={e.id}>
+              <CardContent className="flex items-center justify-between px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">{e.nomeServico}</p>
+                    <span className={`text-[10px] font-bold rounded px-1.5 py-0.5 shrink-0 ${e.motorType === 'motor1' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'}`}>
+                      {e.motorType === 'motor1' ? 'M1' : 'M2'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/70 truncate">
+                    Regra: {regraName(e.regraId)}
+                  </p>
+                </div>
+                {renderItemActions(e, 'catalogo')}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </SubSection>
     </div>
   );
@@ -786,7 +923,17 @@ export function Configuracoes() {
         isEmpty={politicas.length === 0}
         emptyText="Nenhuma política cadastrada. Crie uma para usar nos orçamentos."
       >
-        {politicas.map(e => renderItem(e, `${e.validadeDias} dias · Garantia: ${e.tempoGarantia || '—'} · ${e.formasPagamento.substring(0, 30)}...`, 'politicas'))}
+        {politicas.map(e => (
+          <Card key={e.id}>
+            <CardContent className="flex items-center justify-between px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{e.nomePolitica}</p>
+                <p className="text-xs text-muted-foreground truncate">{e.validadeDias} dias · Garantia: {e.tempoGarantia || '—'} · {e.formasPagamento.substring(0, 30)}...</p>
+              </div>
+              {renderItemActions(e, 'politicas')}
+            </CardContent>
+          </Card>
+        ))}
       </SubSection>
     </div>
   );
