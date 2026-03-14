@@ -560,6 +560,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
                             </p>
+                            {(() => {
+                              const svc = servicosList.find(s => s.id === item.servicoTemplateId);
+                              const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
+                              return regraNome ? (
+                                <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                         <div className="flex gap-0.5 ml-2">
