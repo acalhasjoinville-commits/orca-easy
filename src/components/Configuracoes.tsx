@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2, Layers, Calculator, BookOpen, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 // ─── Types for active entity tracking ───
