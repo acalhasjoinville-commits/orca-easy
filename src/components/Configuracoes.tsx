@@ -234,7 +234,12 @@ function SectionHeader({ title, description }: { title: string; description: str
   );
 }
 
-// ─── Reusable sub-section with header + add button + list ───
+// ─── Accent-normalized search helper ───
+function normalize(str: string) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+// ─── Reusable sub-section with header + search + add button + list ───
 function SubSection({
   title,
   description,
@@ -242,6 +247,11 @@ function SubSection({
   isEmpty,
   emptyText,
   children,
+  searchValue,
+  onSearchChange,
+  totalCount,
+  filteredCount,
+  searchPlaceholder,
 }: {
   title: string;
   description: string;
@@ -249,18 +259,45 @@ function SubSection({
   isEmpty: boolean;
   emptyText: string;
   children: React.ReactNode;
+  searchValue?: string;
+  onSearchChange?: (v: string) => void;
+  totalCount?: number;
+  filteredCount?: number;
+  searchPlaceholder?: string;
 }) {
+  const showSearch = onSearchChange !== undefined;
+  const showCount = totalCount !== undefined && totalCount > 0;
+  const isFiltering = searchValue && searchValue.length > 0;
+
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            {showCount && (
+              <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                {isFiltering ? `${filteredCount}/${totalCount}` : totalCount}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         <Button size="sm" onClick={onAdd} className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="mr-1 h-3 w-3" /> Novo
         </Button>
       </div>
+      {showSearch && (totalCount ?? 0) > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder={searchPlaceholder || 'Buscar...'}
+            value={searchValue || ''}
+            onChange={e => onSearchChange!(e.target.value)}
+            className="h-9 pl-9 text-sm"
+          />
+        </div>
+      )}
       {isEmpty ? (
         <div className="rounded-lg border border-dashed border-muted-foreground/25 py-8 text-center">
           <p className="text-sm text-muted-foreground">{emptyText}</p>
