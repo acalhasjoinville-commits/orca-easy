@@ -333,6 +333,12 @@ export function Configuracoes() {
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
+  // ─── Search states ───
+  const [searchMotor2, setSearchMotor2] = useState('');
+  const [searchInsumos, setSearchInsumos] = useState('');
+  const [searchRegras, setSearchRegras] = useState('');
+  const [searchCatalogo, setSearchCatalogo] = useState('');
+
   const [regraItens, setRegraItens] = useState<ItemRegra[]>([]);
 
   const openAdd = (section: EntitySection) => {
