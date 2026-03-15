@@ -157,3 +157,37 @@ export interface Orcamento {
   tempoGarantiaSnapshot?: string | null;
   termoRecebimentoOsSnapshot?: string | null;
 }
+
+export type TipoLancamento = 'receita' | 'despesa';
+
+export interface LancamentoFinanceiro {
+  id: string;
+  empresaId: string;
+  tipo: TipoLancamento;
+  descricao: string;
+  valor: number;
+  data: string;
+  categoria: string;
+  observacao: string;
+  origem: string;
+}
+
+export const CATEGORIAS_DESPESA = [
+  'Material',
+  'Combustível',
+  'Folha / Salário',
+  'Aluguel',
+  'Ferramentas',
+  'Impostos',
+  'Serviços de Terceiros',
+  'Administrativo',
+  'Transporte',
+  'Outros',
+] as const;
+
+export const CATEGORIAS_RECEITA = [
+  'Receita Avulsa',
+  'Entrada Manual',
+  'Ajuste Positivo',
+  'Outros',
+] as const;
