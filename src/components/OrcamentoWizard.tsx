@@ -150,6 +150,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const handleAddItem = (item: ItemServico) => {
     setItens(prev => [...prev, item]);
     setModalOpen(false);
+    setEditingModalItem(null);
     toast.success('Serviço adicionado!');
   };
 
@@ -158,65 +159,14 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const startEditItem = (item: ItemServico) => {
-    setEditingItemId(item.id);
-    setEditMetragem(String(item.metragem));
-    setEditDificuldade(item.dificuldade);
+    setEditingModalItem(item);
+    setModalOpen(true);
   };
 
-  const cancelEditItem = () => { setEditingItemId(null); };
-
-  const saveEditItem = (item: ItemServico) => {
-    const m = parseFloat(editMetragem);
-    if (isNaN(m) || m <= 0) return;
-    const servico = servicosList.find(s => s.id === item.servicoTemplateId);
-    const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
-    if (!servico || !regra) return;
-
-    let custoMetroLinear: number;
-    if (item.motorType === 'motor1') {
-      const motor1 = motor1List.find(e => e.material === item.materialId);
-      if (!motor1) return;
-      custoMetroLinear = calcCustoMetroMotor1(item.espessura, item.corte, motor1);
-    } else {
-      const resultado = calcCustoMetroMotor2(item.materialId, item.espessura, item.corte, motor2List);
-      if (resultado === null) return;
-      custoMetroLinear = resultado;
-    }
-    const custoTotalMaterial = custoMetroLinear * m;
-    const insumosBase = calcInsumosDinamicos(m, regra, insumosList);
-    const fator = getFatorDificuldade(servico, editDificuldade);
-
-    const existingOverrides = item.insumosOverrides;
-    let cleanedOverrides: Record<string, number> | undefined = undefined;
-    if (existingOverrides) {
-      const filtered: Record<string, number> = {};
-      for (const [insumoId, overrideQty] of Object.entries(existingOverrides)) {
-        const baseInsumo = insumosBase.find(ic => ic.insumoId === insumoId);
-        if (baseInsumo && overrideQty !== baseInsumo.quantidade) {
-          filtered[insumoId] = overrideQty;
-        }
-      }
-      cleanedOverrides = Object.keys(filtered).length > 0 ? filtered : undefined;
-    }
-
-    const insumosCalc = insumosBase.map(ic => {
-      const override = cleanedOverrides?.[ic.insumoId];
-      if (override !== undefined) {
-        return { ...ic, quantidade: override, custoTotal: override * ic.custoUnitario };
-      }
-      return ic;
-    });
-
-    const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
-    const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
-    const valorVenda = custoTotalObra * fator;
-    setItens(prev => prev.map(i => i.id !== item.id ? i : {
-      ...i, metragem: m, dificuldade: editDificuldade, fatorDificuldade: fator,
-      custoMetroLinear, custoTotalMaterial, insumosCalculados: insumosCalc,
-      custoTotalInsumos, custoTotalObra, valorVenda,
-      insumosOverrides: cleanedOverrides,
-    }));
-    setEditingItemId(null);
+  const handleSaveEditedItem = (item: ItemServico) => {
+    setItens(prev => prev.map(i => i.id === item.id ? item : i));
+    setModalOpen(false);
+    setEditingModalItem(null);
     toast.success('Item atualizado!');
   };
 
