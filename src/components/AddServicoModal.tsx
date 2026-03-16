@@ -174,7 +174,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     <Dialog open={open} onOpenChange={v => { if (!v) { resetForm(); onClose(); } }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-primary">Adicionar Serviço</DialogTitle>
+          <DialogTitle className="text-primary">{editingItem ? 'Editar Serviço' : 'Adicionar Serviço'}</DialogTitle>
           <Badge variant="outline" className="w-fit text-[10px] mt-1">
             {motorType === 'motor1' ? (
               <><Factory className="mr-1 h-3 w-3" /> Motor 1 — Fabricar</>
