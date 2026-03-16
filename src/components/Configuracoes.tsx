@@ -512,7 +512,7 @@ export function Configuracoes() {
                   <SelectValue placeholder="Insumo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeUnidadeConsumo}</SelectItem>)}
+                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeEmbalagemCompra}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
