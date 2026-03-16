@@ -467,71 +467,38 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             {itens.map((item, idx) => (
               <Card key={item.id} className="overflow-hidden">
                 <CardContent className="p-4">
-                  {editingItemId === item.id ? (
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold">{item.nomeServico}</p>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground mt-0.5 shrink-0">
+                        {idx + 1}
+                      </span>
                       <div>
-                        <Label className="text-xs">Metragem (m)</Label>
-                        <Input type="number" inputMode="decimal" value={editMetragem}
-                          onChange={e => setEditMetragem(e.target.value)} className="h-9" />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Dificuldade</Label>
-                        <div className="grid grid-cols-3 gap-1.5 mt-1">
-                          {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => (
-                            <button key={d} onClick={() => setEditDificuldade(d)}
-                              className={cn('rounded-md border px-2 py-1.5 text-xs font-medium transition-all',
-                                editDificuldade === d ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground')}>
-                              {dificuldadeLabel[d]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => saveEditItem(item)} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
-                          <Check className="mr-1 h-3 w-3" /> Salvar
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEditItem} className="flex-1">
-                          <X className="mr-1 h-3 w-3" /> Cancelar
-                        </Button>
+                        <p className="text-sm font-semibold">{item.nomeServico}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
+                        </p>
+                        {(() => {
+                          const svc = servicosList.find(s => s.id === item.servicoTemplateId);
+                          const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
+                          return regraNome ? (
+                            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-start gap-2.5">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground mt-0.5 shrink-0">
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <p className="text-sm font-semibold">{item.nomeServico}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
-                            </p>
-                            {(() => {
-                              const svc = servicosList.find(s => s.id === item.servicoTemplateId);
-                              const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
-                              return regraNome ? (
-                                <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
-                              ) : null;
-                            })()}
-                          </div>
-                        </div>
-                        <div className="flex gap-0.5 ml-2">
-                          <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground ml-8.5 pl-[34px]">
-                        <span>Custo: {fmt(item.custoTotalObra)}</span>
-                        <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
-                      </div>
-                    </>
-                  )}
+                    <div className="flex gap-0.5 ml-2">
+                      <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground ml-8.5 pl-[34px]">
+                    <span>Custo: {fmt(item.custoTotalObra)}</span>
+                    <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
+                  </div>
                 </CardContent>
               </Card>
             ))}
