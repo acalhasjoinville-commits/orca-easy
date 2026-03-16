@@ -814,9 +814,9 @@ export function Configuracoes() {
             <Card key={e.id}>
               <CardContent className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{e.nomeUnidadeConsumo}</p>
+                  <p className="text-sm font-medium truncate">{e.nomeEmbalagemCompra}</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {e.nomeEmbalagemCompra} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} un → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
+                    {e.nomeUnidadeConsumo} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
                   </p>
                 </div>
                 {renderItemActions(e, 'insumos')}
