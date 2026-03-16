@@ -22,9 +22,11 @@ interface Props {
   onClose: () => void;
   onSave: (item: ItemServico) => void;
   motorType: MotorType;
+  /** When set, pre-populates all fields for editing an existing item */
+  editingItem?: ItemServico | null;
 }
 
-export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
+export function AddServicoModal({ open, onClose, onSave, motorType, editingItem }: Props) {
   const { servicos: allServicos, isLoading: loadingServicos } = useServicos();
   const { regras: regrasList } = useRegras();
   const { motor1: motor1List } = useMotor1();
@@ -42,6 +44,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
+
+  // Pre-populate when editingItem changes
+  const [lastEditId, setLastEditId] = useState<string | null>(null);
+  if (editingItem && editingItem.id !== lastEditId) {
+    setServicoId(editingItem.servicoTemplateId);
+    setMetragem(String(editingItem.metragem));
+    setDificuldade(editingItem.dificuldade);
+    setEditQtds(editingItem.insumosOverrides ?? {});
+    setLastEditId(editingItem.id);
+  }
+  if (!editingItem && lastEditId) {
+    setLastEditId(null);
+  }
 
   const servico = servicosList.find(s => s.id === servicoId);
   const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
@@ -124,7 +139,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
   const handleSave = () => {
     if (!finalCalc || !servico) return;
     const item: ItemServico = {
-      id: crypto.randomUUID(),
+      id: editingItem?.id ?? crypto.randomUUID(),
       servicoTemplateId: servico.id,
       nomeServico: servico.nomeServico,
       motorType,
@@ -152,13 +167,14 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
     setDificuldade('facil');
     setEditQtds({});
     setPopoverOpen(false);
+    setLastEditId(null);
   };
 
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) { resetForm(); onClose(); } }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-primary">Adicionar Serviço</DialogTitle>
+          <DialogTitle className="text-primary">{editingItem ? 'Editar Serviço' : 'Adicionar Serviço'}</DialogTitle>
           <Badge variant="outline" className="w-fit text-[10px] mt-1">
             {motorType === 'motor1' ? (
               <><Factory className="mr-1 h-3 w-3" /> Motor 1 — Fabricar</>

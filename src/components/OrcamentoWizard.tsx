@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType } from '@/lib/types';
-import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -83,9 +82,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
   const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [editMetragem, setEditMetragem] = useState('');
-  const [editDificuldade, setEditDificuldade] = useState<Dificuldade>('facil');
+  const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
 
   const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
   const [desconto, setDesconto] = useState(String(editingOrcamento?.desconto ?? 0));
@@ -152,6 +149,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const handleAddItem = (item: ItemServico) => {
     setItens(prev => [...prev, item]);
     setModalOpen(false);
+    setEditingModalItem(null);
     toast.success('Serviço adicionado!');
   };
 
@@ -160,65 +158,14 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const startEditItem = (item: ItemServico) => {
-    setEditingItemId(item.id);
-    setEditMetragem(String(item.metragem));
-    setEditDificuldade(item.dificuldade);
+    setEditingModalItem(item);
+    setModalOpen(true);
   };
 
-  const cancelEditItem = () => { setEditingItemId(null); };
-
-  const saveEditItem = (item: ItemServico) => {
-    const m = parseFloat(editMetragem);
-    if (isNaN(m) || m <= 0) return;
-    const servico = servicosList.find(s => s.id === item.servicoTemplateId);
-    const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
-    if (!servico || !regra) return;
-
-    let custoMetroLinear: number;
-    if (item.motorType === 'motor1') {
-      const motor1 = motor1List.find(e => e.material === item.materialId);
-      if (!motor1) return;
-      custoMetroLinear = calcCustoMetroMotor1(item.espessura, item.corte, motor1);
-    } else {
-      const resultado = calcCustoMetroMotor2(item.materialId, item.espessura, item.corte, motor2List);
-      if (resultado === null) return;
-      custoMetroLinear = resultado;
-    }
-    const custoTotalMaterial = custoMetroLinear * m;
-    const insumosBase = calcInsumosDinamicos(m, regra, insumosList);
-    const fator = getFatorDificuldade(servico, editDificuldade);
-
-    const existingOverrides = item.insumosOverrides;
-    let cleanedOverrides: Record<string, number> | undefined = undefined;
-    if (existingOverrides) {
-      const filtered: Record<string, number> = {};
-      for (const [insumoId, overrideQty] of Object.entries(existingOverrides)) {
-        const baseInsumo = insumosBase.find(ic => ic.insumoId === insumoId);
-        if (baseInsumo && overrideQty !== baseInsumo.quantidade) {
-          filtered[insumoId] = overrideQty;
-        }
-      }
-      cleanedOverrides = Object.keys(filtered).length > 0 ? filtered : undefined;
-    }
-
-    const insumosCalc = insumosBase.map(ic => {
-      const override = cleanedOverrides?.[ic.insumoId];
-      if (override !== undefined) {
-        return { ...ic, quantidade: override, custoTotal: override * ic.custoUnitario };
-      }
-      return ic;
-    });
-
-    const custoTotalInsumos = insumosCalc.reduce((s, i) => s + i.custoTotal, 0);
-    const custoTotalObra = custoTotalMaterial + custoTotalInsumos;
-    const valorVenda = custoTotalObra * fator;
-    setItens(prev => prev.map(i => i.id !== item.id ? i : {
-      ...i, metragem: m, dificuldade: editDificuldade, fatorDificuldade: fator,
-      custoMetroLinear, custoTotalMaterial, insumosCalculados: insumosCalc,
-      custoTotalInsumos, custoTotalObra, valorVenda,
-      insumosOverrides: cleanedOverrides,
-    }));
-    setEditingItemId(null);
+  const handleSaveEditedItem = (item: ItemServico) => {
+    setItens(prev => prev.map(i => i.id === item.id ? item : i));
+    setModalOpen(false);
+    setEditingModalItem(null);
     toast.success('Item atualizado!');
   };
 
@@ -519,71 +466,38 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             {itens.map((item, idx) => (
               <Card key={item.id} className="overflow-hidden">
                 <CardContent className="p-4">
-                  {editingItemId === item.id ? (
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold">{item.nomeServico}</p>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2.5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground mt-0.5 shrink-0">
+                        {idx + 1}
+                      </span>
                       <div>
-                        <Label className="text-xs">Metragem (m)</Label>
-                        <Input type="number" inputMode="decimal" value={editMetragem}
-                          onChange={e => setEditMetragem(e.target.value)} className="h-9" />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Dificuldade</Label>
-                        <div className="grid grid-cols-3 gap-1.5 mt-1">
-                          {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => (
-                            <button key={d} onClick={() => setEditDificuldade(d)}
-                              className={cn('rounded-md border px-2 py-1.5 text-xs font-medium transition-all',
-                                editDificuldade === d ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground')}>
-                              {dificuldadeLabel[d]}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={() => saveEditItem(item)} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
-                          <Check className="mr-1 h-3 w-3" /> Salvar
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEditItem} className="flex-1">
-                          <X className="mr-1 h-3 w-3" /> Cancelar
-                        </Button>
+                        <p className="text-sm font-semibold">{item.nomeServico}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
+                        </p>
+                        {(() => {
+                          const svc = servicosList.find(s => s.id === item.servicoTemplateId);
+                          const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
+                          return regraNome ? (
+                            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-start gap-2.5">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground mt-0.5 shrink-0">
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <p className="text-sm font-semibold">{item.nomeServico}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
-                            </p>
-                            {(() => {
-                              const svc = servicosList.find(s => s.id === item.servicoTemplateId);
-                              const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
-                              return regraNome ? (
-                                <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
-                              ) : null;
-                            })()}
-                          </div>
-                        </div>
-                        <div className="flex gap-0.5 ml-2">
-                          <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground ml-8.5 pl-[34px]">
-                        <span>Custo: {fmt(item.custoTotalObra)}</span>
-                        <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
-                      </div>
-                    </>
-                  )}
+                    <div className="flex gap-0.5 ml-2">
+                      <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground ml-8.5 pl-[34px]">
+                    <span>Custo: {fmt(item.custoTotalObra)}</span>
+                    <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -778,7 +692,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
       )}
 
-      <AddServicoModal open={modalOpen} onClose={() => setModalOpen(false)} onSave={handleAddItem} motorType={motorType} />
+      <AddServicoModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingModalItem(null); }}
+        onSave={editingModalItem ? handleSaveEditedItem : handleAddItem}
+        motorType={motorType}
+        editingItem={editingModalItem}
+      />
     </div>
   );
 }
