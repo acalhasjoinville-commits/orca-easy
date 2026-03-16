@@ -847,7 +847,7 @@ export function Configuracoes() {
         ) : (
           filteredRegras.map(e => {
             const insNames = e.itensRegra
-              .map(ir => insumos.find(ins => ins.id === ir.insumoId)?.nomeUnidadeConsumo)
+              .map(ir => insumos.find(ins => ins.id === ir.insumoId)?.nomeEmbalagemCompra)
               .filter(Boolean);
             const displayNames = insNames.length <= 3
               ? insNames.join(', ')
