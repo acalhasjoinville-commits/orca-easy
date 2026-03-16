@@ -22,6 +22,8 @@ interface Props {
   onClose: () => void;
   onSave: (item: ItemServico) => void;
   motorType: MotorType;
+  /** When set, pre-populates all fields for editing an existing item */
+  editingItem?: ItemServico | null;
 }
 
 export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
