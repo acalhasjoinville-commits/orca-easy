@@ -139,7 +139,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
   const handleSave = () => {
     if (!finalCalc || !servico) return;
     const item: ItemServico = {
-      id: crypto.randomUUID(),
+      id: editingItem?.id ?? crypto.randomUUID(),
       servicoTemplateId: servico.id,
       nomeServico: servico.nomeServico,
       motorType,
@@ -167,6 +167,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     setDificuldade('facil');
     setEditQtds({});
     setPopoverOpen(false);
+    setLastEditId(null);
   };
 
   return (
