@@ -512,7 +512,7 @@ export function Configuracoes() {
                   <SelectValue placeholder="Insumo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeUnidadeConsumo}</SelectItem>)}
+                  {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeEmbalagemCompra}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
@@ -814,9 +814,9 @@ export function Configuracoes() {
             <Card key={e.id}>
               <CardContent className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{e.nomeUnidadeConsumo}</p>
+                  <p className="text-sm font-medium truncate">{e.nomeEmbalagemCompra}</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {e.nomeEmbalagemCompra} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} un → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
+                    {e.nomeUnidadeConsumo} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
                   </p>
                 </div>
                 {renderItemActions(e, 'insumos')}
@@ -847,7 +847,7 @@ export function Configuracoes() {
         ) : (
           filteredRegras.map(e => {
             const insNames = e.itensRegra
-              .map(ir => insumos.find(ins => ins.id === ir.insumoId)?.nomeUnidadeConsumo)
+              .map(ir => insumos.find(ins => ins.id === ir.insumoId)?.nomeEmbalagemCompra)
               .filter(Boolean);
             const displayNames = insNames.length <= 3
               ? insNames.join(', ')
