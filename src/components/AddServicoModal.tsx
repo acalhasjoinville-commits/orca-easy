@@ -26,7 +26,7 @@ interface Props {
   editingItem?: ItemServico | null;
 }
 
-export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
+export function AddServicoModal({ open, onClose, onSave, motorType, editingItem }: Props) {
   const { servicos: allServicos, isLoading: loadingServicos } = useServicos();
   const { regras: regrasList } = useRegras();
   const { motor1: motor1List } = useMotor1();
@@ -44,6 +44,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType }: Props) {
   const [metragem, setMetragem] = useState('');
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
+
+  // Pre-populate when editingItem changes
+  const [lastEditId, setLastEditId] = useState<string | null>(null);
+  if (editingItem && editingItem.id !== lastEditId) {
+    setServicoId(editingItem.servicoTemplateId);
+    setMetragem(String(editingItem.metragem));
+    setDificuldade(editingItem.dificuldade);
+    setEditQtds(editingItem.insumosOverrides ?? {});
+    setLastEditId(editingItem.id);
+  }
+  if (!editingItem && lastEditId) {
+    setLastEditId(null);
+  }
 
   const servico = servicosList.find(s => s.id === servicoId);
   const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
