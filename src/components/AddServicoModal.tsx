@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { calcCustoMetroMotor1, calcCustoMetroMotor2, calcInsumosDinamicos, getFatorDificuldade } from '@/lib/calcEngine';
 import { Dificuldade, ItemServico, InsumoCalculado, MotorType } from '@/lib/types';
@@ -45,18 +45,15 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
   const [dificuldade, setDificuldade] = useState<Dificuldade>('facil');
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
 
-  // Pre-populate when editingItem changes
-  const [lastEditId, setLastEditId] = useState<string | null>(null);
-  if (editingItem && editingItem.id !== lastEditId) {
-    setServicoId(editingItem.servicoTemplateId);
-    setMetragem(String(editingItem.metragem));
-    setDificuldade(editingItem.dificuldade);
-    setEditQtds(editingItem.insumosOverrides ?? {});
-    setLastEditId(editingItem.id);
-  }
-  if (!editingItem && lastEditId) {
-    setLastEditId(null);
-  }
+  // Pre-populate when editing an existing item
+  useEffect(() => {
+    if (open && editingItem) {
+      setServicoId(editingItem.servicoTemplateId);
+      setMetragem(String(editingItem.metragem));
+      setDificuldade(editingItem.dificuldade);
+      setEditQtds(editingItem.insumosOverrides ?? {});
+    }
+  }, [open, editingItem]);
 
   const servico = servicosList.find(s => s.id === servicoId);
   const regra = servico ? regrasList.find(r => r.id === servico.regraId) : null;
@@ -167,7 +164,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     setDificuldade('facil');
     setEditQtds({});
     setPopoverOpen(false);
-    setLastEditId(null);
+    
   };
 
   return (
