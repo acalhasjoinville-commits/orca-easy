@@ -51,7 +51,8 @@ function OrcamentosTab() {
 
   const filtered = useMemo(() => {
     return orcamentos.filter((orc) => {
-      if (statusFilter !== 'all' && orc.status !== statusFilter) return false;
+      if (!VALID_STATUSES.includes(orc.status)) return false;
+      if (statusFilter !== 'todos' && orc.status !== statusFilter) return false;
       const d = new Date(orc.dataCriacao);
       if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       if (period === '3months') return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
