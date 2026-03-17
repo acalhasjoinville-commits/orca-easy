@@ -77,7 +77,8 @@ function OrcamentosTab() {
       months.push({ key, label, receita: 0, custo: 0 });
     }
     orcamentos.forEach((orc) => {
-      if (statusFilter !== 'all' && orc.status !== statusFilter) return;
+      if (!VALID_STATUSES.includes(orc.status)) return;
+      if (statusFilter !== 'todos' && orc.status !== statusFilter) return;
       const d = new Date(orc.dataCriacao);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const m = months.find((x) => x.key === key);
