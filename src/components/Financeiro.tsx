@@ -45,7 +45,7 @@ function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: Perio
 function OrcamentosTab() {
   const { orcamentos } = useOrcamentos();
   const [period, setPeriod] = useState<PeriodFilter>('year');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const isMobile = useIsMobile();
   const now = new Date();
 
