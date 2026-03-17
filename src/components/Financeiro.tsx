@@ -25,7 +25,8 @@ const fmt = (v: number) =>
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
 type PeriodFilter = 'month' | '3months' | 'year';
-type StatusFilter = 'all' | 'aprovado' | 'executado';
+type StatusFilter = 'todos' | 'aprovado' | 'executado';
+const VALID_STATUSES = ['aprovado', 'executado'];
 type TipoFilter = 'all' | 'receita' | 'despesa';
 
 // ─── Period filter helper ───
@@ -44,13 +45,14 @@ function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: Perio
 function OrcamentosTab() {
   const { orcamentos } = useOrcamentos();
   const [period, setPeriod] = useState<PeriodFilter>('year');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const isMobile = useIsMobile();
   const now = new Date();
 
   const filtered = useMemo(() => {
     return orcamentos.filter((orc) => {
-      if (statusFilter !== 'all' && orc.status !== statusFilter) return false;
+      if (!VALID_STATUSES.includes(orc.status)) return false;
+      if (statusFilter !== 'todos' && orc.status !== statusFilter) return false;
       const d = new Date(orc.dataCriacao);
       if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       if (period === '3months') return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -75,7 +77,8 @@ function OrcamentosTab() {
       months.push({ key, label, receita: 0, custo: 0 });
     }
     orcamentos.forEach((orc) => {
-      if (statusFilter !== 'all' && orc.status !== statusFilter) return;
+      if (!VALID_STATUSES.includes(orc.status)) return;
+      if (statusFilter !== 'todos' && orc.status !== statusFilter) return;
       const d = new Date(orc.dataCriacao);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const m = months.find((x) => x.key === key);
@@ -117,9 +120,9 @@ function OrcamentosTab() {
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="aprovado">Aprovado</SelectItem>
-            <SelectItem value="executado">Executado</SelectItem>
+            <SelectItem value="todos">Executados + Aprovados</SelectItem>
+            <SelectItem value="executado">Executados</SelectItem>
+            <SelectItem value="aprovado">Aprovados</SelectItem>
           </SelectContent>
         </Select>
       </div>
