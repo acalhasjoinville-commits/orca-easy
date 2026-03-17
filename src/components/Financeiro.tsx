@@ -120,9 +120,9 @@ function OrcamentosTab() {
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            <SelectItem value="aprovado">Aprovado</SelectItem>
-            <SelectItem value="executado">Executado</SelectItem>
+            <SelectItem value="todos">Executados + Aprovados</SelectItem>
+            <SelectItem value="executado">Executados</SelectItem>
+            <SelectItem value="aprovado">Aprovados</SelectItem>
           </SelectContent>
         </Select>
       </div>
