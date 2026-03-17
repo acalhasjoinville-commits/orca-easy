@@ -25,7 +25,8 @@ const fmt = (v: number) =>
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
 type PeriodFilter = 'month' | '3months' | 'year';
-type StatusFilter = 'all' | 'aprovado' | 'executado';
+type StatusFilter = 'todos' | 'aprovado' | 'executado';
+const VALID_STATUSES = ['aprovado', 'executado'];
 type TipoFilter = 'all' | 'receita' | 'despesa';
 
 // ─── Period filter helper ───
