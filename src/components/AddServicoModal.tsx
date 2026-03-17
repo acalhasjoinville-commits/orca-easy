@@ -164,7 +164,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     setDificuldade('facil');
     setEditQtds({});
     setPopoverOpen(false);
-    setLastEditId(null);
+    
   };
 
   return (
