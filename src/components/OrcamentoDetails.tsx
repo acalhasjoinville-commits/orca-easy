@@ -1,26 +1,13 @@
-import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Trash2, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
+import { ArrowLeft, Pencil, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
-import { Loader2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 interface OrcamentoDetailsProps {
   orcamento: Orcamento;
@@ -28,7 +15,6 @@ interface OrcamentoDetailsProps {
   empresa?: MinhaEmpresa;
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
-  onDelete: (id: string) => void | Promise<void>;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
