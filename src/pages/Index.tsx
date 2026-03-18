@@ -114,19 +114,6 @@ const Index = () => {
     setTab('orcamento-novo');
   };
 
-  const handleDelete = async (id: string) => {
-    if (!canDeleteBudget) {
-      toast.error('Sem permissão para excluir orçamentos.', { duration: 5000 });
-      return;
-    }
-    try {
-      await deleteOrcamento.mutateAsync(id);
-      toast.success('Orçamento removido.', { duration: 2500 });
-      setTab('orcamentos');
-    } catch {
-      toast.error('Erro ao remover.', { duration: 5000 });
-    }
-  };
 
   const getHeaderLabel = () => {
     switch (tab) {
