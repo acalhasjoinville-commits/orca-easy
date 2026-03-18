@@ -186,6 +186,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
   };
 
+  const handleNovoCliente = async (cliente: Cliente) => {
+    await addCliente.mutateAsync(cliente);
+    setSelectedClienteId(cliente.id);
+    setClienteModalOpen(false);
+    toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
+  };
+
   const dificuldadeLabel: Record<Dificuldade, string> = {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
