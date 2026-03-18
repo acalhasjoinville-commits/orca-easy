@@ -303,10 +303,16 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
 
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar cliente..." value={clienteSearch}
-              onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar cliente..." value={clienteSearch}
+                onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+            </div>
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 border-accent text-accent hover:bg-accent/10"
+              onClick={() => setClienteModalOpen(true)} title="Novo Cliente">
+              <UserPlus className="h-4 w-4" />
+            </Button>
           </div>
 
           {loadingClientes ? (
@@ -322,7 +328,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
                   </p>
                   {clientes.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Cadastre clientes na aba "Clientes".</p>
+                    <Button variant="outline" size="sm" className="mt-3 border-accent text-accent hover:bg-accent/10"
+                      onClick={() => setClienteModalOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-1.5" /> Cadastrar Cliente
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -351,6 +360,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             Continuar
           </Button>
         </div>
+
+        <ClienteFormModal
+          open={clienteModalOpen}
+          onClose={() => setClienteModalOpen(false)}
+          onSave={handleNovoCliente}
+        />
       </div>
     );
   }
