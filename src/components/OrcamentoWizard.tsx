@@ -1,17 +1,18 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
-import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType, Cliente } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
+import { ClienteFormModal } from './ClienteFormModal';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
