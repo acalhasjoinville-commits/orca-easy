@@ -33,9 +33,8 @@ const dificuldadeLabels: Record<string, string> = {
 const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDelete }: OrcamentoDetailsProps) {
-  const { canCreateEditBudget, canDeleteBudget } = useAuth();
-  const [isDeleting, setIsDeleting] = useState(false);
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit }: OrcamentoDetailsProps) {
+  const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? ((1 - orcamento.custoTotalObra / displayValue) * 100) : 0;
