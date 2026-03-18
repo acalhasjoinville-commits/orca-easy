@@ -1,17 +1,18 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
-import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType, Cliente } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
+import { ClienteFormModal } from './ClienteFormModal';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -82,6 +83,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
   const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
+  const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
 
   const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
@@ -101,7 +103,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
   );
 
-  const { clientes, isLoading: loadingClientes } = useClientes();
+  const { clientes, isLoading: loadingClientes, addCliente } = useClientes();
   const { politicas } = usePoliticas();
   const { getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { empresa } = useEmpresa();
@@ -182,6 +184,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setTempoGarantia(pol.tempoGarantia || '');
     setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
     toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
+  };
+
+  const handleNovoCliente = async (cliente: Cliente) => {
+    await addCliente.mutateAsync(cliente);
+    setSelectedClienteId(cliente.id);
+    setClienteModalOpen(false);
+    toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
   };
 
   const dificuldadeLabel: Record<Dificuldade, string> = {
@@ -294,10 +303,16 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </div>
 
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar cliente..." value={clienteSearch}
-              onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar cliente..." value={clienteSearch}
+                onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+            </div>
+            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 border-accent text-accent hover:bg-accent/10"
+              onClick={() => setClienteModalOpen(true)} title="Novo Cliente">
+              <UserPlus className="h-4 w-4" />
+            </Button>
           </div>
 
           {loadingClientes ? (
@@ -313,7 +328,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
                   </p>
                   {clientes.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Cadastre clientes na aba "Clientes".</p>
+                    <Button variant="outline" size="sm" className="mt-3 border-accent text-accent hover:bg-accent/10"
+                      onClick={() => setClienteModalOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-1.5" /> Cadastrar Cliente
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -342,6 +360,12 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             Continuar
           </Button>
         </div>
+
+        <ClienteFormModal
+          open={clienteModalOpen}
+          onClose={() => setClienteModalOpen(false)}
+          onSave={handleNovoCliente}
+        />
       </div>
     );
   }
