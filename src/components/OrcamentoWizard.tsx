@@ -103,7 +103,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
   );
 
-  const { clientes, isLoading: loadingClientes } = useClientes();
+  const { clientes, isLoading: loadingClientes, addCliente } = useClientes();
   const { politicas } = usePoliticas();
   const { getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { empresa } = useEmpresa();
