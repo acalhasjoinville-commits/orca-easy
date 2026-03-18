@@ -22,7 +22,7 @@ import { LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canDeleteBudget, canManageUsers } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
@@ -30,7 +30,7 @@ const Index = () => {
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
 
-  const { deleteOrcamento } = useOrcamentos();
+  useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
 
@@ -114,19 +114,6 @@ const Index = () => {
     setTab('orcamento-novo');
   };
 
-  const handleDelete = async (id: string) => {
-    if (!canDeleteBudget) {
-      toast.error('Sem permissão para excluir orçamentos.', { duration: 5000 });
-      return;
-    }
-    try {
-      await deleteOrcamento.mutateAsync(id);
-      toast.success('Orçamento removido.', { duration: 2500 });
-      setTab('orcamentos');
-    } catch {
-      toast.error('Erro ao remover.', { duration: 5000 });
-    }
-  };
 
   const getHeaderLabel = () => {
     switch (tab) {
@@ -153,7 +140,6 @@ const Index = () => {
           empresa={empresa}
           onBack={goToList}
           onEdit={goToEdit}
-          onDelete={handleDelete}
         />
       )}
       {tab === 'orcamento-novo' && (

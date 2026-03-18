@@ -1,26 +1,13 @@
-import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Trash2, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
+import { ArrowLeft, Pencil, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
-import { Loader2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 interface OrcamentoDetailsProps {
   orcamento: Orcamento;
@@ -28,7 +15,6 @@ interface OrcamentoDetailsProps {
   empresa?: MinhaEmpresa;
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
-  onDelete: (id: string) => void | Promise<void>;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -47,9 +33,8 @@ const dificuldadeLabels: Record<string, string> = {
 const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDelete }: OrcamentoDetailsProps) {
-  const { canCreateEditBudget, canDeleteBudget } = useAuth();
-  const [isDeleting, setIsDeleting] = useState(false);
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit }: OrcamentoDetailsProps) {
+  const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? ((1 - orcamento.custoTotalObra / displayValue) * 100) : 0;
@@ -254,42 +239,6 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
           </Button>
         )}
 
-        {canDeleteBudget && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="h-10 w-10 text-destructive hover:text-destructive border-destructive/30">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  disabled={isDeleting}
-                  onClick={async (e) => {
-                    if (isDeleting) return;
-                    e.preventDefault();
-                    setIsDeleting(true);
-                    try {
-                      await Promise.resolve(onDelete(orcamento.id));
-                    } finally {
-                      setIsDeleting(false);
-                    }
-                  }}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Excluindo...</> : 'Excluir'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
       </div>
     </div>
   );
