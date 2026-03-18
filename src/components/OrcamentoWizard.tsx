@@ -83,6 +83,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
   const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
   const [modalOpen, setModalOpen] = useState(false);
+  const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
 
   const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
