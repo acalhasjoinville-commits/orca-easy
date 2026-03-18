@@ -271,21 +271,12 @@ export function useOrcamentos() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orcamentos'] }),
   });
 
-  const deleteOrcamento = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('orcamentos').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['orcamentos'] }),
-  });
-
   return {
     orcamentos: query.data || [],
     isLoading: query.isLoading,
     getNextNumero,
     addOrcamento,
     updateOrcamento,
-    deleteOrcamento,
   };
 }
 

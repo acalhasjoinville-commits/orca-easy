@@ -239,42 +239,6 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit }
           </Button>
         )}
 
-        {canDeleteBudget && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="h-10 w-10 text-destructive hover:text-destructive border-destructive/30">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. O orçamento #{orcamento.numeroOrcamento} será removido permanentemente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  disabled={isDeleting}
-                  onClick={async (e) => {
-                    if (isDeleting) return;
-                    e.preventDefault();
-                    setIsDeleting(true);
-                    try {
-                      await Promise.resolve(onDelete(orcamento.id));
-                    } finally {
-                      setIsDeleting(false);
-                    }
-                  }}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Excluindo...</> : 'Excluir'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
       </div>
     </div>
   );

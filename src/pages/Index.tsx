@@ -140,7 +140,6 @@ const Index = () => {
           empresa={empresa}
           onBack={goToList}
           onEdit={goToEdit}
-          onDelete={handleDelete}
         />
       )}
       {tab === 'orcamento-novo' && (

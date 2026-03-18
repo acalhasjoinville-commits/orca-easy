@@ -75,10 +75,6 @@ export const storage = {
     const list = storage.getOrcamentos().map(o => o.id === updated.id ? updated : o);
     save(KEYS.orcamentos, list);
   },
-  deleteOrcamento: (id: string) => {
-    const list = storage.getOrcamentos().filter(o => o.id !== id);
-    save(KEYS.orcamentos, list);
-  },
 
   getClientes: (): Cliente[] => {
     const stored = localStorage.getItem(KEYS.clientes);
