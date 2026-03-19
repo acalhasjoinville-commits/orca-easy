@@ -709,7 +709,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </h3>
               <div>
                 <Label className="text-xs">Tempo de Garantia</Label>
-                <Select value={tempoGarantia} onValueChange={setTempoGarantia}>
+                <Select value={tempoGarantia} onValueChange={v => updateDraft({ tempoGarantia: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
