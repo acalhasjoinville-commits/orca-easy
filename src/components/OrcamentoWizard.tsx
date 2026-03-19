@@ -241,7 +241,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const handleNovoCliente = async (cliente: Cliente) => {
     try {
       const saved = await addCliente.mutateAsync(cliente);
-      setSelectedClienteId(saved.id);
+      updateDraft({ selectedClienteId: saved.id });
       setClienteModalOpen(false);
       toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
     } catch {
