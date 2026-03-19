@@ -657,7 +657,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <Label className="text-xs">Termo de Recebimento (OS)</Label>
                 <Textarea
                   value={termoRecebimentoOs}
-                  onChange={e => setTermoRecebimentoOs(e.target.value)}
+                  onChange={e => updateDraft({ termoRecebimentoOs: e.target.value })}
                   rows={3}
                   className="text-sm"
                   placeholder="Texto do canhoto de entrega da OS..."
