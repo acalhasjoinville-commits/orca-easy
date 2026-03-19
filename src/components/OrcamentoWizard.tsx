@@ -199,7 +199,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleAddItem = (item: ItemServico) => {
-    setItens(prev => [...prev, item]);
+    updateDraft({ itens: [...itens, item] });
     setModalOpen(false);
     setEditingModalItem(null);
     toast.success('Serviço adicionado!');
