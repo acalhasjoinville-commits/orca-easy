@@ -187,7 +187,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.', { duration: 5000 });
       return;
     }
-    setPhase('motor');
+    updateDraft({ phase: 'motor' });
   };
 
   const handleMotorSelect = (nextMotor: MotorType) => {
