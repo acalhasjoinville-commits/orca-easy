@@ -687,7 +687,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Label className="text-xs flex items-center gap-1.5">
                 <FileText className="h-3 w-3 text-muted-foreground" /> Escopo do Serviço
               </Label>
-              <Textarea value={descricaoGeral} onChange={e => setDescricaoGeral(e.target.value)}
+              <Textarea value={descricaoGeral} onChange={e => updateDraft({ descricaoGeral: e.target.value })}
                 placeholder="Ex: Instalação de calhas no beiral frontal e rufos na platibanda lateral..." rows={3} className="text-sm" />
             </div>
 
