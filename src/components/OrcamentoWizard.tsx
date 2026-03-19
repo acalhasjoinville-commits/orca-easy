@@ -215,7 +215,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleSaveEditedItem = (item: ItemServico) => {
-    setItens(prev => prev.map(i => i.id === item.id ? item : i));
+    updateDraft({ itens: itens.map(i => i.id === item.id ? item : i) });
     setModalOpen(false);
     setEditingModalItem(null);
     toast.success('Item atualizado!');
