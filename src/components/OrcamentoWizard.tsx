@@ -478,7 +478,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             </button>
           </div>
-          <Button onClick={() => setPhase('carrinho')}
+          <Button onClick={() => updateDraft({ phase: 'carrinho' })}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
             Continuar
           </Button>
