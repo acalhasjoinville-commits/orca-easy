@@ -187,10 +187,14 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleNovoCliente = async (cliente: Cliente) => {
-    await addCliente.mutateAsync(cliente);
-    setSelectedClienteId(cliente.id);
-    setClienteModalOpen(false);
-    toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
+    try {
+      const saved = await addCliente.mutateAsync(cliente);
+      setSelectedClienteId(saved.id);
+      setClienteModalOpen(false);
+      toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
+    } catch {
+      // Modal stays open on error; toast handled by mutation
+    }
   };
 
   const dificuldadeLabel: Record<Dificuldade, string> = {
