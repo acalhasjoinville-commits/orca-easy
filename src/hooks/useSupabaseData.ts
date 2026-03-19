@@ -178,8 +178,9 @@ export function useClientes() {
   const addCliente = useMutation({
     mutationFn: async (c: Cliente) => {
       if (!empresaId) throw new Error('Empresa não vinculada');
-      const { error } = await supabase.from('clientes').insert(clienteToDb(c, empresaId));
+      const { data, error } = await supabase.from('clientes').insert(clienteToDb(c, empresaId)).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
   });
