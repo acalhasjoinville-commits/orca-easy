@@ -678,7 +678,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
               <div>
                 <Label className="text-xs">Desconto (R$)</Label>
-                <Input type="number" inputMode="decimal" value={desconto} onChange={e => setDesconto(e.target.value)} placeholder="0" className="h-9" />
+                <Input type="number" inputMode="decimal" value={desconto} onChange={e => updateDraft({ desconto: e.target.value })} placeholder="0" className="h-9" />
               </div>
             </div>
 
