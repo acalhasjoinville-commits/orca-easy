@@ -293,6 +293,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         ...base,
       };
       await addOrcamento.mutateAsync(orc);
+      clearDraft();
       return orc;
     }
   };
