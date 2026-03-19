@@ -510,7 +510,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               {' · '}{motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
             </p>
           </div>
-          <Select value={status} onValueChange={v => setStatus(v as StatusOrcamento)}>
+          <Select value={status} onValueChange={v => updateDraft({ status: v as StatusOrcamento })}>
             <SelectTrigger className={cn('h-8 w-auto text-xs font-semibold border', currentStatus.color)}>
               <SelectValue />
             </SelectTrigger>
