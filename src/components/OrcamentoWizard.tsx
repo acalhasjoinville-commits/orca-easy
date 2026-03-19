@@ -393,7 +393,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 </div>
               ) : (
                 filteredClientes.map(c => (
-                  <button key={c.id} onClick={() => setSelectedClienteId(c.id)}
+                  <button key={c.id} onClick={() => updateDraft({ selectedClienteId: c.id })}
                     className={cn(
                       'w-full text-left rounded-lg border p-3.5 transition-all',
                       selectedClienteId === c.id
