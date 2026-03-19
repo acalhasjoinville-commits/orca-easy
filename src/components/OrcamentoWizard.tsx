@@ -226,13 +226,15 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const loadPolitica = (politicaId: string) => {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
-    setLoadedPoliticaId(pol.id);
-    setPoliticaNomeSnapshot(pol.nomePolitica);
-    setValidade(`${pol.validadeDias} dias`);
-    setFormasPagamento(pol.formasPagamento);
-    setGarantia(pol.garantia);
-    setTempoGarantia(pol.tempoGarantia || '');
-    setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
+    updateDraft({
+      loadedPoliticaId: pol.id,
+      politicaNomeSnapshot: pol.nomePolitica,
+      validade: `${pol.validadeDias} dias`,
+      formasPagamento: pol.formasPagamento,
+      garantia: pol.garantia,
+      tempoGarantia: pol.tempoGarantia || '',
+      termoRecebimentoOs: pol.termoRecebimentoOs || FALLBACK_TERMO,
+    });
     toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
   };
 
