@@ -282,6 +282,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     if (isEditing && editingOrcamento) {
       const orc = { ...editingOrcamento, ...base };
       await updateOrcamento.mutateAsync(orc);
+      clearDraft();
       return orc;
     } else {
       const nextNum = await getNextNumero();
