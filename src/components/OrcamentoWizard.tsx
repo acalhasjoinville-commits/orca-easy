@@ -206,7 +206,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleRemoveItem = (id: string) => {
-    setItens(prev => prev.filter(i => i.id !== id));
+    updateDraft({ itens: itens.filter(i => i.id !== id) });
   };
 
   const startEditItem = (item: ItemServico) => {
