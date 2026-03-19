@@ -720,7 +720,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
               <div>
                 <Label className="text-xs">Detalhes da Garantia</Label>
-                <Textarea value={garantia} onChange={e => setGarantia(e.target.value)}
+                <Textarea value={garantia} onChange={e => updateDraft({ garantia: e.target.value })}
                   placeholder="Termos de garantia..." rows={2} className="text-sm" />
               </div>
             </div>
