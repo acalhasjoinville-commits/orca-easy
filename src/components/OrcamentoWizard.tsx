@@ -412,7 +412,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
           )}
 
-          <Button onClick={() => setPhase('motor')} disabled={!selectedClienteId}
+          <Button onClick={() => updateDraft({ phase: 'motor' })} disabled={!selectedClienteId}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
             Continuar
           </Button>
