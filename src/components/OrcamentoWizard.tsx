@@ -433,7 +433,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
         <StepIndicator current="motor" />
         <div className="mb-5">
-          <button onClick={() => hasItems ? setPhase('carrinho') : setPhase('cliente')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+          <button onClick={() => hasItems ? updateDraft({ phase: 'carrinho' }) : updateDraft({ phase: 'cliente' })} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
           <h1 className="text-xl font-bold text-foreground">Tipo de Orçamento</h1>
