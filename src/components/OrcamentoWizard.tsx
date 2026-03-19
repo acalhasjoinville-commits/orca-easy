@@ -674,7 +674,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <Label className="text-xs flex items-center gap-1.5">
                   <CalendarDays className="h-3 w-3 text-muted-foreground" /> Validade
                 </Label>
-                <Input value={validade} onChange={e => setValidade(e.target.value)} placeholder="Ex: 15 dias" className="h-9" />
+                <Input value={validade} onChange={e => updateDraft({ validade: e.target.value })} placeholder="Ex: 15 dias" className="h-9" />
               </div>
               <div>
                 <Label className="text-xs">Desconto (R$)</Label>
