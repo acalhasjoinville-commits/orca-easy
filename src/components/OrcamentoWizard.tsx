@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType, Cliente } from '@/lib/types';
+import { useDraft } from '@/hooks/useDraft';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -77,31 +78,80 @@ function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' 
 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
-  const [phase, setPhase] = useState<'cliente' | 'motor' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
-  const [selectedClienteId, setSelectedClienteId] = useState(editingOrcamento?.clienteId ?? '');
-  const [clienteSearch, setClienteSearch] = useState('');
-  const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
-  const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
+
+  // Draft key: distinguish new vs edit
+  const draftKey = isEditing
+    ? `draft:orcamento-edit:${editingOrcamento!.id}`
+    : 'draft:orcamento-new';
+
+  interface WizardDraft {
+    phase: 'cliente' | 'motor' | 'carrinho';
+    selectedClienteId: string;
+    motorType: MotorType;
+    itens: ItemServico[];
+    status: StatusOrcamento;
+    desconto: string;
+    validade: string;
+    descricaoGeral: string;
+    formasPagamento: string;
+    garantia: string;
+    tempoGarantia: string;
+    loadedPoliticaId: string | null;
+    politicaNomeSnapshot: string | null;
+    termoRecebimentoOs: string;
+  }
+
+  const defaultDraft: WizardDraft = {
+    phase: isEditing ? 'carrinho' : 'cliente',
+    selectedClienteId: editingOrcamento?.clienteId ?? '',
+    motorType: editingOrcamento?.motorType ?? 'motor1',
+    itens: editingOrcamento?.itensServico ?? [],
+    status: editingOrcamento?.status ?? 'pendente',
+    desconto: String(editingOrcamento?.desconto ?? 0),
+    validade: editingOrcamento?.validade ?? '',
+    descricaoGeral: editingOrcamento?.descricaoGeral ?? '',
+    formasPagamento: editingOrcamento?.formasPagamento ?? '',
+    garantia: editingOrcamento?.garantia ?? '',
+    tempoGarantia: editingOrcamento?.tempoGarantia ?? '',
+    loadedPoliticaId: editingOrcamento?.politicaComercialId ?? null,
+    politicaNomeSnapshot: editingOrcamento?.politicaNomeSnapshot ?? null,
+    termoRecebimentoOs: editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO,
+  };
+
+  const [draft, setDraft, clearDraft, wasRestored] = useDraft<WizardDraft>(draftKey, defaultDraft);
+
+  // Show toast once when draft was restored
+  useEffect(() => {
+    if (wasRestored) {
+      toast.info('Rascunho restaurado.', { duration: 2500 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Convenience setters
+  const phase = draft.phase;
+  const selectedClienteId = draft.selectedClienteId;
+  const motorType = draft.motorType;
+  const itens = draft.itens;
+  const status = draft.status;
+  const desconto = draft.desconto;
+  const validade = draft.validade;
+  const descricaoGeral = draft.descricaoGeral;
+  const formasPagamento = draft.formasPagamento;
+  const garantia = draft.garantia;
+  const tempoGarantia = draft.tempoGarantia;
+  const loadedPoliticaId = draft.loadedPoliticaId;
+  const politicaNomeSnapshot = draft.politicaNomeSnapshot;
+  const termoRecebimentoOs = draft.termoRecebimentoOs;
+
+  const updateDraft = useCallback((partial: Partial<WizardDraft>) => {
+    setDraft(prev => ({ ...prev, ...partial }));
+  }, [setDraft]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
-
-  const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
-  const [desconto, setDesconto] = useState(String(editingOrcamento?.desconto ?? 0));
-  const [validade, setValidade] = useState(editingOrcamento?.validade ?? '');
-  const [descricaoGeral, setDescricaoGeral] = useState(editingOrcamento?.descricaoGeral ?? '');
-  const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
-  const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
-  const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
-  const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
-    editingOrcamento?.politicaComercialId ?? null
-  );
-  const [politicaNomeSnapshot, setPoliticaNomeSnapshot] = useState<string | null>(
-    editingOrcamento?.politicaNomeSnapshot ?? null
-  );
-  const [termoRecebimentoOs, setTermoRecebimentoOs] = useState<string>(
-    editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
-  );
+  const [clienteSearch, setClienteSearch] = useState('');
 
   const { clientes, isLoading: loadingClientes, addCliente } = useClientes();
   const { politicas } = usePoliticas();
@@ -137,7 +187,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       toast.error('Motor travado após adicionar item. Remova os itens para alterar o motor.', { duration: 5000 });
       return;
     }
-    setPhase('motor');
+    updateDraft({ phase: 'motor' });
   };
 
   const handleMotorSelect = (nextMotor: MotorType) => {
@@ -145,18 +195,18 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       toast.error('Motor travado após adicionar item.', { duration: 5000 });
       return;
     }
-    setMotorType(nextMotor);
+    updateDraft({ motorType: nextMotor });
   };
 
   const handleAddItem = (item: ItemServico) => {
-    setItens(prev => [...prev, item]);
+    updateDraft({ itens: [...itens, item] });
     setModalOpen(false);
     setEditingModalItem(null);
     toast.success('Serviço adicionado!');
   };
 
   const handleRemoveItem = (id: string) => {
-    setItens(prev => prev.filter(i => i.id !== id));
+    updateDraft({ itens: itens.filter(i => i.id !== id) });
   };
 
   const startEditItem = (item: ItemServico) => {
@@ -165,7 +215,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const handleSaveEditedItem = (item: ItemServico) => {
-    setItens(prev => prev.map(i => i.id === item.id ? item : i));
+    updateDraft({ itens: itens.map(i => i.id === item.id ? item : i) });
     setModalOpen(false);
     setEditingModalItem(null);
     toast.success('Item atualizado!');
@@ -176,20 +226,22 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const loadPolitica = (politicaId: string) => {
     const pol = politicas.find(p => p.id === politicaId);
     if (!pol) return;
-    setLoadedPoliticaId(pol.id);
-    setPoliticaNomeSnapshot(pol.nomePolitica);
-    setValidade(`${pol.validadeDias} dias`);
-    setFormasPagamento(pol.formasPagamento);
-    setGarantia(pol.garantia);
-    setTempoGarantia(pol.tempoGarantia || '');
-    setTermoRecebimentoOs(pol.termoRecebimentoOs || FALLBACK_TERMO);
+    updateDraft({
+      loadedPoliticaId: pol.id,
+      politicaNomeSnapshot: pol.nomePolitica,
+      validade: `${pol.validadeDias} dias`,
+      formasPagamento: pol.formasPagamento,
+      garantia: pol.garantia,
+      tempoGarantia: pol.tempoGarantia || '',
+      termoRecebimentoOs: pol.termoRecebimentoOs || FALLBACK_TERMO,
+    });
     toast(`Política "${pol.nomePolitica}" aplicada`, { duration: 2000 });
   };
 
   const handleNovoCliente = async (cliente: Cliente) => {
     try {
       const saved = await addCliente.mutateAsync(cliente);
-      setSelectedClienteId(saved.id);
+      updateDraft({ selectedClienteId: saved.id });
       setClienteModalOpen(false);
       toast.success('Cliente cadastrado e selecionado!', { duration: 2500 });
     } catch {
@@ -230,6 +282,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     if (isEditing && editingOrcamento) {
       const orc = { ...editingOrcamento, ...base };
       await updateOrcamento.mutateAsync(orc);
+      clearDraft();
       return orc;
     } else {
       const nextNum = await getNextNumero();
@@ -240,6 +293,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         ...base,
       };
       await addOrcamento.mutateAsync(orc);
+      clearDraft();
       return orc;
     }
   };
@@ -288,6 +342,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         await addOrcamento.mutateAsync(orcamento);
         toast.success('Orçamento salvo com sucesso!', { duration: 2500 });
       }
+      clearDraft();
       onDone();
     } catch {
       toast.error('Erro ao salvar orçamento.', { duration: 5000 });
@@ -340,7 +395,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 </div>
               ) : (
                 filteredClientes.map(c => (
-                  <button key={c.id} onClick={() => setSelectedClienteId(c.id)}
+                  <button key={c.id} onClick={() => updateDraft({ selectedClienteId: c.id })}
                     className={cn(
                       'w-full text-left rounded-lg border p-3.5 transition-all',
                       selectedClienteId === c.id
@@ -359,7 +414,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
           )}
 
-          <Button onClick={() => setPhase('motor')} disabled={!selectedClienteId}
+          <Button onClick={() => updateDraft({ phase: 'motor' })} disabled={!selectedClienteId}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
             Continuar
           </Button>
@@ -380,7 +435,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
         <StepIndicator current="motor" />
         <div className="mb-5">
-          <button onClick={() => hasItems ? setPhase('carrinho') : setPhase('cliente')} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
+          <button onClick={() => hasItems ? updateDraft({ phase: 'carrinho' }) : updateDraft({ phase: 'cliente' })} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </button>
           <h1 className="text-xl font-bold text-foreground">Tipo de Orçamento</h1>
@@ -425,7 +480,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             </button>
           </div>
-          <Button onClick={() => setPhase('carrinho')}
+          <Button onClick={() => updateDraft({ phase: 'carrinho' })}
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
             Continuar
           </Button>
@@ -457,7 +512,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               {' · '}{motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
             </p>
           </div>
-          <Select value={status} onValueChange={v => setStatus(v as StatusOrcamento)}>
+          <Select value={status} onValueChange={v => updateDraft({ status: v as StatusOrcamento })}>
             <SelectTrigger className={cn('h-8 w-auto text-xs font-semibold border', currentStatus.color)}>
               <SelectValue />
             </SelectTrigger>
@@ -604,7 +659,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <Label className="text-xs">Termo de Recebimento (OS)</Label>
                 <Textarea
                   value={termoRecebimentoOs}
-                  onChange={e => setTermoRecebimentoOs(e.target.value)}
+                  onChange={e => updateDraft({ termoRecebimentoOs: e.target.value })}
                   rows={3}
                   className="text-sm"
                   placeholder="Texto do canhoto de entrega da OS..."
@@ -621,11 +676,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <Label className="text-xs flex items-center gap-1.5">
                   <CalendarDays className="h-3 w-3 text-muted-foreground" /> Validade
                 </Label>
-                <Input value={validade} onChange={e => setValidade(e.target.value)} placeholder="Ex: 15 dias" className="h-9" />
+                <Input value={validade} onChange={e => updateDraft({ validade: e.target.value })} placeholder="Ex: 15 dias" className="h-9" />
               </div>
               <div>
                 <Label className="text-xs">Desconto (R$)</Label>
-                <Input type="number" inputMode="decimal" value={desconto} onChange={e => setDesconto(e.target.value)} placeholder="0" className="h-9" />
+                <Input type="number" inputMode="decimal" value={desconto} onChange={e => updateDraft({ desconto: e.target.value })} placeholder="0" className="h-9" />
               </div>
             </div>
 
@@ -634,7 +689,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Label className="text-xs flex items-center gap-1.5">
                 <FileText className="h-3 w-3 text-muted-foreground" /> Escopo do Serviço
               </Label>
-              <Textarea value={descricaoGeral} onChange={e => setDescricaoGeral(e.target.value)}
+              <Textarea value={descricaoGeral} onChange={e => updateDraft({ descricaoGeral: e.target.value })}
                 placeholder="Ex: Instalação de calhas no beiral frontal e rufos na platibanda lateral..." rows={3} className="text-sm" />
             </div>
 
@@ -643,7 +698,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Label className="text-xs flex items-center gap-1.5">
                 <CreditCard className="h-3 w-3 text-muted-foreground" /> Formas de Pagamento
               </Label>
-              <Textarea value={formasPagamento} onChange={e => setFormasPagamento(e.target.value)}
+              <Textarea value={formasPagamento} onChange={e => updateDraft({ formasPagamento: e.target.value })}
                 placeholder="Condições de pagamento..." rows={2} className="text-sm" />
             </div>
 
@@ -656,7 +711,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </h3>
               <div>
                 <Label className="text-xs">Tempo de Garantia</Label>
-                <Select value={tempoGarantia} onValueChange={setTempoGarantia}>
+                <Select value={tempoGarantia} onValueChange={v => updateDraft({ tempoGarantia: v })}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -667,7 +722,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
               <div>
                 <Label className="text-xs">Detalhes da Garantia</Label>
-                <Textarea value={garantia} onChange={e => setGarantia(e.target.value)}
+                <Textarea value={garantia} onChange={e => updateDraft({ garantia: e.target.value })}
                   placeholder="Termos de garantia..." rows={2} className="text-sm" />
               </div>
             </div>
