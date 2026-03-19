@@ -340,6 +340,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         await addOrcamento.mutateAsync(orcamento);
         toast.success('Orçamento salvo com sucesso!', { duration: 2500 });
       }
+      clearDraft();
       onDone();
     } catch {
       toast.error('Erro ao salvar orçamento.', { duration: 5000 });
