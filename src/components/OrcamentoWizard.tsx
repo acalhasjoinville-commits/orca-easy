@@ -78,31 +78,80 @@ function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' 
 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
-  const [phase, setPhase] = useState<'cliente' | 'motor' | 'carrinho'>(isEditing ? 'carrinho' : 'cliente');
-  const [selectedClienteId, setSelectedClienteId] = useState(editingOrcamento?.clienteId ?? '');
-  const [clienteSearch, setClienteSearch] = useState('');
-  const [motorType, setMotorType] = useState<MotorType>(editingOrcamento?.motorType ?? 'motor1');
-  const [itens, setItens] = useState<ItemServico[]>(editingOrcamento?.itensServico ?? []);
+
+  // Draft key: distinguish new vs edit
+  const draftKey = isEditing
+    ? `draft:orcamento-edit:${editingOrcamento!.id}`
+    : 'draft:orcamento-new';
+
+  interface WizardDraft {
+    phase: 'cliente' | 'motor' | 'carrinho';
+    selectedClienteId: string;
+    motorType: MotorType;
+    itens: ItemServico[];
+    status: StatusOrcamento;
+    desconto: string;
+    validade: string;
+    descricaoGeral: string;
+    formasPagamento: string;
+    garantia: string;
+    tempoGarantia: string;
+    loadedPoliticaId: string | null;
+    politicaNomeSnapshot: string | null;
+    termoRecebimentoOs: string;
+  }
+
+  const defaultDraft: WizardDraft = {
+    phase: isEditing ? 'carrinho' : 'cliente',
+    selectedClienteId: editingOrcamento?.clienteId ?? '',
+    motorType: editingOrcamento?.motorType ?? 'motor1',
+    itens: editingOrcamento?.itensServico ?? [],
+    status: editingOrcamento?.status ?? 'pendente',
+    desconto: String(editingOrcamento?.desconto ?? 0),
+    validade: editingOrcamento?.validade ?? '',
+    descricaoGeral: editingOrcamento?.descricaoGeral ?? '',
+    formasPagamento: editingOrcamento?.formasPagamento ?? '',
+    garantia: editingOrcamento?.garantia ?? '',
+    tempoGarantia: editingOrcamento?.tempoGarantia ?? '',
+    loadedPoliticaId: editingOrcamento?.politicaComercialId ?? null,
+    politicaNomeSnapshot: editingOrcamento?.politicaNomeSnapshot ?? null,
+    termoRecebimentoOs: editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO,
+  };
+
+  const [draft, setDraft, clearDraft, wasRestored] = useDraft<WizardDraft>(draftKey, defaultDraft);
+
+  // Show toast once when draft was restored
+  useEffect(() => {
+    if (wasRestored) {
+      toast.info('Rascunho restaurado.', { duration: 2500 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Convenience setters
+  const phase = draft.phase;
+  const selectedClienteId = draft.selectedClienteId;
+  const motorType = draft.motorType;
+  const itens = draft.itens;
+  const status = draft.status;
+  const desconto = draft.desconto;
+  const validade = draft.validade;
+  const descricaoGeral = draft.descricaoGeral;
+  const formasPagamento = draft.formasPagamento;
+  const garantia = draft.garantia;
+  const tempoGarantia = draft.tempoGarantia;
+  const loadedPoliticaId = draft.loadedPoliticaId;
+  const politicaNomeSnapshot = draft.politicaNomeSnapshot;
+  const termoRecebimentoOs = draft.termoRecebimentoOs;
+
+  const updateDraft = useCallback((partial: Partial<WizardDraft>) => {
+    setDraft(prev => ({ ...prev, ...partial }));
+  }, [setDraft]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
-
-  const [status, setStatus] = useState<StatusOrcamento>(editingOrcamento?.status ?? 'pendente');
-  const [desconto, setDesconto] = useState(String(editingOrcamento?.desconto ?? 0));
-  const [validade, setValidade] = useState(editingOrcamento?.validade ?? '');
-  const [descricaoGeral, setDescricaoGeral] = useState(editingOrcamento?.descricaoGeral ?? '');
-  const [formasPagamento, setFormasPagamento] = useState(editingOrcamento?.formasPagamento ?? '');
-  const [garantia, setGarantia] = useState(editingOrcamento?.garantia ?? '');
-  const [tempoGarantia, setTempoGarantia] = useState(editingOrcamento?.tempoGarantia ?? '');
-  const [loadedPoliticaId, setLoadedPoliticaId] = useState<string | null>(
-    editingOrcamento?.politicaComercialId ?? null
-  );
-  const [politicaNomeSnapshot, setPoliticaNomeSnapshot] = useState<string | null>(
-    editingOrcamento?.politicaNomeSnapshot ?? null
-  );
-  const [termoRecebimentoOs, setTermoRecebimentoOs] = useState<string>(
-    editingOrcamento?.termoRecebimentoOsSnapshot || FALLBACK_TERMO
-  );
+  const [clienteSearch, setClienteSearch] = useState('');
 
   const { clientes, isLoading: loadingClientes, addCliente } = useClientes();
   const { politicas } = usePoliticas();
