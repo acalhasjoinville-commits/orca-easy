@@ -696,7 +696,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Label className="text-xs flex items-center gap-1.5">
                 <CreditCard className="h-3 w-3 text-muted-foreground" /> Formas de Pagamento
               </Label>
-              <Textarea value={formasPagamento} onChange={e => setFormasPagamento(e.target.value)}
+              <Textarea value={formasPagamento} onChange={e => updateDraft({ formasPagamento: e.target.value })}
                 placeholder="Condições de pagamento..." rows={2} className="text-sm" />
             </div>
 
