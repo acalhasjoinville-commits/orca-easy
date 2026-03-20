@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
 import { ClienteFormModal } from './ClienteFormModal';
 import { PDFDownloadButton } from './PDFDownloadButton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
