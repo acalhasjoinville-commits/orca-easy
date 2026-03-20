@@ -547,9 +547,30 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
       {/* Header */}
       <div className="mb-5">
-        <button onClick={handleBackFromCart} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> {isEditing ? 'Voltar para lista' : 'Voltar'}
-        </button>
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={handleBackFromCart} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> {isEditing ? 'Voltar para lista' : 'Voltar'}
+          </button>
+          {hasDraft && !isEditing && (
+            <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-8 gap-1.5 text-xs">
+                  <RotateCcw className="h-3.5 w-3.5" /> Descartar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Descartar rascunho?</AlertDialogTitle>
+                  <AlertDialogDescription>Todo o progresso será perdido e você começará um orçamento do zero.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDiscardDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Descartar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-foreground">
@@ -559,6 +580,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}
               {' · '}{motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
             </p>
+            {wasRestored && !isEditing && (
+              <p className="text-xs text-muted-foreground/70 mt-1 flex items-center gap-1.5">
+                <RotateCcw className="h-3 w-3" /> Rascunho em andamento
+              </p>
+            )}
           </div>
           <Select value={status} onValueChange={v => updateDraft({ status: v as StatusOrcamento })}>
             <SelectTrigger className={cn('h-8 w-auto text-xs font-semibold border', currentStatus.color)}>
