@@ -149,6 +149,25 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setDraft(prev => ({ ...prev, ...partial }));
   }, [setDraft]);
 
+  // Track whether there's a meaningful draft (restored or user has started filling)
+  const hasDraft = wasRestored || (
+    !isEditing && (
+      draft.selectedClienteId !== '' ||
+      draft.itens.length > 0 ||
+      draft.descricaoGeral !== '' ||
+      draft.desconto !== '0'
+    )
+  );
+
+  const [discardOpen, setDiscardOpen] = useState(false);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setDraft(defaultDraft);
+    setDiscardOpen(false);
+    toast.info('Rascunho descartado.', { duration: 2500 });
+  }, [clearDraft, setDraft, defaultDraft]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
