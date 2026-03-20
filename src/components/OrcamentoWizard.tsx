@@ -377,8 +377,36 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
         <StepIndicator current="cliente" />
         <div className="mb-5">
-          <h1 className="text-xl font-bold text-foreground">Selecionar Cliente</h1>
-          <p className="text-sm text-muted-foreground mt-1">Escolha o cliente para este orçamento</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Selecionar Cliente</h1>
+              <p className="text-sm text-muted-foreground mt-1">Escolha o cliente para este orçamento</p>
+            </div>
+            {hasDraft && !isEditing && (
+              <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-8 gap-1.5 text-xs">
+                    <RotateCcw className="h-3.5 w-3.5" /> Descartar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Descartar rascunho?</AlertDialogTitle>
+                    <AlertDialogDescription>Todo o progresso será perdido e você começará um orçamento do zero.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDiscardDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Descartar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+          {wasRestored && !isEditing && (
+            <p className="text-xs text-muted-foreground/70 mt-2 flex items-center gap-1.5">
+              <RotateCcw className="h-3 w-3" /> Rascunho em andamento
+            </p>
+          )}
         </div>
 
         <div className="space-y-4">
