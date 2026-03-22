@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
@@ -15,6 +15,7 @@ interface OrcamentoDetailsProps {
   empresa?: MinhaEmpresa;
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
+  onDuplicate?: (orc: Orcamento) => void;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -33,7 +34,7 @@ const dificuldadeLabels: Record<string, string> = {
 const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit }: OrcamentoDetailsProps) {
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate }: OrcamentoDetailsProps) {
   const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
@@ -236,6 +237,17 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit }
           >
             <Pencil className="mr-1.5 h-4 w-4" />
             Editar
+          </Button>
+        )}
+
+        {canCreateEditBudget && onDuplicate && (
+          <Button
+            variant="outline"
+            onClick={() => onDuplicate(orcamento)}
+            className="h-10 px-4 text-xs sm:text-sm"
+          >
+            <Copy className="mr-1.5 h-4 w-4" />
+            Duplicar
           </Button>
         )}
 

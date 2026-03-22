@@ -16,6 +16,7 @@ import { AccessDenied } from '@/components/AccessDenied';
 import { Orcamento } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
+
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogOut, Loader2 } from 'lucide-react';
@@ -30,7 +31,7 @@ const Index = () => {
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
 
-  useOrcamentos();
+  const { orcamentos: _orc, getNextNumero, addOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
 
@@ -114,6 +115,28 @@ const Index = () => {
     setTab('orcamento-novo');
   };
 
+  const handleDuplicate = async (orc: Orcamento) => {
+    if (!canCreateEditBudget) {
+      toast.error('Sem permissão para duplicar orçamentos.');
+      return;
+    }
+    try {
+      const novoNumero = await getNextNumero();
+      const novoOrcamento: Orcamento = {
+        ...orc,
+        id: crypto.randomUUID(),
+        numeroOrcamento: novoNumero,
+        dataCriacao: new Date().toISOString(),
+        status: 'pendente',
+      };
+      await addOrcamento.mutateAsync(novoOrcamento);
+      toast.success(`Orçamento #${novoNumero} duplicado com sucesso!`);
+      goToDetails(novoOrcamento);
+    } catch {
+      toast.error('Erro ao duplicar orçamento.');
+    }
+  };
+
 
   const getHeaderLabel = () => {
     switch (tab) {
@@ -140,6 +163,7 @@ const Index = () => {
           empresa={empresa}
           onBack={goToList}
           onEdit={goToEdit}
+          onDuplicate={handleDuplicate}
         />
       )}
       {tab === 'orcamento-novo' && (
