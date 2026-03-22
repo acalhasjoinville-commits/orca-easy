@@ -115,6 +115,28 @@ const Index = () => {
     setTab('orcamento-novo');
   };
 
+  const handleDuplicate = async (orc: Orcamento) => {
+    if (!canCreateEditBudget) {
+      toast.error('Sem permissão para duplicar orçamentos.');
+      return;
+    }
+    try {
+      const novoNumero = await getNextNumero();
+      const novoOrcamento: Orcamento = {
+        ...orc,
+        id: crypto.randomUUID(),
+        numeroOrcamento: novoNumero,
+        dataCriacao: new Date().toISOString(),
+        status: 'pendente',
+      };
+      await addOrcamento.mutateAsync(novoOrcamento);
+      toast.success(`Orçamento #${novoNumero} duplicado com sucesso!`);
+      goToDetails(novoOrcamento);
+    } catch {
+      toast.error('Erro ao duplicar orçamento.');
+    }
+  };
+
 
   const getHeaderLabel = () => {
     switch (tab) {
