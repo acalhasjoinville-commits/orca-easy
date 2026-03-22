@@ -15,6 +15,7 @@ interface OrcamentoDetailsProps {
   empresa?: MinhaEmpresa;
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
+  onDuplicate?: (orc: Orcamento) => void;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
