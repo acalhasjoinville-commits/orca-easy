@@ -16,6 +16,7 @@ import { AccessDenied } from '@/components/AccessDenied';
 import { Orcamento } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
+import { v4 as uuidv4 } from 'crypto';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LogOut, Loader2 } from 'lucide-react';
