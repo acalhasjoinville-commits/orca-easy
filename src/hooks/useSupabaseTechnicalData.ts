@@ -60,12 +60,18 @@ function servicoToDb(e: ServicoTemplate, empresaId: string) {
 
 // ─── SEED HELPER ───
 
+const seededTables = new Set<string>();
+
 async function seedIfEmpty(table: string, seedData: any[], mapper: (row: any, empresaId: string) => any, empresaId: string) {
+  const seedKey = `${table}:${empresaId}`;
+  // Only seed once per session — prevents re-inserting after user deletes all rows
+  if (seededTables.has(seedKey)) return;
   const { count } = await db.from(table).select('id', { count: 'exact', head: true });
   if ((count ?? 0) === 0 && seedData.length > 0) {
     const rows = seedData.map(r => mapper(r, empresaId));
     await db.from(table).insert(rows);
   }
+  seededTables.add(seedKey);
 }
 
 // ─── HOOKS ───
