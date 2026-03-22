@@ -163,6 +163,7 @@ const Index = () => {
           empresa={empresa}
           onBack={goToList}
           onEdit={goToEdit}
+          onDuplicate={handleDuplicate}
         />
       )}
       {tab === 'orcamento-novo' && (
