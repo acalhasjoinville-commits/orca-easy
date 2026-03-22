@@ -51,8 +51,9 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
   const valorPendente = byStatus.pendente.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0);
   const valorAprovado = byStatus.aprovado.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0);
   const faturamentoExecutado = byStatus.executado.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0);
-  const ticketMedio = orcamentos.length > 0 
-    ? orcamentos.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0) / orcamentos.length 
+  const vendas = [...byStatus.aprovado, ...byStatus.executado];
+  const ticketMedio = vendas.length > 0 
+    ? vendas.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0) / vendas.length 
     : 0;
 
   // Recent budgets (last 5)
