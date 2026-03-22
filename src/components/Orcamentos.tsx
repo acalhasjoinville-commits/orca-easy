@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -40,23 +40,52 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 
 const allStatuses: StatusOrcamento[] = ['pendente', 'aprovado', 'rejeitado', 'executado'];
 
-type StatusFilter = 'todos' | StatusOrcamento;
-
-const filterConfig: { key: StatusFilter; label: string }[] = [
-  { key: 'todos', label: 'Todos' },
+const filterChips: { key: StatusOrcamento; label: string }[] = [
   { key: 'pendente', label: 'Pendentes' },
   { key: 'aprovado', label: 'Aprovados' },
   { key: 'executado', label: 'Executados' },
   { key: 'rejeitado', label: 'Rejeitados' },
 ];
 
+const statusPriority: Record<string, number> = {
+  pendente: 0,
+  aprovado: 1,
+  executado: 2,
+  rejeitado: 3,
+  cancelado: 4,
+};
+
+const defaultActiveFilters = new Set<StatusOrcamento>(['pendente', 'aprovado']);
+
 export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }: OrcamentosProps) {
   const { orcamentos, isLoading, updateOrcamento } = useOrcamentos();
   const { canCreateEditBudget } = useAuth();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
+  const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Orcamento | null>(null);
+
+  const allSelected = filterChips.every(f => activeFilters.has(f.key));
+
+  const toggleFilter = (status: StatusOrcamento) => {
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setActiveFilters(new Set());
+    } else {
+      setActiveFilters(new Set(filterChips.map(f => f.key)));
+    }
+  };
 
   const formatCurrency = (v: number) =>
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -71,7 +100,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   };
 
   const applyStatusChange = async (orc: Orcamento, newStatus: StatusOrcamento) => {
-    if (updatingId) return; // guard against double-click
+    if (updatingId) return;
     setUpdatingId(orc.id);
     try {
       await updateOrcamento.mutateAsync({ ...orc, status: newStatus });
@@ -89,15 +118,26 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     setPendingReject(null);
   };
 
-  const filtered = orcamentos.filter(o => {
-    if (statusFilter !== 'todos' && o.status !== statusFilter) return false;
-    const q = search.toLowerCase();
-    if (!q) return true;
-    return (
-      o.nomeCliente.toLowerCase().includes(q) ||
-      String(o.numeroOrcamento ?? '').includes(q)
-    );
-  });
+  const filtered = useMemo(() => {
+    const showAll = activeFilters.size === 0;
+    const result = orcamentos.filter(o => {
+      if (!showAll && !activeFilters.has(o.status as StatusOrcamento)) return false;
+      const q = search.toLowerCase();
+      if (!q) return true;
+      return (
+        o.nomeCliente.toLowerCase().includes(q) ||
+        String(o.numeroOrcamento ?? '').includes(q)
+      );
+    });
+    // Sort by priority then by date desc
+    result.sort((a, b) => {
+      const pa = statusPriority[a.status] ?? 99;
+      const pb = statusPriority[b.status] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime();
+    });
+    return result;
+  }, [orcamentos, activeFilters, search]);
 
   const motorLabel = (mt?: string) => {
     if (mt === 'motor1') return 'Motor 1';
@@ -157,20 +197,29 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             )}
           </div>
 
-          {/* Status filter chips */}
+          {/* Status filter chips — multi-select */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            {filterConfig.map(f => {
-              const isActive = statusFilter === f.key;
-              const chipColor = f.key !== 'todos' ? statusConfig[f.key as StatusOrcamento].color : '';
+            <button
+              onClick={toggleAll}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                allSelected
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+              )}
+            >
+              Todos
+            </button>
+            {filterChips.map(f => {
+              const isActive = activeFilters.has(f.key);
+              const chipColor = statusConfig[f.key].color;
               return (
                 <button
                   key={f.key}
-                  onClick={() => setStatusFilter(f.key)}
+                  onClick={() => toggleFilter(f.key)}
                   className={cn(
                     'shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
-                    isActive && f.key === 'todos' && 'bg-primary text-primary-foreground border-primary',
-                    isActive && f.key !== 'todos' && chipColor,
-                    !isActive && 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    isActive ? chipColor : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                   )}
                 >
                   {f.label}

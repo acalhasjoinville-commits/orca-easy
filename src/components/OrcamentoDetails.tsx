@@ -240,6 +240,17 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
           </Button>
         )}
 
+        {canCreateEditBudget && onDuplicate && (
+          <Button
+            variant="outline"
+            onClick={() => onDuplicate(orcamento)}
+            className="h-10 px-4 text-xs sm:text-sm"
+          >
+            <Copy className="mr-1.5 h-4 w-4" />
+            Duplicar
+          </Button>
+        )}
+
       </div>
     </div>
   );
