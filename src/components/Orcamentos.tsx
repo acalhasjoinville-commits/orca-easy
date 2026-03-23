@@ -139,6 +139,26 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     return result;
   }, [orcamentos, activeFilters, search]);
 
+  // Group filtered results by status for visual headers
+  const groupedByStatus = useMemo(() => {
+    const statusOrder: string[] = ['pendente', 'aprovado', 'executado', 'rejeitado', 'cancelado'];
+    const groups: { status: string; label: string; items: typeof filtered }[] = [];
+    for (const s of statusOrder) {
+      const items = filtered.filter(o => o.status === s);
+      if (items.length > 0) {
+        const label = statusConfig[s as StatusOrcamento]?.label ?? s;
+        groups.push({ status: s, label: `${label}s`, items });
+      }
+    }
+    // Catch any status not in the order
+    const known = new Set(statusOrder);
+    const rest = filtered.filter(o => !known.has(o.status));
+    if (rest.length > 0) {
+      groups.push({ status: 'outros', label: 'Outros', items: rest });
+    }
+    return groups;
+  }, [filtered]);
+
   const motorLabel = (mt?: string) => {
     if (mt === 'motor1') return 'Motor 1';
     if (mt === 'motor2') return 'Motor 2';
