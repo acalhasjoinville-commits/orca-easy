@@ -128,12 +128,28 @@ const Index = () => {
         numeroOrcamento: novoNumero,
         dataCriacao: new Date().toISOString(),
         status: 'pendente',
+        dataExecucao: null,
       };
       await addOrcamento.mutateAsync(novoOrcamento);
       toast.success(`Orçamento #${novoNumero} duplicado com sucesso!`);
       goToDetails(novoOrcamento);
     } catch {
       toast.error('Erro ao duplicar orçamento.');
+    }
+  };
+
+  const handleMarkExecuted = async (orc: Orcamento) => {
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        status: 'executado',
+        dataExecucao: new Date().toISOString(),
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success('Orçamento marcado como executado!');
+    } catch {
+      toast.error('Erro ao marcar como executado.');
     }
   };
 
