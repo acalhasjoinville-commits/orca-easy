@@ -248,97 +248,121 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             })}
           </div>
 
-          {filtered.map(o => {
-            const st = statusConfig[o.status ?? 'pendente'];
-            const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
-            const isUpdating = updatingId === o.id;
-            const motor = motorLabel(o.motorType);
-            return (
-              <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onViewOrcamento(o)}>
-                <CardContent className="p-4">
-                  {/* Row 1: number + status + menu + value */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-base font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
+          {groupedByStatus.map(group => (
+            <div key={group.status}>
+              {/* Group header */}
+              <div className="flex items-center gap-2 pt-3 pb-1.5">
+                <span className={cn(
+                  'text-xs font-semibold',
+                  statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
+                )}>
+                  {group.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground">({group.items.length})</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
 
-                    {/* Status badge — clickable for users with permission */}
-                    {canCreateEditBudget ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <button
-                            disabled={isUpdating}
-                            className={cn(
-                              'rounded-full px-2 py-0.5 text-[10px] font-semibold border cursor-pointer transition-opacity',
-                              st.color,
-                              isUpdating && 'opacity-50'
-                            )}
-                          >
-                            {isUpdating ? (
-                              <Loader2 className="h-3 w-3 animate-spin inline" />
-                            ) : (
-                              st.label
-                            )}
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
-                          {allStatuses.map(s => (
-                            <DropdownMenuItem
-                              key={s}
-                              onClick={() => handleStatusChange(o, s)}
-                              className="text-xs gap-2"
-                            >
-                              {s === o.status && <Check className="h-3 w-3" />}
-                              {s !== o.status && <span className="w-3" />}
-                              <span className={cn('rounded-full w-2 h-2 shrink-0', statusConfig[s].color.split(' ')[0])} />
-                              {statusConfig[s].label}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
-                        {st.label}
-                      </span>
-                    )}
+              {group.items.map(o => {
+                const st = statusConfig[o.status ?? 'pendente'];
+                const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
+                const isUpdating = updatingId === o.id;
+                const motor = motorLabel(o.motorType);
+                return (
+                  <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onViewOrcamento(o)}>
+                    <CardContent className="p-4">
+                      {/* Row 1: number + status + menu + value */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
 
-                    <span className="flex-1" />
-
-                    {/* Three-dot menu */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <button className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors">
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
-                        <DropdownMenuItem onClick={() => onViewOrcamento(o)} className="text-xs gap-2">
-                          <Eye className="h-3.5 w-3.5" /> Ver detalhes
-                        </DropdownMenuItem>
-                        {canCreateEditBudget && onEditOrcamento && (
-                          <DropdownMenuItem onClick={() => onEditOrcamento(o)} className="text-xs gap-2">
-                            <Pencil className="h-3.5 w-3.5" /> Editar
-                          </DropdownMenuItem>
+                        {/* Status badge — clickable for users with permission */}
+                        {canCreateEditBudget ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                              <button
+                                disabled={isUpdating}
+                                className={cn(
+                                  'rounded-full px-2 py-0.5 text-[10px] font-semibold border cursor-pointer transition-opacity',
+                                  st.color,
+                                  isUpdating && 'opacity-50'
+                                )}
+                              >
+                                {isUpdating ? (
+                                  <Loader2 className="h-3 w-3 animate-spin inline" />
+                                ) : (
+                                  st.label
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
+                              {allStatuses.map(s => (
+                                <DropdownMenuItem
+                                  key={s}
+                                  onClick={() => handleStatusChange(o, s)}
+                                  className="text-xs gap-2"
+                                >
+                                  {s === o.status && <Check className="h-3 w-3" />}
+                                  {s !== o.status && <span className="w-3" />}
+                                  <span className={cn('rounded-full w-2 h-2 shrink-0', statusConfig[s].color.split(' ')[0])} />
+                                  {statusConfig[s].label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
+                            {st.label}
+                          </span>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
 
-                    <p className="text-lg font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
-                  </div>
+                        <span className="flex-1" />
 
-                  {/* Row 2: client name */}
-                  <p className="text-sm font-medium text-foreground truncate mb-1.5">{o.nomeCliente}</p>
+                        {/* Three-dot menu */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <button className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors">
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => onViewOrcamento(o)} className="text-xs gap-2">
+                              <Eye className="h-3.5 w-3.5" /> Ver detalhes
+                            </DropdownMenuItem>
+                            {canCreateEditBudget && onEditOrcamento && (
+                              <DropdownMenuItem onClick={() => onEditOrcamento(o)} className="text-xs gap-2">
+                                <Pencil className="h-3.5 w-3.5" /> Editar
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
 
-                  {/* Row 3: meta */}
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
-                    {motor && (
-                      <span className="text-muted-foreground/70">{motor}</span>
-                    )}
-                    <span className="ml-auto">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        <p className="text-lg font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
+                      </div>
+
+                      {/* Row 2: client name */}
+                      <p className="text-sm font-medium text-foreground truncate mb-1.5">{o.nomeCliente}</p>
+
+                      {/* Row 3: meta */}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                        {motor && (
+                          <span className="text-muted-foreground/70">{motor}</span>
+                        )}
+                        <span className="ml-auto">
+                          {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
+                          {o.dataExecucao && (
+                            <span className="flex items-center gap-0.5 inline-flex ml-2">
+                              <Hammer className="h-3 w-3" />
+                              {new Date(o.dataExecucao).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ))}
 
           {filtered.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-8">Nenhum orçamento encontrado.</p>
