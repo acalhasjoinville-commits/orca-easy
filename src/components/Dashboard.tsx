@@ -13,11 +13,14 @@ import {
   Users,
   DollarSign,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { Tab } from '@/components/AppSidebar';
+import { useMemo } from 'react';
 
 interface DashboardProps {
   onNewOrcamento: () => void;
@@ -56,6 +59,42 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
     ? vendas.reduce((sum, o) => sum + (o.valorFinal ?? o.valorVenda), 0) / vendas.length 
     : 0;
 
+  // Monthly performance metrics
+  const monthlyMetrics = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const isCurrentMonth = (dateStr: string) => {
+      const d = new Date(dateStr);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    };
+
+    const monthAprovados = orcamentos.filter(o => o.status === 'aprovado' && isCurrentMonth(o.dataCriacao));
+    const monthExecutados = orcamentos.filter(o => o.status === 'executado' && isCurrentMonth(o.dataExecucao || o.dataCriacao));
+    const monthRejeitados = orcamentos.filter(o => o.status === 'rejeitado' && isCurrentMonth(o.dataCriacao));
+
+    const monthAprovadosValor = monthAprovados.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
+    const monthExecutadosValor = monthExecutados.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
+
+    const monthVendas = [...monthAprovados, ...monthExecutados];
+    const monthTicket = monthVendas.length > 0
+      ? monthVendas.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0) / monthVendas.length
+      : 0;
+
+    const convDenom = monthAprovados.length + monthRejeitados.length;
+    const taxaConversao = convDenom > 0 ? (monthAprovados.length / convDenom) * 100 : 0;
+
+    return {
+      aprovadosCount: monthAprovados.length,
+      aprovadosValor: monthAprovadosValor,
+      executadosCount: monthExecutados.length,
+      executadosValor: monthExecutadosValor,
+      ticketMedio: monthTicket,
+      taxaConversao,
+      pendentesCount: byStatus.pendente.length,
+    };
+  }, [orcamentos, byStatus.pendente.length]);
+
   // Recent budgets (last 5)
   const recentOrcamentos = [...orcamentos]
     .sort((a, b) => new Date(b.dataCriacao).getTime() - new Date(a.dataCriacao).getTime())
@@ -68,6 +107,8 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
       </div>
     );
   }
+
+  const monthName = new Date().toLocaleString('pt-BR', { month: 'long' });
 
   return (
     <div className="px-4 pb-24 lg:pb-8 pt-4 space-y-6">
@@ -154,6 +195,57 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
                 <p className="text-xs font-medium text-muted-foreground">Ticket Médio</p>
               </div>
               <p className="text-lg font-bold text-foreground">{formatCurrency(ticketMedio)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* BLOCO 3.5 — Desempenho do Mês */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 capitalize">
+          <BarChart3 className="h-4 w-4 inline mr-1.5 -mt-0.5" />
+          Desempenho de {monthName}
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Aprovados</p>
+              <p className="text-xl font-bold text-green-700">{monthlyMetrics.aprovadosCount}</p>
+              <p className="text-[10px] text-muted-foreground">{formatCurrency(monthlyMetrics.aprovadosValor)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Executados</p>
+              <p className="text-xl font-bold text-blue-700">{monthlyMetrics.executadosCount}</p>
+              <p className="text-[10px] text-muted-foreground">{formatCurrency(monthlyMetrics.executadosValor)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="h-3.5 w-3.5 text-accent" />
+                <p className="text-xs font-medium text-muted-foreground">Ticket Médio</p>
+              </div>
+              <p className="text-lg font-bold text-foreground">{formatCurrency(monthlyMetrics.ticketMedio)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Target className="h-3.5 w-3.5 text-accent" />
+                <p className="text-xs font-medium text-muted-foreground">Conversão</p>
+              </div>
+              <p className="text-lg font-bold text-foreground">{monthlyMetrics.taxaConversao.toFixed(0)}%</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="h-3.5 w-3.5 text-yellow-700" />
+                <p className="text-xs font-medium text-muted-foreground">Pendentes</p>
+              </div>
+              <p className="text-lg font-bold text-yellow-700">{monthlyMetrics.pendentesCount}</p>
             </CardContent>
           </Card>
         </div>

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus, RotateCcw, Copy } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
@@ -643,6 +643,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                       </div>
                     </div>
                     <div className="flex gap-0.5 ml-2">
+                      <button onClick={() => {
+                        const cloned: ItemServico = { ...item, id: crypto.randomUUID() };
+                        updateDraft({
+                          itens: (() => {
+                            const copy = [...itens];
+                            copy.splice(idx + 1, 0, cloned);
+                            return copy;
+                          })(),
+                        });
+                        toast.success('Item duplicado!');
+                      }} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors" title="Duplicar item">
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
                       <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
