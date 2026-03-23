@@ -329,6 +329,7 @@ export type Database = {
           created_at: string
           custo_total_obra: number
           data_criacao: string
+          data_execucao: string | null
           desconto: number
           descricao_geral: string | null
           empresa_id: string
@@ -358,6 +359,7 @@ export type Database = {
           created_at?: string
           custo_total_obra?: number
           data_criacao?: string
+          data_execucao?: string | null
           desconto?: number
           descricao_geral?: string | null
           empresa_id: string
@@ -387,6 +389,7 @@ export type Database = {
           created_at?: string
           custo_total_obra?: number
           data_criacao?: string
+          data_execucao?: string | null
           desconto?: number
           descricao_geral?: string | null
           empresa_id?: string
