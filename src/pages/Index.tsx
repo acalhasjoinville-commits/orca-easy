@@ -180,6 +180,7 @@ const Index = () => {
           onBack={goToList}
           onEdit={goToEdit}
           onDuplicate={handleDuplicate}
+          onMarkExecuted={handleMarkExecuted}
         />
       )}
       {tab === 'orcamento-novo' && (
