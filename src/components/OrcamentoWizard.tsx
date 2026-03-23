@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus, RotateCcw, Copy } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
