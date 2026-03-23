@@ -3,11 +3,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface OrcamentoDetailsProps {
   orcamento: Orcamento;
@@ -16,6 +27,7 @@ interface OrcamentoDetailsProps {
   onBack: () => void;
   onEdit: (orc: Orcamento) => void;
   onDuplicate?: (orc: Orcamento) => void;
+  onMarkExecuted?: (orc: Orcamento) => void;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -34,7 +46,7 @@ const dificuldadeLabels: Record<string, string> = {
 const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate }: OrcamentoDetailsProps) {
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate, onMarkExecuted }: OrcamentoDetailsProps) {
   const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
@@ -78,6 +90,12 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               <CalendarDays className="h-3 w-3" />
               Criado em {new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR')}
             </span>
+            {orcamento.dataExecucao && (
+              <span className="flex items-center gap-1">
+                <Hammer className="h-3 w-3" />
+                Executado em {new Date(orcamento.dataExecucao).toLocaleDateString('pt-BR')}
+              </span>
+            )}
             {orcamento.validade && !isNaN(new Date(orcamento.validade).getTime()) && (
               <span>Válido até {new Date(orcamento.validade).toLocaleDateString('pt-BR')}</span>
             )}
@@ -227,6 +245,35 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         )}
 
         <div className="hidden sm:block h-6 w-px bg-border mx-1" />
+
+        {/* Mark as executed */}
+        {canCreateEditBudget && orcamento.status === 'aprovado' && onMarkExecuted && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-4 text-xs sm:text-sm border-blue-500/30 text-blue-700 hover:bg-blue-500/10"
+              >
+                <Hammer className="mr-1.5 h-4 w-4" />
+                Marcar Executado
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Marcar como Executado?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O orçamento <strong>#{orcamento.numeroOrcamento}</strong> será marcado como executado com a data de hoje.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onMarkExecuted(orcamento)} className="bg-blue-600 text-white hover:bg-blue-700">
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
 
         {/* Secondary actions */}
         {canCreateEditBudget && (

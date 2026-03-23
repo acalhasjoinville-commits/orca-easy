@@ -31,7 +31,7 @@ const Index = () => {
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
 
-  const { orcamentos: _orc, getNextNumero, addOrcamento } = useOrcamentos();
+  const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
 
