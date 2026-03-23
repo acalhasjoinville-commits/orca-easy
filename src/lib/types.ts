@@ -148,6 +148,7 @@ export interface Orcamento {
   formasPagamento: string;
   garantia: string;
   tempoGarantia: string;
+  dataExecucao?: string | null;
   // Commercial snapshot fields — frozen at save time, never recalculated
   politicaComercialId?: string | null;
   politicaNomeSnapshot?: string | null;

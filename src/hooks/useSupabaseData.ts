@@ -125,6 +125,7 @@ function orcamentoToDb(o: Orcamento, empresaId: string) {
     formas_pagamento: o.formasPagamento,
     garantia: o.garantia,
     tempo_garantia: o.tempoGarantia,
+    data_execucao: o.dataExecucao ?? null,
     empresa_id: empresaId,
     // Snapshot fields — persist final form state at save time
     politica_comercial_id: o.politicaComercialId ?? null,
