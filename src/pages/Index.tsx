@@ -153,6 +153,55 @@ const Index = () => {
     }
   };
 
+  const handleMarkFaturado = async (orc: Orcamento) => {
+    if (orc.dataFaturamento) {
+      toast.error('Orçamento já foi faturado.');
+      return;
+    }
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        dataFaturamento: new Date().toISOString(),
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success('Orçamento marcado como faturado!');
+    } catch {
+      toast.error('Erro ao marcar como faturado.');
+    }
+  };
+
+  const handleMarkPago = async (orc: Orcamento) => {
+    if (orc.dataPagamento) {
+      toast.error('Orçamento já foi marcado como pago.');
+      return;
+    }
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        dataPagamento: new Date().toISOString(),
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success('Orçamento marcado como pago!');
+    } catch {
+      toast.error('Erro ao marcar como pago.');
+    }
+  };
+
+  const handleUpdateDataPrevista = async (orc: Orcamento, date: string | null) => {
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        dataPrevista: date,
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success(date ? 'Data prevista atualizada!' : 'Data prevista removida.');
+    } catch {
+      toast.error('Erro ao atualizar data prevista.');
+    }
+  };
 
   const getHeaderLabel = () => {
     switch (tab) {
@@ -181,6 +230,9 @@ const Index = () => {
           onEdit={goToEdit}
           onDuplicate={handleDuplicate}
           onMarkExecuted={handleMarkExecuted}
+          onMarkFaturado={handleMarkFaturado}
+          onMarkPago={handleMarkPago}
+          onUpdateDataPrevista={handleUpdateDataPrevista}
         />
       )}
       {tab === 'orcamento-novo' && (

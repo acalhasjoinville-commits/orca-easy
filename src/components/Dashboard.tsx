@@ -15,7 +15,9 @@ import {
   ArrowRight,
   TrendingUp,
   Target,
-  BarChart3
+  BarChart3,
+  Receipt,
+  Banknote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,19 +64,25 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
   // Monthly performance metrics
   const monthlyMetrics = useMemo(() => {
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const isCurrentMonth = (dateStr: string) => {
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const isInMonth = (dateStr: string | null | undefined) => {
+      if (!dateStr) return false;
       const d = new Date(dateStr);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      return d >= monthStart && d <= monthEnd;
     };
 
-    const monthAprovados = orcamentos.filter(o => o.status === 'aprovado' && isCurrentMonth(o.dataCriacao));
-    const monthExecutados = orcamentos.filter(o => o.status === 'executado' && isCurrentMonth(o.dataExecucao || o.dataCriacao));
-    const monthRejeitados = orcamentos.filter(o => o.status === 'rejeitado' && isCurrentMonth(o.dataCriacao));
+    const monthAprovados = orcamentos.filter(o => o.status === 'aprovado' && isInMonth(o.dataCriacao));
+    const monthExecutados = orcamentos.filter(o => o.status === 'executado' && isInMonth(o.dataExecucao || o.dataCriacao));
+    const monthRejeitados = orcamentos.filter(o => o.status === 'rejeitado' && isInMonth(o.dataCriacao));
+    const monthFaturados = orcamentos.filter(o => isInMonth(o.dataFaturamento));
+    const monthPagos = orcamentos.filter(o => isInMonth(o.dataPagamento));
 
     const monthAprovadosValor = monthAprovados.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
     const monthExecutadosValor = monthExecutados.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
+    const monthFaturadosValor = monthFaturados.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
+    const monthPagosValor = monthPagos.reduce((s, o) => s + (o.valorFinal ?? o.valorVenda), 0);
 
     const monthVendas = [...monthAprovados, ...monthExecutados];
     const monthTicket = monthVendas.length > 0
@@ -89,6 +97,8 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
       aprovadosValor: monthAprovadosValor,
       executadosCount: monthExecutados.length,
       executadosValor: monthExecutadosValor,
+      faturadosValor: monthFaturadosValor,
+      pagosValor: monthPagosValor,
       ticketMedio: monthTicket,
       taxaConversao,
       pendentesCount: byStatus.pendente.length,
@@ -246,6 +256,34 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
                 <p className="text-xs font-medium text-muted-foreground">Pendentes</p>
               </div>
               <p className="text-lg font-bold text-yellow-700">{monthlyMetrics.pendentesCount}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* BLOCO 3.6 — Faturamento e Recebimento do Mês */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 capitalize">
+          <Receipt className="h-4 w-4 inline mr-1.5 -mt-0.5" />
+          Faturamento e Recebimento — {monthName}
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Receipt className="h-3.5 w-3.5 text-emerald-700" />
+                <p className="text-xs font-medium text-muted-foreground">Faturado no mês</p>
+              </div>
+              <p className="text-lg font-bold text-emerald-700">{formatCurrency(monthlyMetrics.faturadosValor)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Banknote className="h-3.5 w-3.5 text-violet-700" />
+                <p className="text-xs font-medium text-muted-foreground">Recebido no mês</p>
+              </div>
+              <p className="text-lg font-bold text-violet-700">{formatCurrency(monthlyMetrics.pagosValor)}</p>
             </CardContent>
           </Card>
         </div>

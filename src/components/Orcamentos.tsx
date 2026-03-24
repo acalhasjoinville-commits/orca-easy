@@ -3,7 +3,7 @@ import { Orcamento, StatusOrcamento } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, Hammer } from 'lucide-react';
+import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, Hammer, CalendarClock, Receipt, Banknote } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -347,12 +347,30 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                         {motor && (
                           <span className="text-muted-foreground/70">{motor}</span>
                         )}
-                        <span className="ml-auto">
+                        <span className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-0.5 justify-end">
                           {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
+                          {o.dataPrevista && (
+                            <span className="inline-flex items-center gap-0.5">
+                              <CalendarClock className="h-3 w-3" />
+                              {new Date(o.dataPrevista).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
                           {o.dataExecucao && (
-                            <span className="flex items-center gap-0.5 inline-flex ml-2">
+                            <span className="inline-flex items-center gap-0.5">
                               <Hammer className="h-3 w-3" />
                               {new Date(o.dataExecucao).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                          {o.dataFaturamento && (
+                            <span className="inline-flex items-center gap-0.5">
+                              <Receipt className="h-3 w-3" />
+                              {new Date(o.dataFaturamento).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                          {o.dataPagamento && (
+                            <span className="inline-flex items-center gap-0.5">
+                              <Banknote className="h-3 w-3" />
+                              {new Date(o.dataPagamento).toLocaleDateString('pt-BR')}
                             </span>
                           )}
                         </span>

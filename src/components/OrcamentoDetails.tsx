@@ -1,13 +1,18 @@
+import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer, Receipt, Banknote, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
 import { OSDownloadButton } from './OSDownloadButton';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +33,9 @@ interface OrcamentoDetailsProps {
   onEdit: (orc: Orcamento) => void;
   onDuplicate?: (orc: Orcamento) => void;
   onMarkExecuted?: (orc: Orcamento) => void;
+  onMarkFaturado?: (orc: Orcamento) => void;
+  onMarkPago?: (orc: Orcamento) => void;
+  onUpdateDataPrevista?: (orc: Orcamento, date: string | null) => void;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -46,11 +54,71 @@ const dificuldadeLabels: Record<string, string> = {
 const formatCurrency = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate, onMarkExecuted }: OrcamentoDetailsProps) {
+// Pipeline steps
+const pipelineSteps = [
+  { key: 'pendente', label: 'Pendente' },
+  { key: 'aprovado', label: 'Aprovado' },
+  { key: 'executado', label: 'Executado' },
+  { key: 'faturado', label: 'Faturado' },
+  { key: 'pago', label: 'Pago' },
+];
+
+function getPipelineStep(orc: Orcamento): number {
+  if (orc.dataPagamento) return 4;
+  if (orc.dataFaturamento) return 3;
+  if (orc.status === 'executado') return 2;
+  if (orc.status === 'aprovado') return 1;
+  return 0;
+}
+
+function PipelineBar({ orcamento }: { orcamento: Orcamento }) {
+  const currentStep = getPipelineStep(orcamento);
+  return (
+    <div className="flex items-center gap-1 mb-6">
+      {pipelineSteps.map((step, idx) => {
+        const isActive = idx <= currentStep;
+        const isCurrent = idx === currentStep;
+        return (
+          <div key={step.key} className="flex items-center flex-1 min-w-0">
+            <div className={cn(
+              'flex flex-col items-center flex-1',
+            )}>
+              <div className={cn(
+                'w-full h-2 rounded-full transition-colors',
+                isActive ? 'bg-accent' : 'bg-muted',
+                isCurrent && 'ring-2 ring-accent/30'
+              )} />
+              <span className={cn(
+                'text-[10px] mt-1 font-medium truncate',
+                isActive ? 'text-accent' : 'text-muted-foreground'
+              )}>
+                {step.label}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate, onMarkExecuted, onMarkFaturado, onMarkPago, onUpdateDataPrevista }: OrcamentoDetailsProps) {
   const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? ((1 - orcamento.custoTotalObra / displayValue) * 100) : 0;
+
+  const showPipeline = orcamento.status !== 'rejeitado';
+
+  // Data prevista picker state — only saves on explicit action
+  const [dataPrevPopoverOpen, setDataPrevPopoverOpen] = useState(false);
+
+  const handleDataPrevistaSelect = (date: Date | undefined) => {
+    if (onUpdateDataPrevista) {
+      onUpdateDataPrevista(orcamento, date ? date.toISOString() : null);
+    }
+    setDataPrevPopoverOpen(false);
+  };
 
   return (
     <div className="px-4 lg:px-6 pt-4 pb-8 max-w-3xl mx-auto">
@@ -62,6 +130,9 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
         <ArrowLeft className="h-4 w-4" />
         Voltar para lista
       </button>
+
+      {/* Pipeline */}
+      {showPipeline && <PipelineBar orcamento={orcamento} />}
 
       {/* Header Card */}
       <Card className="mb-6">
@@ -85,21 +156,70 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
             </div>
             <p className="text-xl font-bold text-accent">{formatCurrency(displayValue)}</p>
           </div>
+          {/* Dates in order: criação → prevista → execução → faturamento → pagamento */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <CalendarDays className="h-3 w-3" />
               Criado em {new Date(orcamento.dataCriacao).toLocaleDateString('pt-BR')}
             </span>
+            {orcamento.dataPrevista && (
+              <span className="flex items-center gap-1">
+                <CalendarClock className="h-3 w-3" />
+                Previsto {new Date(orcamento.dataPrevista).toLocaleDateString('pt-BR')}
+              </span>
+            )}
             {orcamento.dataExecucao && (
               <span className="flex items-center gap-1">
                 <Hammer className="h-3 w-3" />
                 Executado em {new Date(orcamento.dataExecucao).toLocaleDateString('pt-BR')}
               </span>
             )}
+            {orcamento.dataFaturamento && (
+              <span className="flex items-center gap-1">
+                <Receipt className="h-3 w-3" />
+                Faturado em {new Date(orcamento.dataFaturamento).toLocaleDateString('pt-BR')}
+              </span>
+            )}
+            {orcamento.dataPagamento && (
+              <span className="flex items-center gap-1">
+                <Banknote className="h-3 w-3" />
+                Pago em {new Date(orcamento.dataPagamento).toLocaleDateString('pt-BR')}
+              </span>
+            )}
             {orcamento.validade && !isNaN(new Date(orcamento.validade).getTime()) && (
               <span>Válido até {new Date(orcamento.validade).toLocaleDateString('pt-BR')}</span>
             )}
           </div>
+
+          {/* Data prevista editor — only when status = aprovado */}
+          {canCreateEditBudget && orcamento.status === 'aprovado' && onUpdateDataPrevista && (
+            <div className="mt-3 flex items-center gap-2">
+              <Popover open={dataPrevPopoverOpen} onOpenChange={setDataPrevPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs h-8">
+                    <CalendarClock className="mr-1.5 h-3.5 w-3.5" />
+                    {orcamento.dataPrevista
+                      ? `Previsto: ${new Date(orcamento.dataPrevista).toLocaleDateString('pt-BR')}`
+                      : 'Definir data prevista'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={orcamento.dataPrevista ? new Date(orcamento.dataPrevista) : undefined}
+                    onSelect={handleDataPrevistaSelect}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {orcamento.dataPrevista && (
+                <Button variant="ghost" size="sm" className="text-xs h-8 text-destructive" onClick={() => onUpdateDataPrevista(orcamento, null)}>
+                  Limpar
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -246,7 +366,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
         <div className="hidden sm:block h-6 w-px bg-border mx-1" />
 
-        {/* Mark as executed */}
+        {/* Mark as executed — only if approved and not yet executed */}
         {canCreateEditBudget && orcamento.status === 'aprovado' && onMarkExecuted && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -268,6 +388,64 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={() => onMarkExecuted(orcamento)} className="bg-blue-600 text-white hover:bg-blue-700">
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {/* Mark as faturado — only if executed and not yet faturado */}
+        {canCreateEditBudget && orcamento.status === 'executado' && !orcamento.dataFaturamento && onMarkFaturado && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-4 text-xs sm:text-sm border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
+              >
+                <Receipt className="mr-1.5 h-4 w-4" />
+                Marcar Faturado
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Marcar como Faturado?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O orçamento <strong>#{orcamento.numeroOrcamento}</strong> será marcado como faturado com a data de hoje.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onMarkFaturado(orcamento)} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                  Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {/* Mark as pago — only if faturado and not yet pago */}
+        {canCreateEditBudget && orcamento.dataFaturamento && !orcamento.dataPagamento && onMarkPago && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-4 text-xs sm:text-sm border-violet-500/30 text-violet-700 hover:bg-violet-500/10"
+              >
+                <Banknote className="mr-1.5 h-4 w-4" />
+                Marcar Pago
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Marcar como Pago?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O orçamento <strong>#{orcamento.numeroOrcamento}</strong> será marcado como pago com a data de hoje.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onMarkPago(orcamento)} className="bg-violet-600 text-white hover:bg-violet-700">
                   Confirmar
                 </AlertDialogAction>
               </AlertDialogFooter>
