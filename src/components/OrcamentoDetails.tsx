@@ -74,23 +74,38 @@ function getPipelineStep(orc: Orcamento): number {
 function PipelineBar({ orcamento }: { orcamento: Orcamento }) {
   const currentStep = getPipelineStep(orcamento);
   return (
-    <div className="flex items-center gap-1 mb-6">
+    <div className="flex items-center gap-0 mb-8 px-2">
       {pipelineSteps.map((step, idx) => {
         const isActive = idx <= currentStep;
         const isCurrent = idx === currentStep;
         return (
           <div key={step.key} className="flex items-center flex-1 min-w-0">
-            <div className={cn(
-              'flex flex-col items-center flex-1',
-            )}>
+            <div className="flex flex-col items-center flex-1 relative">
+              {/* Connector line */}
+              {idx > 0 && (
+                <div className={cn(
+                  'absolute top-3 right-1/2 w-full h-0.5 -z-10',
+                  isActive ? 'bg-accent' : 'bg-border'
+                )} />
+              )}
+              {/* Circle */}
               <div className={cn(
-                'w-full h-2 rounded-full transition-colors',
-                isActive ? 'bg-accent' : 'bg-muted',
-                isCurrent && 'ring-2 ring-accent/30'
-              )} />
+                'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all border-2',
+                isCurrent
+                  ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20 scale-110'
+                  : isActive
+                    ? 'bg-accent/20 text-accent border-accent/40'
+                    : 'bg-muted text-muted-foreground border-border'
+              )}>
+                {isActive && idx < currentStep ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  idx + 1
+                )}
+              </div>
               <span className={cn(
-                'text-[10px] mt-1 font-medium truncate',
-                isActive ? 'text-accent' : 'text-muted-foreground'
+                'text-[10px] mt-1.5 font-semibold truncate',
+                isCurrent ? 'text-accent' : isActive ? 'text-accent/70' : 'text-muted-foreground'
               )}>
                 {step.label}
               </span>
