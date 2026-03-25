@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer, Receipt, Banknote, CalendarClock } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer, Receipt, Banknote, CalendarClock, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
