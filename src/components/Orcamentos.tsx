@@ -251,27 +251,30 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           {groupedByStatus.map(group => (
             <div key={group.status}>
               {/* Group header */}
-              <div className="flex items-center gap-2 pt-3 pb-1.5">
+              <div className="flex items-center gap-2.5 pt-4 pb-2">
                 <span className={cn(
-                  'text-xs font-semibold',
+                  'text-xs font-bold uppercase tracking-wider',
                   statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
                 )}>
                   {group.label}
                 </span>
-                <span className="text-[10px] text-muted-foreground">({group.items.length})</span>
-                <div className="flex-1 h-px bg-border" />
+                <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
+                  {group.items.length}
+                </span>
+                <div className="flex-1 h-px bg-border/60" />
               </div>
 
+              <div className="space-y-2.5">
               {group.items.map(o => {
                 const st = statusConfig[o.status ?? 'pendente'];
                 const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
                 const isUpdating = updatingId === o.id;
                 const motor = motorLabel(o.motorType);
                 return (
-                  <Card key={o.id} className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={() => onViewOrcamento(o)}>
+                  <Card key={o.id} className="overflow-hidden cursor-pointer card-hover hover:border-primary/30" onClick={() => onViewOrcamento(o)}>
                     <CardContent className="p-4">
                       {/* Row 1: number + status + menu + value */}
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2.5 mb-2.5">
                         <span className="text-base font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
 
                         {/* Status badge — clickable for users with permission */}
@@ -281,7 +284,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                               <button
                                 disabled={isUpdating}
                                 className={cn(
-                                  'rounded-full px-2 py-0.5 text-[10px] font-semibold border cursor-pointer transition-opacity',
+                                  'rounded-full px-2.5 py-0.5 text-[10px] font-semibold border cursor-pointer transition-all',
                                   st.color,
                                   isUpdating && 'opacity-50'
                                 )}
@@ -309,7 +312,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : (
-                          <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
+                          <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-semibold border', st.color)}>
                             {st.label}
                           </span>
                         )}
@@ -319,7 +322,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                         {/* Three-dot menu */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <button className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors">
+                            <button className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                               <MoreVertical className="h-4 w-4" />
                             </button>
                           </DropdownMenuTrigger>
@@ -335,19 +338,21 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                           </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <p className="text-lg font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
+                        <p className="text-xl font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
                       </div>
 
                       {/* Row 2: client name */}
-                      <p className="text-sm font-medium text-foreground truncate mb-1.5">{o.nomeCliente}</p>
+                      <p className="text-sm font-semibold text-foreground truncate mb-2">{o.nomeCliente}</p>
 
                       {/* Row 3: meta */}
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                        <span className="bg-muted/60 rounded-md px-1.5 py-0.5 font-medium">
+                          {o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}
+                        </span>
                         {motor && (
                           <span className="text-muted-foreground/70">{motor}</span>
                         )}
-                        <span className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-0.5 justify-end">
+                        <span className="ml-auto flex flex-wrap items-center gap-x-2.5 gap-y-0.5 justify-end">
                           {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
                           {o.dataPrevista && (
                             <span className="inline-flex items-center gap-0.5">
@@ -379,6 +384,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                   </Card>
                 );
               })}
+              </div>
             </div>
           ))}
 
