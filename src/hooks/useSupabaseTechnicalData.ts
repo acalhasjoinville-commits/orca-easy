@@ -59,19 +59,56 @@ function servicoToDb(e: ServicoTemplate, empresaId: string) {
 }
 
 // ─── SEED HELPER ───
+// Seed is a ONE-TIME event per empresa+table, controlled by backend (seed_control table).
+// localStorage is used only as a performance cache to skip unnecessary RPC calls.
 
-const seededTables = new Set<string>();
+const SEED_CACHE_PREFIX = 'orcacalhas_seeded:';
+
+function isSeedCached(table: string, empresaId: string): boolean {
+  return localStorage.getItem(`${SEED_CACHE_PREFIX}${table}:${empresaId}`) === '1';
+}
+
+function markSeedCached(table: string, empresaId: string) {
+  localStorage.setItem(`${SEED_CACHE_PREFIX}${table}:${empresaId}`, '1');
+}
 
 async function seedIfEmpty(table: string, seedData: any[], mapper: (row: any, empresaId: string) => any, empresaId: string) {
-  const seedKey = `${table}:${empresaId}`;
-  // Only seed once per session — prevents re-inserting after user deletes all rows
-  if (seededTables.has(seedKey)) return;
-  const { count } = await db.from(table).select('id', { count: 'exact', head: true });
-  if ((count ?? 0) === 0 && seedData.length > 0) {
-    const rows = seedData.map(r => mapper(r, empresaId));
-    await db.from(table).insert(rows);
+  // 1. Fast path: localStorage cache says seed already happened
+  if (isSeedCached(table, empresaId)) return;
+
+  // 2. Backend atomic claim — returns true only if THIS call is the first to claim
+  const { data: claimed, error: claimErr } = await db.rpc('claim_seed', {
+    _empresa_id: empresaId,
+    _table_name: table,
+  });
+
+  if (claimErr) {
+    console.error(`claim_seed error for ${table}:`, claimErr);
+    // Cache anyway to avoid retrying on every render
+    markSeedCached(table, empresaId);
+    return;
   }
-  seededTables.add(seedKey);
+
+  if (!claimed) {
+    // Seed was already done (by this or another user/device) — just cache locally
+    markSeedCached(table, empresaId);
+    return;
+  }
+
+  // 3. We claimed the seed — insert data in a single batch
+  if (seedData.length > 0) {
+    const rows = seedData.map(r => mapper(r, empresaId));
+    const { error: insertErr } = await db.from(table).insert(rows);
+    if (insertErr) {
+      console.error(`Seed insert error for ${table}:`, insertErr);
+      // Don't cache on failure — allow retry on next load
+      // But the claim is already in seed_control, so another device won't re-seed
+      return;
+    }
+  }
+
+  // 4. Success — cache locally
+  markSeedCached(table, empresaId);
 }
 
 // ─── HOOKS ───

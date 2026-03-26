@@ -564,6 +564,27 @@ export type Database = {
           },
         ]
       }
+      seed_control: {
+        Row: {
+          empresa_id: string
+          id: string
+          seeded_at: string
+          table_name: string
+        }
+        Insert: {
+          empresa_id: string
+          id?: string
+          seeded_at?: string
+          table_name: string
+        }
+        Update: {
+          empresa_id?: string
+          id?: string
+          seeded_at?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
       servicos_catalogo: {
         Row: {
           corte_padrao: number
@@ -654,6 +675,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_seed: {
+        Args: { _empresa_id: string; _table_name: string }
+        Returns: boolean
+      }
       get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
