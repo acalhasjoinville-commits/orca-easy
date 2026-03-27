@@ -10,6 +10,7 @@ import { Configuracoes } from '@/components/Configuracoes';
 import { Clientes } from '@/components/Clientes';
 import { Financeiro } from '@/components/Financeiro';
 import { Usuarios } from '@/components/Usuarios';
+import { EditarPerfil } from '@/components/EditarPerfil';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
@@ -19,7 +20,7 @@ import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData'
 
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -30,6 +31,7 @@ const Index = () => {
   const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
