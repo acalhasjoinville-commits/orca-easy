@@ -4,9 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth, AppRole } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Trash2, Loader2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Users, Plus, Trash2, Loader2, ShieldCheck, ShieldAlert, Mail, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -14,6 +16,14 @@ interface UserProfile {
   fullName: string;
   email: string;
   roles: AppRole[];
+}
+
+interface Invite {
+  id: string;
+  email: string;
+  role: AppRole;
+  created_at: string;
+  used_at: string | null;
 }
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -29,24 +39,26 @@ const ROLE_COLORS: Record<AppRole, string> = {
 };
 
 export function Usuarios() {
-  const { empresaId } = useAuth();
+  const { empresaId, user } = useAuth();
   const qc = useQueryClient();
   const [addingRoleFor, setAddingRoleFor] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole>('vendedor');
 
+  // Invite state
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<AppRole>('vendedor');
+
+  // ── Users query ──
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['empresa-users', empresaId],
     queryFn: async () => {
       if (!empresaId) return [];
-
-      // Fetch profiles for this empresa
       const { data: profiles, error: pErr } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, email, empresa_id')
         .eq('empresa_id', empresaId);
       if (pErr) throw pErr;
 
-      // Fetch all roles for this empresa
       const { data: roles, error: rErr } = await (supabase as any)
         .from('user_roles')
         .select('user_id, role')
@@ -70,6 +82,24 @@ export function Usuarios() {
     enabled: !!empresaId,
   });
 
+  // ── Invites query ──
+  const { data: invites = [] } = useQuery({
+    queryKey: ['invites', empresaId],
+    queryFn: async () => {
+      if (!empresaId) return [];
+      const { data, error } = await (supabase as any)
+        .from('invites')
+        .select('id, email, role, created_at, used_at')
+        .eq('empresa_id', empresaId)
+        .is('used_at', null)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as Invite[];
+    },
+    enabled: !!empresaId,
+  });
+
+  // ── Mutations ──
   const addRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
       if (!empresaId) throw new Error('Sem empresa');
@@ -117,6 +147,60 @@ export function Usuarios() {
     },
   });
 
+  const createInvite = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: AppRole }) => {
+      if (!empresaId || !user) throw new Error('Sem empresa');
+      const { error } = await (supabase as any)
+        .from('invites')
+        .insert({
+          empresa_id: empresaId,
+          email: email.toLowerCase().trim(),
+          role,
+          invited_by: user.id,
+        });
+      if (error) {
+        if (error.message?.includes('duplicate') || error.code === '23505') {
+          throw new Error('Já existe um convite para este email.');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invites'] });
+      setInviteEmail('');
+      toast.success('Convite criado! O usuário deve se cadastrar com este email.', { duration: 5000 });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Erro ao criar convite.', { duration: 5000 });
+    },
+  });
+
+  const revokeInvite = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const { error } = await (supabase as any)
+        .from('invites')
+        .delete()
+        .eq('id', inviteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['invites'] });
+      toast.success('Convite revogado.', { duration: 2500 });
+    },
+    onError: () => {
+      toast.error('Erro ao revogar convite.', { duration: 5000 });
+    },
+  });
+
+  const handleSendInvite = () => {
+    const email = inviteEmail.trim();
+    if (!email || !email.includes('@')) {
+      toast.error('Informe um email válido.');
+      return;
+    }
+    createInvite.mutate({ email, role: inviteRole });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -134,6 +218,67 @@ export function Usuarios() {
         <Users className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold text-foreground">Gerenciar Usuários</h2>
       </div>
+
+      {/* ── Invite Section ── */}
+      <Card>
+        <CardContent className="px-4 py-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Convidar Usuário</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Insira o email do usuário. Quando ele se cadastrar com este email, será vinculado automaticamente à empresa com a role selecionada.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="email@exemplo.com"
+              value={inviteEmail}
+              onChange={e => setInviteEmail(e.target.value)}
+              className="flex-1"
+              type="email"
+            />
+            <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
+              <SelectTrigger className="w-36 h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(['vendedor', 'financeiro', 'admin'] as AppRole[]).map(r => (
+                  <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleSendInvite} disabled={createInvite.isPending} size="sm" className="h-10 px-4">
+              {createInvite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {/* Pending invites */}
+          {invites.length > 0 && (
+            <div className="space-y-1.5 pt-2">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Convites pendentes</p>
+              {invites.map(inv => (
+                <div key={inv.id} className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm truncate">{inv.email}</p>
+                    <p className="text-[10px] text-muted-foreground">{ROLE_LABELS[inv.role]} · {new Date(inv.created_at).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-destructive hover:text-destructive"
+                    onClick={() => revokeInvite.mutate(inv.id)}
+                    disabled={revokeInvite.isPending}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Separator />
 
       {/* Active users */}
       <div className="space-y-2">

@@ -10,6 +10,7 @@ import { Configuracoes } from '@/components/Configuracoes';
 import { Clientes } from '@/components/Clientes';
 import { Financeiro } from '@/components/Financeiro';
 import { Usuarios } from '@/components/Usuarios';
+import { EditarPerfil } from '@/components/EditarPerfil';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
@@ -19,7 +20,7 @@ import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData'
 
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -30,6 +31,7 @@ const Index = () => {
   const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
@@ -203,6 +205,21 @@ const Index = () => {
     }
   };
 
+  const handleCancelOrcamento = async (orc: Orcamento) => {
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        status: 'cancelado',
+        dataCancelamento: new Date().toISOString(),
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success('Orçamento cancelado.');
+    } catch {
+      toast.error('Erro ao cancelar orçamento.');
+    }
+  };
+
   const getHeaderLabel = () => {
     switch (tab) {
       case 'dashboard': return 'Dashboard';
@@ -233,6 +250,7 @@ const Index = () => {
           onMarkFaturado={handleMarkFaturado}
           onMarkPago={handleMarkPago}
           onUpdateDataPrevista={handleUpdateDataPrevista}
+          onCancelOrcamento={handleCancelOrcamento}
         />
       )}
       {tab === 'orcamento-novo' && (
@@ -261,6 +279,12 @@ const Index = () => {
     </>
   );
 
+  const profileButton = (
+    <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-8 px-2">
+      <UserCircle className="h-4 w-4" />
+    </Button>
+  );
+
   const logoutButton = (
     <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-8 px-2">
       <LogOut className="h-4 w-4" />
@@ -273,10 +297,12 @@ const Index = () => {
         <header className="h-12 flex items-center border-b bg-card px-4 sticky top-0 z-50">
           <span className="text-base font-bold text-primary">OrçaCalhas</span>
           <span className="ml-3 text-sm text-muted-foreground flex-1">{getHeaderLabel()}</span>
+          {profileButton}
           {logoutButton}
         </header>
         <main className="pb-16">{content}</main>
         <MobileBottomNav active={tab} onNavigate={guardedNavigate} onNewOrcamento={goToNew} />
+        <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
     );
   }
@@ -290,11 +316,13 @@ const Index = () => {
             <SidebarTrigger className="mr-3" />
             <span className="text-sm font-semibold text-muted-foreground flex-1">{getHeaderLabel()}</span>
             <span className="text-xs text-muted-foreground mr-2 hidden sm:inline">{user?.email}</span>
+            {profileButton}
             {logoutButton}
           </header>
           <main className="flex-1 overflow-auto">{content}</main>
         </div>
       </div>
+      <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
     </SidebarProvider>
   );
 };

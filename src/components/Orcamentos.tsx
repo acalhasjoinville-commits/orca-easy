@@ -36,15 +36,17 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
   aprovado: { label: 'Aprovado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
   rejeitado: { label: 'Rejeitado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
   executado: { label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+  cancelado: { label: 'Cancelado', color: 'bg-gray-500/20 text-gray-600 border-gray-500/30' },
 };
 
-const allStatuses: StatusOrcamento[] = ['pendente', 'aprovado', 'rejeitado', 'executado'];
+const allStatuses: StatusOrcamento[] = ['pendente', 'aprovado', 'rejeitado', 'executado', 'cancelado'];
 
 const filterChips: { key: StatusOrcamento; label: string }[] = [
   { key: 'pendente', label: 'Pendentes' },
   { key: 'aprovado', label: 'Aprovados' },
   { key: 'executado', label: 'Executados' },
   { key: 'rejeitado', label: 'Rejeitados' },
+  { key: 'cancelado', label: 'Cancelados' },
 ];
 
 const statusPriority: Record<string, number> = {
@@ -122,11 +124,12 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     const showAll = activeFilters.size === 0;
     const result = orcamentos.filter(o => {
       if (!showAll && !activeFilters.has(o.status as StatusOrcamento)) return false;
-      const q = search.toLowerCase();
+      const q = search.toLowerCase().trim();
       if (!q) return true;
       return (
         o.nomeCliente.toLowerCase().includes(q) ||
-        String(o.numeroOrcamento ?? '').includes(q)
+        String(o.numeroOrcamento ?? '').includes(q) ||
+        formatCurrency(o.valorFinal).toLowerCase().includes(q)
       );
     });
     // Sort by priority then by date desc

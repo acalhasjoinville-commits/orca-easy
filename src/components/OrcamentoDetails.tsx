@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer, Receipt, Banknote, CalendarClock, Check } from 'lucide-react';
+import { ArrowLeft, Pencil, Copy, CalendarDays, CreditCard, Shield, FileText, Factory, Truck, Hammer, Receipt, Banknote, CalendarClock, Check, Ban } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { PDFDownloadButton } from './PDFDownloadButton';
@@ -36,6 +36,7 @@ interface OrcamentoDetailsProps {
   onMarkFaturado?: (orc: Orcamento) => void;
   onMarkPago?: (orc: Orcamento) => void;
   onUpdateDataPrevista?: (orc: Orcamento, date: string | null) => void;
+  onCancelOrcamento?: (orc: Orcamento) => void;
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
@@ -43,6 +44,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
   aprovado: { label: 'Aprovado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
   rejeitado: { label: 'Rejeitado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
   executado: { label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+  cancelado: { label: 'Cancelado', color: 'bg-gray-500/20 text-gray-600 border-gray-500/30' },
 };
 
 const dificuldadeLabels: Record<string, string> = {
@@ -117,13 +119,13 @@ function PipelineBar({ orcamento }: { orcamento: Orcamento }) {
   );
 }
 
-export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate, onMarkExecuted, onMarkFaturado, onMarkPago, onUpdateDataPrevista }: OrcamentoDetailsProps) {
+export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, onDuplicate, onMarkExecuted, onMarkFaturado, onMarkPago, onUpdateDataPrevista, onCancelOrcamento }: OrcamentoDetailsProps) {
   const { canCreateEditBudget } = useAuth();
   const st = statusConfig[orcamento.status ?? 'pendente'];
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? ((1 - orcamento.custoTotalObra / displayValue) * 100) : 0;
 
-  const showPipeline = orcamento.status !== 'rejeitado';
+  const showPipeline = orcamento.status !== 'rejeitado' && orcamento.status !== 'cancelado';
 
   // Data prevista picker state — only saves on explicit action
   const [dataPrevPopoverOpen, setDataPrevPopoverOpen] = useState(false);
@@ -462,6 +464,35 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={() => onMarkPago(orcamento)} className="bg-violet-600 text-white hover:bg-violet-700">
                   Confirmar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
+        {/* Cancel — only if pendente or aprovado */}
+        {canCreateEditBudget && (orcamento.status === 'pendente' || orcamento.status === 'aprovado') && onCancelOrcamento && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-4 text-xs sm:text-sm border-gray-500/30 text-gray-600 hover:bg-gray-500/10"
+              >
+                <Ban className="mr-1.5 h-4 w-4" />
+                Cancelar Orçamento
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancelar Orçamento?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  O orçamento <strong>#{orcamento.numeroOrcamento}</strong> será cancelado. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onCancelOrcamento(orcamento)} className="bg-gray-600 text-white hover:bg-gray-700">
+                  Confirmar Cancelamento
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
