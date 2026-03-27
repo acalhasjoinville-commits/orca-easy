@@ -98,6 +98,7 @@ function dbToOrcamento(row: any): Orcamento {
     dataPrevista: row.data_prevista ?? null,
     dataFaturamento: row.data_faturamento ?? null,
     dataPagamento: row.data_pagamento ?? null,
+    dataCancelamento: row.data_cancelamento ?? null,
     // Snapshot fields — read as-is (null means legacy record)
     politicaComercialId: row.politica_comercial_id ?? null,
     politicaNomeSnapshot: row.politica_nome_snapshot ?? null,
@@ -132,6 +133,7 @@ function orcamentoToDb(o: Orcamento, empresaId: string) {
     data_prevista: o.dataPrevista ?? null,
     data_faturamento: o.dataFaturamento ?? null,
     data_pagamento: o.dataPagamento ?? null,
+    data_cancelamento: o.dataCancelamento ?? null,
     empresa_id: empresaId,
     // Snapshot fields — persist final form state at save time
     politica_comercial_id: o.politicaComercialId ?? null,

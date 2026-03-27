@@ -43,6 +43,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
   aprovado: { label: 'Aprovado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
   rejeitado: { label: 'Rejeitado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
   executado: { label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+  cancelado: { label: 'Cancelado', color: 'bg-gray-500/20 text-gray-600 border-gray-500/30' },
 };
 
 const dificuldadeLabels: Record<string, string> = {
@@ -123,7 +124,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
   const displayValue = (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? ((1 - orcamento.custoTotalObra / displayValue) * 100) : 0;
 
-  const showPipeline = orcamento.status !== 'rejeitado';
+  const showPipeline = orcamento.status !== 'rejeitado' && orcamento.status !== 'cancelado';
 
   // Data prevista picker state — only saves on explicit action
   const [dataPrevPopoverOpen, setDataPrevPopoverOpen] = useState(false);

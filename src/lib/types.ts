@@ -101,7 +101,7 @@ export interface ItemServico {
   insumosOverrides?: Record<string, number>;
 }
 
-export type StatusOrcamento = 'pendente' | 'aprovado' | 'rejeitado' | 'executado';
+export type StatusOrcamento = 'pendente' | 'aprovado' | 'rejeitado' | 'executado' | 'cancelado';
 
 export interface PoliticaComercial {
   id: string;
@@ -152,6 +152,7 @@ export interface Orcamento {
   dataPrevista?: string | null;
   dataFaturamento?: string | null;
   dataPagamento?: string | null;
+  dataCancelamento?: string | null;
   // Commercial snapshot fields — frozen at save time, never recalculated
   politicaComercialId?: string | null;
   politicaNomeSnapshot?: string | null;
