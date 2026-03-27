@@ -17,7 +17,8 @@ import {
   Target,
   BarChart3,
   Receipt,
-  Banknote
+  Banknote,
+  Ban
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,6 +36,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string; bgCo
   aprovado: { label: 'Aprovados', color: 'text-green-700', bgColor: 'bg-green-500/10 border-green-500/20', icon: CheckCircle },
   executado: { label: 'Executados', color: 'text-blue-700', bgColor: 'bg-blue-500/10 border-blue-500/20', icon: Hammer },
   rejeitado: { label: 'Rejeitados', color: 'text-red-700', bgColor: 'bg-red-500/10 border-red-500/20', icon: XCircle },
+  cancelado: { label: 'Cancelados', color: 'text-gray-600', bgColor: 'bg-gray-500/10 border-gray-500/20', icon: Ban },
 };
 
 export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: DashboardProps) {

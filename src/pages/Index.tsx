@@ -203,6 +203,21 @@ const Index = () => {
     }
   };
 
+  const handleCancelOrcamento = async (orc: Orcamento) => {
+    try {
+      const updated: Orcamento = {
+        ...orc,
+        status: 'cancelado',
+        dataCancelamento: new Date().toISOString(),
+      };
+      await updateOrcamento.mutateAsync(updated);
+      setSelectedOrcamento(updated);
+      toast.success('Orçamento cancelado.');
+    } catch {
+      toast.error('Erro ao cancelar orçamento.');
+    }
+  };
+
   const getHeaderLabel = () => {
     switch (tab) {
       case 'dashboard': return 'Dashboard';
@@ -233,6 +248,7 @@ const Index = () => {
           onMarkFaturado={handleMarkFaturado}
           onMarkPago={handleMarkPago}
           onUpdateDataPrevista={handleUpdateDataPrevista}
+          onCancelOrcamento={handleCancelOrcamento}
         />
       )}
       {tab === 'orcamento-novo' && (
