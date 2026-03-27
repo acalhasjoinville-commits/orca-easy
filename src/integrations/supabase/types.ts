@@ -194,6 +194,44 @@ export type Database = {
           },
         ]
       }
+      invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          empresa_id: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          empresa_id: string
+          id?: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          empresa_id?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invites_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos_financeiros: {
         Row: {
           categoria: string
@@ -328,6 +366,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           custo_total_obra: number
+          data_cancelamento: string | null
           data_criacao: string
           data_execucao: string | null
           data_faturamento: string | null
@@ -361,6 +400,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           custo_total_obra?: number
+          data_cancelamento?: string | null
           data_criacao?: string
           data_execucao?: string | null
           data_faturamento?: string | null
@@ -394,6 +434,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           custo_total_obra?: number
+          data_cancelamento?: string | null
           data_criacao?: string
           data_execucao?: string | null
           data_faturamento?: string | null
