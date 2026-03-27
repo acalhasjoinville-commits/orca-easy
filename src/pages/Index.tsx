@@ -279,6 +279,12 @@ const Index = () => {
     </>
   );
 
+  const profileButton = (
+    <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-8 px-2">
+      <UserCircle className="h-4 w-4" />
+    </Button>
+  );
+
   const logoutButton = (
     <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-8 px-2">
       <LogOut className="h-4 w-4" />
@@ -291,10 +297,12 @@ const Index = () => {
         <header className="h-12 flex items-center border-b bg-card px-4 sticky top-0 z-50">
           <span className="text-base font-bold text-primary">OrçaCalhas</span>
           <span className="ml-3 text-sm text-muted-foreground flex-1">{getHeaderLabel()}</span>
+          {profileButton}
           {logoutButton}
         </header>
         <main className="pb-16">{content}</main>
         <MobileBottomNav active={tab} onNavigate={guardedNavigate} onNewOrcamento={goToNew} />
+        <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
     );
   }
@@ -308,11 +316,13 @@ const Index = () => {
             <SidebarTrigger className="mr-3" />
             <span className="text-sm font-semibold text-muted-foreground flex-1">{getHeaderLabel()}</span>
             <span className="text-xs text-muted-foreground mr-2 hidden sm:inline">{user?.email}</span>
+            {profileButton}
             {logoutButton}
           </header>
           <main className="flex-1 overflow-auto">{content}</main>
         </div>
       </div>
+      <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
     </SidebarProvider>
   );
 };
