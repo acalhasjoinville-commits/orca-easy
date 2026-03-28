@@ -939,30 +939,30 @@ export function Configuracoes() {
   );
 
   return (
-    <div className="px-4 pb-24 pt-4">
-      <h1 className="mb-5 text-xl font-bold text-primary">Configurações</h1>
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
+      <h1 className="mb-5 text-xl font-bold text-foreground">Configurações</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full grid grid-cols-5 mb-6 h-auto">
-          <TabsTrigger value="empresa" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+          <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Building2 className="h-4 w-4" />
-            <span>Empresa</span>
+            <span className="truncate">Empresa</span>
           </TabsTrigger>
-          <TabsTrigger value="materiais" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+          <TabsTrigger value="materiais" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Layers className="h-4 w-4" />
-            <span>Materiais</span>
+            <span className="truncate">Materiais</span>
           </TabsTrigger>
-          <TabsTrigger value="regras" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+          <TabsTrigger value="regras" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Calculator className="h-4 w-4" />
-            <span>Regras</span>
+            <span className="truncate">Regras</span>
           </TabsTrigger>
-          <TabsTrigger value="catalogo" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+          <TabsTrigger value="catalogo" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <BookOpen className="h-4 w-4" />
-            <span>Catálogo</span>
+            <span className="truncate">Catálogo</span>
           </TabsTrigger>
-          <TabsTrigger value="politicas" className="text-xs px-2 py-2.5 gap-1.5 flex-col sm:flex-row">
+          <TabsTrigger value="politicas" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <FileText className="h-4 w-4" />
-            <span>Políticas</span>
+            <span className="truncate">Políticas</span>
           </TabsTrigger>
         </TabsList>
 
@@ -983,7 +983,7 @@ export function Configuracoes() {
       </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{dialogTitle}</DialogTitle>
           </DialogHeader>
