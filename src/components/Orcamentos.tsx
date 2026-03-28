@@ -7,6 +7,7 @@ import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, Hamm
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -62,6 +63,7 @@ const defaultActiveFilters = new Set<StatusOrcamento>(['pendente', 'aprovado']);
 export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }: OrcamentosProps) {
   const { orcamentos, isLoading, updateOrcamento } = useOrcamentos();
   const { canCreateEditBudget } = useAuth();
+  const isMobile = useIsMobile();
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -132,7 +134,6 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
         formatCurrency(o.valorFinal).toLowerCase().includes(q)
       );
     });
-    // Sort by priority then by date desc
     result.sort((a, b) => {
       const pa = statusPriority[a.status] ?? 99;
       const pb = statusPriority[b.status] ?? 99;
@@ -142,7 +143,6 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     return result;
   }, [orcamentos, activeFilters, search]);
 
-  // Group filtered results by status for visual headers
   const groupedByStatus = useMemo(() => {
     const statusOrder: string[] = ['pendente', 'aprovado', 'executado', 'rejeitado', 'cancelado'];
     const groups: { status: string; label: string; items: typeof filtered }[] = [];
@@ -153,7 +153,6 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
         groups.push({ status: s, label: `${label}s`, items });
       }
     }
-    // Catch any status not in the order
     const known = new Set(statusOrder);
     const rest = filtered.filter(o => !known.has(o.status));
     if (rest.length > 0) {
@@ -163,10 +162,72 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   }, [filtered]);
 
   const motorLabel = (mt?: string) => {
-    if (mt === 'motor1') return 'Motor 1';
-    if (mt === 'motor2') return 'Motor 2';
+    if (mt === 'motor1') return 'M1';
+    if (mt === 'motor2') return 'M2';
     return null;
   };
+
+  // Shared status badge renderer
+  const renderStatusBadge = (o: Orcamento) => {
+    const st = statusConfig[o.status ?? 'pendente'];
+    const isUpdating = updatingId === o.id;
+
+    if (canCreateEditBudget) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+            <button
+              disabled={isUpdating}
+              className={cn(
+                'rounded-md px-2 py-0.5 text-[10px] font-semibold border cursor-pointer transition-all',
+                st.color,
+                isUpdating && 'opacity-50'
+              )}
+            >
+              {isUpdating ? <Loader2 className="h-3 w-3 animate-spin inline" /> : st.label}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
+            {allStatuses.map(s => (
+              <DropdownMenuItem key={s} onClick={() => handleStatusChange(o, s)} className="text-xs gap-2">
+                {s === o.status && <Check className="h-3 w-3" />}
+                {s !== o.status && <span className="w-3" />}
+                <span className={cn('rounded-full w-2 h-2 shrink-0', statusConfig[s].color.split(' ')[0])} />
+                {statusConfig[s].label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
+        {st.label}
+      </span>
+    );
+  };
+
+  // Shared row actions menu
+  const renderRowActions = (o: Orcamento) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+        <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
+        <DropdownMenuItem onClick={() => onViewOrcamento(o)} className="text-xs gap-2">
+          <Eye className="h-3.5 w-3.5" /> Ver detalhes
+        </DropdownMenuItem>
+        {canCreateEditBudget && onEditOrcamento && (
+          <DropdownMenuItem onClick={() => onEditOrcamento(o)} className="text-xs gap-2">
+            <Pencil className="h-3.5 w-3.5" /> Editar
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   if (isLoading) {
     return (
@@ -179,13 +240,13 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Orçamentos</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie seus orçamentos de calhas e rufos</p>
+          <h1 className="text-xl font-bold text-foreground">Orçamentos</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus orçamentos de calhas e rufos</p>
         </div>
         {canCreateEditBudget && orcamentos.length > 0 && (
-          <Button onClick={onNewOrcamento} className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button onClick={onNewOrcamento} size="sm" className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="mr-1.5 h-4 w-4" /> Novo Orçamento
           </Button>
         )}
@@ -193,7 +254,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
 
       {orcamentos.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText className="mb-4 h-12 w-12 text-muted-foreground/40" />
+          <FileText className="mb-4 h-12 w-12 text-muted-foreground/30" />
           <h2 className="mb-2 text-lg font-semibold text-foreground">Nenhum orçamento ainda</h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
             {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
@@ -206,26 +267,26 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Search + mobile CTA */}
-          <div className="flex gap-2">
+          {/* Toolbar: Search + filters on same row */}
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar por nome ou número..." value={search}
-                onChange={e => setSearch(e.target.value)} className="pl-9" />
+                onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
             </div>
             {canCreateEditBudget && (
-              <Button onClick={onNewOrcamento} className="sm:hidden bg-accent text-accent-foreground hover:bg-accent/90 shrink-0">
+              <Button onClick={onNewOrcamento} size="sm" className="sm:hidden bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-9">
                 <Plus className="h-4 w-4" />
               </Button>
             )}
           </div>
 
-          {/* Status filter chips — multi-select */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {/* Filter chips */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
             <button
               onClick={toggleAll}
               className={cn(
-                'shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                'shrink-0 rounded-md px-2.5 py-1 text-[11px] font-medium border transition-colors',
                 allSelected
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
@@ -241,7 +302,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                   key={f.key}
                   onClick={() => toggleFilter(f.key)}
                   className={cn(
-                    'shrink-0 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                    'shrink-0 rounded-md px-2.5 py-1 text-[11px] font-medium border transition-colors',
                     isActive ? chipColor : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                   )}
                 >
@@ -251,145 +312,114 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             })}
           </div>
 
-          {groupedByStatus.map(group => (
-            <div key={group.status}>
-              {/* Group header */}
-              <div className="flex items-center gap-2.5 pt-4 pb-2">
-                <span className={cn(
-                  'text-xs font-bold uppercase tracking-wider',
-                  statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
-                )}>
-                  {group.label}
-                </span>
-                <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
-                  {group.items.length}
-                </span>
-                <div className="flex-1 h-px bg-border/60" />
-              </div>
-
-              <div className="space-y-2.5">
-              {group.items.map(o => {
-                const st = statusConfig[o.status ?? 'pendente'];
-                const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
-                const isUpdating = updatingId === o.id;
-                const motor = motorLabel(o.motorType);
-                return (
-                  <Card key={o.id} className="overflow-hidden cursor-pointer card-hover hover:border-primary/30" onClick={() => onViewOrcamento(o)}>
-                    <CardContent className="p-4">
-                      {/* Row 1: number + status + menu + value */}
-                      <div className="flex items-center gap-2.5 mb-2.5">
-                        <span className="text-base font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
-
-                        {/* Status badge — clickable for users with permission */}
-                        {canCreateEditBudget ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                              <button
-                                disabled={isUpdating}
-                                className={cn(
-                                  'rounded-full px-2.5 py-0.5 text-[10px] font-semibold border cursor-pointer transition-all',
-                                  st.color,
-                                  isUpdating && 'opacity-50'
-                                )}
+          {/* Desktop: Table view */}
+          {!isMobile ? (
+            <div className="space-y-4">
+              {groupedByStatus.map(group => (
+                <div key={group.status}>
+                  <div className="flex items-center gap-2.5 pt-2 pb-2">
+                    <span className={cn(
+                      'text-[11px] font-bold uppercase tracking-wider',
+                      statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
+                    )}>
+                      {group.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-md px-1.5 py-0.5">
+                      {group.items.length}
+                    </span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                  <Card>
+                    <CardContent className="p-0">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-[11px] text-muted-foreground">
+                            <th className="py-2.5 px-3 font-medium w-16">#</th>
+                            <th className="py-2.5 px-3 font-medium">Cliente</th>
+                            <th className="py-2.5 px-3 font-medium w-24">Status</th>
+                            <th className="py-2.5 px-3 font-medium text-right w-32">Valor</th>
+                            <th className="py-2.5 px-3 font-medium w-24">Data</th>
+                            <th className="py-2.5 px-3 font-medium w-12">Motor</th>
+                            <th className="py-2.5 px-3 font-medium w-10 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.items.map(o => {
+                            const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
+                            const motor = motorLabel(o.motorType);
+                            return (
+                              <tr
+                                key={o.id}
+                                className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                                onClick={() => onViewOrcamento(o)}
                               >
-                                {isUpdating ? (
-                                  <Loader2 className="h-3 w-3 animate-spin inline" />
-                                ) : (
-                                  st.label
-                                )}
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
-                              {allStatuses.map(s => (
-                                <DropdownMenuItem
-                                  key={s}
-                                  onClick={() => handleStatusChange(o, s)}
-                                  className="text-xs gap-2"
-                                >
-                                  {s === o.status && <Check className="h-3 w-3" />}
-                                  {s !== o.status && <span className="w-3" />}
-                                  <span className={cn('rounded-full w-2 h-2 shrink-0', statusConfig[s].color.split(' ')[0])} />
-                                  {statusConfig[s].label}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-semibold border', st.color)}>
-                            {st.label}
-                          </span>
-                        )}
-
-                        <span className="flex-1" />
-
-                        {/* Three-dot menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                            <button className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={() => onViewOrcamento(o)} className="text-xs gap-2">
-                              <Eye className="h-3.5 w-3.5" /> Ver detalhes
-                            </DropdownMenuItem>
-                            {canCreateEditBudget && onEditOrcamento && (
-                              <DropdownMenuItem onClick={() => onEditOrcamento(o)} className="text-xs gap-2">
-                                <Pencil className="h-3.5 w-3.5" /> Editar
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <p className="text-xl font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
-                      </div>
-
-                      {/* Row 2: client name */}
-                      <p className="text-sm font-semibold text-foreground truncate mb-2">{o.nomeCliente}</p>
-
-                      {/* Row 3: meta */}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="bg-muted/60 rounded-md px-1.5 py-0.5 font-medium">
-                          {o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}
-                        </span>
-                        {motor && (
-                          <span className="text-muted-foreground/70">{motor}</span>
-                        )}
-                        <span className="ml-auto flex flex-wrap items-center gap-x-2.5 gap-y-0.5 justify-end">
-                          {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
-                          {o.dataPrevista && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <CalendarClock className="h-3 w-3" />
-                              {new Date(o.dataPrevista).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                          {o.dataExecucao && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <Hammer className="h-3 w-3" />
-                              {new Date(o.dataExecucao).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                          {o.dataFaturamento && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <Receipt className="h-3 w-3" />
-                              {new Date(o.dataFaturamento).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                          {o.dataPagamento && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <Banknote className="h-3 w-3" />
-                              {new Date(o.dataPagamento).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                        </span>
-                      </div>
+                                <td className="py-2.5 px-3 font-bold text-accent">#{o.numeroOrcamento ?? '—'}</td>
+                                <td className="py-2.5 px-3 font-medium truncate max-w-[200px]">{o.nomeCliente}</td>
+                                <td className="py-2.5 px-3">{renderStatusBadge(o)}</td>
+                                <td className="py-2.5 px-3 text-right font-semibold text-accent">{formatCurrency(displayValue)}</td>
+                                <td className="py-2.5 px-3 text-muted-foreground text-xs whitespace-nowrap">
+                                  {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
+                                </td>
+                                <td className="py-2.5 px-3 text-xs text-muted-foreground">{motor ?? '—'}</td>
+                                <td className="py-2.5 px-3 text-right">{renderRowActions(o)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </CardContent>
                   </Card>
-                );
-              })}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            /* Mobile: Cards view */
+            <div>
+              {groupedByStatus.map(group => (
+                <div key={group.status}>
+                  <div className="flex items-center gap-2.5 pt-3 pb-2">
+                    <span className={cn(
+                      'text-[11px] font-bold uppercase tracking-wider',
+                      statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
+                    )}>
+                      {group.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-md px-1.5 py-0.5">
+                      {group.items.length}
+                    </span>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                  <div className="space-y-2">
+                    {group.items.map(o => {
+                      const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
+                      return (
+                        <Card key={o.id} className="overflow-hidden cursor-pointer card-hover hover:border-primary/30" onClick={() => onViewOrcamento(o)}>
+                          <CardContent className="p-3">
+                            {/* Row 1: number + status + menu + value */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-sm font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
+                              {renderStatusBadge(o)}
+                              <span className="flex-1" />
+                              {renderRowActions(o)}
+                              <p className="text-base font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
+                            </div>
+                            {/* Row 2: client + meta */}
+                            <p className="text-sm font-medium text-foreground truncate mb-1">{o.nomeCliente}</p>
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                              <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                              <span className="ml-auto">
+                                {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {filtered.length === 0 && (
             <p className="text-center text-sm text-muted-foreground py-8">Nenhum orçamento encontrado.</p>

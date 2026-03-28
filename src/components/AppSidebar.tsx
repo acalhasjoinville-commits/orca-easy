@@ -71,7 +71,7 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
           onClick={() => onNavigate(item.tab)}
           className={cn(
             'w-full cursor-pointer',
-            isActive && 'bg-accent text-accent-foreground font-semibold'
+            isActive && 'bg-primary/10 text-primary font-semibold'
           )}
         >
           <item.icon className="h-5 w-5 shrink-0" />

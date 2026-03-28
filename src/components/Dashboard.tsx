@@ -1,6 +1,6 @@
 import { useOrcamentos } from '@/hooks/useSupabaseData';
 import { Orcamento, StatusOrcamento } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Plus, 
@@ -123,196 +123,156 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
   const monthName = new Date().toLocaleString('pt-BR', { month: 'long' });
 
   return (
-    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-8">
-      {/* BLOCO 1 — Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+          <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Resumo rápido do seu negócio</p>
         </div>
-        <div className="flex gap-2">
-          {canCreateEditBudget && (
-            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm">
-              <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
-            </Button>
-          )}
-          {canManageClientes && (
-            <Button variant="outline" onClick={() => onNavigate('clientes')} className="shadow-sm">
-              <Users className="mr-2 h-4 w-4" /> Novo Cliente
-            </Button>
-          )}
-        </div>
+        {canCreateEditBudget && (
+          <Button onClick={onNewOrcamento} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Plus className="mr-1.5 h-4 w-4" /> Novo Orçamento
+          </Button>
+        )}
       </div>
 
-      {/* BLOCO 2 — KPIs de Status */}
+      {/* BLOCO 1 — KPIs Consolidados: Status + Valores */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Status dos Orçamentos</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {(['pendente', 'aprovado', 'executado', 'rejeitado'] as StatusOrcamento[]).map((status) => {
-            const config = statusConfig[status];
-            const Icon = config.icon;
-            const count = byStatus[status].length;
-            return (
-              <Card key={status} className={cn('border card-hover', config.bgColor)}>
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={cn('text-[11px] font-semibold uppercase tracking-wider', config.color)}>{config.label}</p>
-                      <p className={cn('text-3xl font-bold mt-1', config.color)}>{count}</p>
-                    </div>
-                    <div className={cn('rounded-xl p-2.5 bg-background/50')}>
-                      <Icon className={cn('h-7 w-7 opacity-70', config.color)} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* BLOCO 3 — Resumo Comercial */}
-      <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Resumo Comercial</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-yellow-500/10">
-                  <Clock className="h-4 w-4 text-yellow-700" />
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">Visão Geral</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Pendentes */}
+          <Card className={cn('border', statusConfig.pendente.bgColor)}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn('text-[11px] font-semibold uppercase tracking-wider', statusConfig.pendente.color)}>Pendentes</p>
+                  <p className={cn('text-2xl font-bold mt-0.5', statusConfig.pendente.color)}>{byStatus.pendente.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{formatCurrency(valorPendente)}</p>
                 </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Valor Pendente</p>
+                <div className="rounded-lg p-2 bg-background/50">
+                  <Clock className={cn('h-5 w-5 opacity-70', statusConfig.pendente.color)} />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(valorPendente)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-green-500/10">
-                  <CheckCircle className="h-4 w-4 text-green-700" />
+          {/* Aprovados */}
+          <Card className={cn('border', statusConfig.aprovado.bgColor)}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn('text-[11px] font-semibold uppercase tracking-wider', statusConfig.aprovado.color)}>Aprovados</p>
+                  <p className={cn('text-2xl font-bold mt-0.5', statusConfig.aprovado.color)}>{byStatus.aprovado.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{formatCurrency(valorAprovado)}</p>
                 </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Valor Aprovado</p>
+                <div className="rounded-lg p-2 bg-background/50">
+                  <CheckCircle className={cn('h-5 w-5 opacity-70', statusConfig.aprovado.color)} />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(valorAprovado)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-blue-500/10">
-                  <DollarSign className="h-4 w-4 text-blue-700" />
+          {/* Executados */}
+          <Card className={cn('border', statusConfig.executado.bgColor)}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={cn('text-[11px] font-semibold uppercase tracking-wider', statusConfig.executado.color)}>Executados</p>
+                  <p className={cn('text-2xl font-bold mt-0.5', statusConfig.executado.color)}>{byStatus.executado.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{formatCurrency(faturamentoExecutado)}</p>
                 </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Faturamento</p>
+                <div className="rounded-lg p-2 bg-background/50">
+                  <Hammer className={cn('h-5 w-5 opacity-70', statusConfig.executado.color)} />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(faturamentoExecutado)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-accent/10">
-                  <TrendingUp className="h-4 w-4 text-accent" />
+          {/* Ticket Médio */}
+          <Card className="border">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ticket Médio</p>
+                  <p className="text-2xl font-bold mt-0.5 text-foreground">{formatCurrency(ticketMedio)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{vendas.length} vendas</p>
                 </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ticket Médio</p>
+                <div className="rounded-lg p-2 bg-accent/10">
+                  <TrendingUp className="h-5 w-5 text-accent opacity-70" />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(ticketMedio)}</p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* BLOCO 3.5 — Desempenho do Mês */}
+      {/* BLOCO 2 — Desempenho do Mês + Fat/Rec */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2 capitalize">
-          <BarChart3 className="h-4 w-4" />
-          Desempenho de {monthName}
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5 flex items-center gap-1.5 capitalize">
+          <BarChart3 className="h-3.5 w-3.5" />
+          Desempenho — {monthName}
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Aprovados</p>
-              <p className="text-3xl font-bold text-green-700">{monthlyMetrics.aprovadosCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">{formatCurrency(monthlyMetrics.aprovadosValor)}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Aprovados</p>
+              <p className="text-2xl font-bold text-green-700">{monthlyMetrics.aprovadosCount}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatCurrency(monthlyMetrics.aprovadosValor)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Executados</p>
-              <p className="text-3xl font-bold text-blue-700">{monthlyMetrics.executadosCount}</p>
-              <p className="text-xs text-muted-foreground mt-1">{formatCurrency(monthlyMetrics.executadosValor)}</p>
+          <Card>
+            <CardContent className="p-4">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Executados</p>
+              <p className="text-2xl font-bold text-blue-700">{monthlyMetrics.executadosCount}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatCurrency(monthlyMetrics.executadosValor)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-accent" />
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ticket Médio</p>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(monthlyMetrics.ticketMedio)}</p>
-            </CardContent>
-          </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Target className="h-3.5 w-3.5 text-accent" />
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Target className="h-3 w-3 text-accent" />
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Conversão</p>
               </div>
               <p className="text-2xl font-bold text-foreground">{monthlyMetrics.taxaConversao.toFixed(0)}%</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Ticket: {formatCurrency(monthlyMetrics.ticketMedio)}</p>
             </CardContent>
           </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Clock className="h-3.5 w-3.5 text-yellow-700" />
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Receipt className="h-3 w-3 text-emerald-700" />
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Faturado</p>
+              </div>
+              <p className="text-xl font-bold text-emerald-700">{formatCurrency(monthlyMetrics.faturadosValor)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Banknote className="h-3 w-3 text-violet-700" />
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Recebido</p>
+              </div>
+              <p className="text-xl font-bold text-violet-700">{formatCurrency(monthlyMetrics.pagosValor)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="h-3 w-3 text-yellow-700" />
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Pendentes</p>
               </div>
-              <p className="text-2xl font-bold text-yellow-700">{monthlyMetrics.pendentesCount}</p>
+              <p className="text-xl font-bold text-yellow-700">{monthlyMetrics.pendentesCount}</p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* BLOCO 3.6 — Faturamento e Recebimento do Mês */}
+      {/* BLOCO 3 — Últimos Orçamentos (lista compacta) */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2 capitalize">
-          <Receipt className="h-4 w-4" />
-          Faturamento e Recebimento — {monthName}
-        </h2>
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-emerald-500/10">
-                  <Receipt className="h-4 w-4 text-emerald-700" />
-                </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Faturado no mês</p>
-              </div>
-              <p className="text-2xl font-bold text-emerald-700">{formatCurrency(monthlyMetrics.faturadosValor)}</p>
-            </CardContent>
-          </Card>
-          <Card className="card-hover">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="rounded-lg p-1.5 bg-violet-500/10">
-                  <Banknote className="h-4 w-4 text-violet-700" />
-                </div>
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Recebido no mês</p>
-              </div>
-              <p className="text-2xl font-bold text-violet-700">{formatCurrency(monthlyMetrics.pagosValor)}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* BLOCO 4 — Últimos Orçamentos */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Últimos Orçamentos</h2>
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Últimos Orçamentos</h2>
           <Button 
             variant="ghost" 
             size="sm" 
-            className="text-xs text-accent hover:text-accent/80"
+            className="text-xs text-accent hover:text-accent/80 h-7 px-2"
             onClick={() => onNavigate('orcamentos')}
           >
             Ver todos <ArrowRight className="ml-1 h-3 w-3" />
@@ -325,90 +285,70 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
               <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
               <p className="text-sm text-muted-foreground mb-4">Você ainda não possui orçamentos cadastrados</p>
               {canCreateEditBudget && (
-                <Button onClick={onNewOrcamento} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm">
+                <Button onClick={onNewOrcamento} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
                   <Plus className="mr-2 h-4 w-4" /> Criar primeiro orçamento
                 </Button>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2.5">
-            {recentOrcamentos.map((o) => {
-              const st = statusConfig[o.status ?? 'pendente'];
-              const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
-              return (
-                <Card 
-                  key={o.id} 
-                  className="cursor-pointer card-hover hover:border-primary/30"
-                  onClick={() => onViewOrcamento(o)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-3">
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y divide-border">
+                {recentOrcamentos.map((o) => {
+                  const st = statusConfig[o.status ?? 'pendente'];
+                  const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
+                  return (
+                    <div 
+                      key={o.id} 
+                      className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => onViewOrcamento(o)}
+                    >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-semibold border shrink-0', st.bgColor, st.color)}>
+                        <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-semibold border shrink-0', st.bgColor, st.color)}>
                           {st.label.replace('s', '')}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">
+                          <p className="text-sm font-medium truncate">
                             <span className="text-accent font-bold">#{o.numeroOrcamento ?? '—'}</span>
-                            {' — '}
+                            <span className="text-muted-foreground mx-1.5">·</span>
                             {o.nomeCliente}
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground">
                             {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
                           </p>
                         </div>
                       </div>
-                      <p className="text-base font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
+                      <p className="text-sm font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* BLOCO 5 — Atalhos Rápidos */}
+      {/* BLOCO 4 — Atalhos Rápidos (compactados) */}
       <div>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Atalhos Rápidos</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">Atalhos Rápidos</h2>
+        <div className="flex flex-wrap gap-2">
           {canCreateEditBudget && (
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-1.5 rounded-xl shadow-sm card-hover"
-              onClick={onNewOrcamento}
-            >
-              <Plus className="h-5 w-5" />
-              <span className="text-xs font-medium">Novo Orçamento</span>
+            <Button variant="outline" size="sm" onClick={onNewOrcamento} className="h-9 text-xs">
+              <Plus className="mr-1.5 h-3.5 w-3.5" /> Novo Orçamento
             </Button>
           )}
           {canManageClientes && (
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-1.5 rounded-xl shadow-sm card-hover"
-              onClick={() => onNavigate('clientes')}
-            >
-              <Users className="h-5 w-5" />
-              <span className="text-xs font-medium">Novo Cliente</span>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('clientes')} className="h-9 text-xs">
+              <Users className="mr-1.5 h-3.5 w-3.5" /> Novo Cliente
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            className="h-20 flex-col gap-1.5 rounded-xl shadow-sm card-hover"
-            onClick={() => onNavigate('orcamentos')}
-          >
-            <FileText className="h-5 w-5" />
-            <span className="text-xs font-medium">Ver Orçamentos</span>
+          <Button variant="outline" size="sm" onClick={() => onNavigate('orcamentos')} className="h-9 text-xs">
+            <FileText className="mr-1.5 h-3.5 w-3.5" /> Ver Orçamentos
           </Button>
           {canViewFinanceiro && (
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-1.5 rounded-xl shadow-sm card-hover"
-              onClick={() => onNavigate('financeiro')}
-            >
-              <DollarSign className="h-5 w-5" />
-              <span className="text-xs font-medium">Ver Financeiro</span>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('financeiro')} className="h-9 text-xs">
+              <DollarSign className="mr-1.5 h-3.5 w-3.5" /> Ver Financeiro
             </Button>
           )}
         </div>
