@@ -76,7 +76,7 @@ function getPipelineStep(orc: Orcamento): number {
 function PipelineBar({ orcamento }: { orcamento: Orcamento }) {
   const currentStep = getPipelineStep(orcamento);
   return (
-    <div className="flex items-center gap-0 mb-8 px-2">
+    <div className="flex items-center gap-0 mb-6 px-2">
       {pipelineSteps.map((step, idx) => {
         const isActive = idx <= currentStep;
         const isCurrent = idx === currentStep;
@@ -92,7 +92,7 @@ function PipelineBar({ orcamento }: { orcamento: Orcamento }) {
               )}
               {/* Circle */}
               <div className={cn(
-                'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all border-2',
+                'flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all border-2',
                 isCurrent
                   ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20 scale-110'
                   : isActive
@@ -138,7 +138,7 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
   };
 
   return (
-    <div className="px-4 lg:px-6 pt-4 pb-8 max-w-3xl mx-auto">
+    <div className="px-4 lg:px-6 pt-4 pb-24 lg:pb-8 max-w-4xl mx-auto">
       {/* Back button */}
       <button
         onClick={onBack}
@@ -157,8 +157,8 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
           <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <h1 className="text-2xl font-bold text-accent">#{orcamento.numeroOrcamento ?? '—'}</h1>
-                <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold border', st.color)}>
+                <h1 className="text-xl font-bold text-accent">#{orcamento.numeroOrcamento ?? '—'}</h1>
+                <span className={cn('rounded-md px-2 py-0.5 text-[11px] font-semibold border', st.color)}>
                   {st.label}
                 </span>
                 <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground border border-border">
