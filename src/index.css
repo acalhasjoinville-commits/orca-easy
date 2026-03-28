@@ -97,6 +97,6 @@
 
 @layer utilities {
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+    @apply transition-shadow duration-200 hover:shadow;
   }
 }
