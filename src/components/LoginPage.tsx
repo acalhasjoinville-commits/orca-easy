@@ -56,7 +56,7 @@ export function LoginPage() {
           <p className="text-sm text-muted-foreground">Sistema de orçamentos para calhas e rufos</p>
         </div>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="pb-4">
             <Tabs value={tab} onValueChange={(v) => setTab(v as 'login' | 'signup')}>
               <TabsList className="grid w-full grid-cols-2">

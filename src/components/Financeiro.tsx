@@ -464,8 +464,8 @@ export function Financeiro() {
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-        <p className="text-sm text-muted-foreground mt-1">Análise financeira e lançamentos</p>
+        <h1 className="text-xl font-bold text-foreground">Financeiro</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e lançamentos</p>
       </div>
 
       <Tabs defaultValue="orcamentos" className="w-full">

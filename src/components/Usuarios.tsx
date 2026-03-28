@@ -213,10 +213,10 @@ export function Usuarios() {
   const usersPending = users.filter(u => u.roles.length === 0);
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-bold text-foreground">Gerenciar Usuários</h2>
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6 max-w-2xl mx-auto">
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Gerenciar Usuários</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Convide e gerencie os membros da sua equipe</p>
       </div>
 
       {/* ── Invite Section ── */}
