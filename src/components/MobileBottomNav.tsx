@@ -19,7 +19,6 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
   const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers, canManageClientes } = useAuth();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Secondary items for the "Mais" sheet
   const secondaryItems: { title: string; tab: Tab; icon: React.ElementType }[] = [];
 
   if (canManageClientes) {
@@ -40,13 +39,13 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
   const isSecondaryActive = secondaryItems.some(item => item.tab === active);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card shadow-lg lg:hidden">
-      <div className="flex h-16 items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-sm shadow-[0_-1px_3px_rgba(0,0,0,0.05)] lg:hidden">
+      <div className="flex h-16 items-center justify-around max-w-lg mx-auto">
         {/* Dashboard */}
         <button
           onClick={() => onNavigate('dashboard')}
           className={cn(
-            'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors',
+            'flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] transition-colors rounded-lg',
             active === 'dashboard' ? 'text-primary font-semibold' : 'text-muted-foreground'
           )}
         >
@@ -58,7 +57,7 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
         <button
           onClick={() => onNavigate('orcamentos')}
           className={cn(
-            'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors',
+            'flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] transition-colors rounded-lg',
             isOrcamentoTab(active) && active !== 'orcamento-novo'
               ? 'text-primary font-semibold'
               : 'text-muted-foreground'
@@ -75,14 +74,14 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
             className="flex flex-col items-center gap-0.5"
           >
             <div className={cn(
-              'flex h-11 w-11 items-center justify-center rounded-full shadow-md -mt-5 transition-colors',
-              'bg-accent text-accent-foreground'
+              'flex h-12 w-12 items-center justify-center rounded-xl shadow-lg -mt-5 transition-all',
+              'bg-primary text-primary-foreground hover:shadow-xl'
             )}>
               <Plus className="h-5 w-5" />
             </div>
             <span className={cn(
               'text-[10px]',
-              active === 'orcamento-novo' ? 'text-accent font-semibold' : 'text-muted-foreground'
+              active === 'orcamento-novo' ? 'text-primary font-semibold' : 'text-muted-foreground'
             )}>Novo</span>
           </button>
         )}
@@ -92,7 +91,7 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
           <button
             onClick={() => onNavigate('financeiro')}
             className={cn(
-              'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors',
+              'flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] transition-colors rounded-lg',
               active === 'financeiro' ? 'text-primary font-semibold' : 'text-muted-foreground'
             )}
           >
@@ -107,7 +106,7 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
             <SheetTrigger asChild>
               <button
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] transition-colors',
+                  'flex flex-col items-center gap-0.5 px-3 py-1.5 text-[10px] transition-colors rounded-lg',
                   isSecondaryActive ? 'text-primary font-semibold' : 'text-muted-foreground'
                 )}
               >
@@ -125,9 +124,9 @@ export function MobileBottomNav({ active, onNavigate, onNewOrcamento }: MobileBo
                     key={item.tab}
                     onClick={() => handleSecondaryNav(item.tab)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors',
+                      'flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm transition-colors',
                       active === item.tab
-                        ? 'bg-accent/10 text-accent font-semibold'
+                        ? 'bg-primary/10 text-primary font-semibold'
                         : 'text-foreground hover:bg-muted'
                     )}
                   >
