@@ -20,7 +20,7 @@ import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData'
 
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { LogOut, Loader2, UserCircle } from 'lucide-react';
+import { LogOut, Loader2, UserCircle, Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -279,28 +279,22 @@ const Index = () => {
     </>
   );
 
-  const profileButton = (
-    <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-8 px-2">
-      <UserCircle className="h-4 w-4" />
-    </Button>
-  );
-
-  const logoutButton = (
-    <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-8 px-2">
-      <LogOut className="h-4 w-4" />
-    </Button>
-  );
-
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="h-12 flex items-center border-b bg-card px-4 sticky top-0 z-50">
-          <span className="text-base font-bold text-primary">OrçaCalhas</span>
-          <span className="ml-3 text-sm text-muted-foreground flex-1">{getHeaderLabel()}</span>
-          {profileButton}
-          {logoutButton}
+        <header className="h-14 flex items-center border-b bg-card px-4 sticky top-0 z-50 shadow-sm">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
+            OC
+          </div>
+          <span className="ml-3 text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</span>
+          <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0">
+            <UserCircle className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0">
+            <LogOut className="h-5 w-5" />
+          </Button>
         </header>
-        <main className="pb-16">{content}</main>
+        <main className="pb-20">{content}</main>
         <MobileBottomNav active={tab} onNavigate={guardedNavigate} onNewOrcamento={goToNew} />
         <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
       </div>
@@ -312,13 +306,18 @@ const Index = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar active={tab} onNavigate={guardedNavigate} />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 flex items-center border-b bg-card px-4 shrink-0">
-            <SidebarTrigger className="mr-3" />
-            <span className="text-sm font-medium text-foreground flex-1">{getHeaderLabel()}</span>
-            <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
-            <div className="hidden sm:block h-5 w-px bg-border mr-2" />
-            {profileButton}
-            {logoutButton}
+          <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-sm px-5 shrink-0 sticky top-0 z-40">
+            <SidebarTrigger className="mr-4 text-muted-foreground hover:text-foreground" />
+            <h1 className="text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</h1>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
+              <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
+                <UserCircle className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </header>
           <main className="flex-1 overflow-auto">{content}</main>
         </div>

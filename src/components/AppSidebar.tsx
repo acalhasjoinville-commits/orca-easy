@@ -70,38 +70,49 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
         <SidebarMenuButton
           onClick={() => onNavigate(item.tab)}
           className={cn(
-            'w-full cursor-pointer',
-            isActive && 'bg-primary/10 text-primary font-semibold'
+            'w-full cursor-pointer rounded-lg transition-all duration-150 h-10',
+            isActive
+              ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm'
+              : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
           )}
         >
-          <item.icon className="h-5 w-5 shrink-0" />
-          {!collapsed && <span>{item.title}</span>}
+          <item.icon className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && <span className="text-[13px]">{item.title}</span>}
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarContent>
+    <Sidebar collapsible="icon" className="border-r-0">
+      <SidebarContent className="pt-2">
         {/* Brand */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            {!collapsed && (
-              <span className="text-lg font-bold tracking-tight text-primary">
-                OrçaCalhas
-              </span>
+          <SidebarGroupLabel className="px-3 h-12 flex items-center">
+            {!collapsed ? (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+                  OC
+                </div>
+                <span className="text-base font-bold tracking-tight text-sidebar-accent-foreground">
+                  OrçaCalhas
+                </span>
+              </div>
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm mx-auto">
+                OC
+              </div>
             )}
           </SidebarGroupLabel>
         </SidebarGroup>
 
         {/* Operação */}
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            {!collapsed && <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">Operação</span>}
+        <SidebarGroup className="mt-2">
+          <SidebarGroupLabel className="px-4">
+            {!collapsed && <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold">Operação</span>}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="px-2 space-y-0.5">
               {visibleOps.map(renderItem)}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -109,12 +120,12 @@ export function AppSidebar({ active, onNavigate }: AppSidebarProps) {
 
         {/* Administração */}
         {visibleAdmin.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              {!collapsed && <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">Administração</span>}
+          <SidebarGroup className="mt-4">
+            <SidebarGroupLabel className="px-4">
+              {!collapsed && <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50 font-semibold">Administração</span>}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="px-2 space-y-0.5">
                 {visibleAdmin.map(renderItem)}
               </SidebarMenu>
             </SidebarGroupContent>
