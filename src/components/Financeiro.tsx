@@ -9,13 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  DollarSign, TrendingUp, TrendingDown, BarChart3, Percent, Plus, Pencil, Trash2, Wallet,
+  DollarSign, TrendingUp, TrendingDown, BarChart3, Percent, Plus, Pencil, Trash2, Wallet, MoreVertical,
 } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -29,7 +33,6 @@ type StatusFilter = 'todos' | 'aprovado' | 'executado';
 const VALID_STATUSES = ['aprovado', 'executado'];
 type TipoFilter = 'all' | 'receita' | 'despesa';
 
-// ─── Period filter helper ───
 function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: PeriodFilter, now: Date): T[] {
   return items.filter((item) => {
     const d = getDate(item);
@@ -39,8 +42,27 @@ function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: Perio
   });
 }
 
+// ─── KPI Card Component ───
+function KpiCard({ title, value, icon: Icon, color = 'text-foreground', iconBg = 'bg-muted', highlight = false }: {
+  title: string; value: string; icon: React.ElementType; color?: string; iconBg?: string; highlight?: boolean;
+}) {
+  return (
+    <Card className={highlight ? 'border-primary/20 bg-primary/[0.03] dark:bg-primary/[0.06]' : ''}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
+          <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${iconBg}`}>
+            <Icon className={`h-4 w-4 ${color}`} />
+          </div>
+        </div>
+        <p className={`text-xl lg:text-2xl font-bold ${color}`}>{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ═══════════════════════════════════════════════════
-// Aba: Orçamentos (conteúdo original, sem alteração)
+// Aba: Orçamentos
 // ═══════════════════════════════════════════════════
 function OrcamentosTab() {
   const { orcamentos } = useOrcamentos();
@@ -98,85 +120,80 @@ function OrcamentosTab() {
       .slice(0, 5);
   }, [filtered]);
 
-  const kpiCards = [
-    { title: 'Faturamento Total', value: fmt(kpis.faturamento), icon: DollarSign, highlight: false },
-    { title: 'Custo Total', value: fmt(kpis.custo), icon: BarChart3, highlight: false },
-    { title: 'Lucro Real', value: fmt(kpis.lucro), icon: TrendingUp, highlight: true },
-    { title: 'Margem Média', value: fmtPct(kpis.margem), icon: Percent, highlight: false },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-4">
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Mês Atual</SelectItem>
-            <SelectItem value="3months">Últimos 3 Meses</SelectItem>
-            <SelectItem value="year">Ano Atual</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Executados + Aprovados</SelectItem>
-            <SelectItem value="executado">Executados</SelectItem>
-            <SelectItem value="aprovado">Aprovados</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Período</span>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Mês Atual</SelectItem>
+                <SelectItem value="3months">Últimos 3 Meses</SelectItem>
+                <SelectItem value="year">Ano Atual</SelectItem>
+              </SelectContent>
+            </Select>
+            <Separator orientation="vertical" className="h-5 hidden sm:block" />
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Status</span>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Executados + Aprovados</SelectItem>
+                <SelectItem value="executado">Executados</SelectItem>
+                <SelectItem value="aprovado">Aprovados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.title} className={kpi.highlight ? 'border-accent/40 bg-accent/5' : ''}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-muted-foreground">{kpi.title}</p>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${kpi.highlight ? 'bg-accent/15' : 'bg-muted'}`}>
-                  <kpi.icon className={`h-4 w-4 ${kpi.highlight ? 'text-accent' : 'text-muted-foreground'}`} />
-                </div>
-              </div>
-              <p className={`text-xl lg:text-2xl font-bold ${kpi.highlight ? 'text-accent' : 'text-foreground'}`}>{kpi.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <KpiCard title="Faturamento" value={fmt(kpis.faturamento)} icon={DollarSign} iconBg="bg-primary/10" color="text-primary" />
+        <KpiCard title="Custo Total" value={fmt(kpis.custo)} icon={BarChart3} iconBg="bg-muted" color="text-muted-foreground" />
+        <KpiCard title="Lucro Bruto" value={fmt(kpis.lucro)} icon={TrendingUp} iconBg="bg-emerald-500/10" color="text-emerald-600 dark:text-emerald-400" highlight />
+        <KpiCard title="Margem Média" value={fmtPct(kpis.margem)} icon={Percent} iconBg="bg-amber-500/10" color="text-amber-600 dark:text-amber-400" />
       </div>
 
       {/* Chart + Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
           <CardContent className="p-4 lg:p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">Receita vs Custo — Últimos 6 Meses</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground">Receita vs Custo</h2>
+              <span className="text-[10px] text-muted-foreground">Últimos 6 meses</span>
+            </div>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                 <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(value: number) => fmt(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-                <Legend />
-                <Bar dataKey="receita" name="Receita" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="custo" name="Custo" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Tooltip formatter={(value: number) => fmt(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Bar dataKey="receita" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="custo" name="Custo" fill="hsl(var(--muted-foreground) / 0.3)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 lg:p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-4">Resumo do Período</h2>
-            <div className="space-y-5">
+            <h2 className="text-sm font-semibold text-foreground mb-5">Resumo do Período</h2>
+            <div className="space-y-6">
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Orçamentos no período</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Orçamentos</p>
                 <p className="text-3xl font-bold text-foreground">{filtered.length}</p>
               </div>
+              <Separator />
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Ticket Médio</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Ticket Médio</p>
                 <p className="text-xl font-semibold text-foreground">{filtered.length > 0 ? fmt(kpis.faturamento / filtered.length) : 'R$ 0,00'}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Lucro por Orçamento</p>
-                <p className="text-xl font-semibold text-accent">{filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : 'R$ 0,00'}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Lucro por Orçamento</p>
+                <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : 'R$ 0,00'}</p>
               </div>
             </div>
           </CardContent>
@@ -186,9 +203,15 @@ function OrcamentosTab() {
       {/* Top 5 */}
       <Card>
         <CardContent className="p-4 lg:p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4">Top 5 — Orçamentos Mais Lucrativos</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-foreground">Top 5 — Mais Lucrativos</h2>
+            <span className="text-[10px] text-muted-foreground">{filtered.length} orçamentos no período</span>
+          </div>
           {top5.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Nenhum orçamento encontrado para o período selecionado.</p>
+            <div className="flex flex-col items-center justify-center py-10">
+              <BarChart3 className="h-10 w-10 text-muted-foreground/20 mb-2" />
+              <p className="text-sm text-muted-foreground">Nenhum orçamento no período selecionado.</p>
+            </div>
           ) : isMobile ? (
             <div className="space-y-3">
               {top5.map((o) => (
@@ -203,7 +226,7 @@ function OrcamentosTab() {
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div><p className="text-muted-foreground">Valor</p><p className="font-medium">{fmt(o.valorFinal)}</p></div>
                     <div><p className="text-muted-foreground">Custo</p><p className="font-medium">{fmt(o.custoTotalObra)}</p></div>
-                    <div><p className="text-muted-foreground">Lucro</p><p className="font-semibold text-accent">{fmt(o.lucro)}</p></div>
+                    <div><p className="text-muted-foreground">Lucro</p><p className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(o.lucro)}</p></div>
                   </div>
                 </div>
               ))}
@@ -212,24 +235,24 @@ function OrcamentosTab() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="pb-2 font-medium">Cliente</th>
-                    <th className="pb-2 font-medium">Data</th>
-                    <th className="pb-2 font-medium text-right">Valor Total</th>
-                    <th className="pb-2 font-medium text-right">Custo Total</th>
-                    <th className="pb-2 font-medium text-right">Lucro Bruto</th>
-                    <th className="pb-2 font-medium text-right">Margem</th>
+                  <tr className="border-b text-left text-[11px] text-muted-foreground bg-muted/30">
+                    <th className="py-2.5 px-3 font-medium">Cliente</th>
+                    <th className="py-2.5 px-3 font-medium">Data</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Valor Total</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Custo Total</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Lucro Bruto</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Margem</th>
                   </tr>
                 </thead>
                 <tbody>
                   {top5.map((o) => (
-                    <tr key={o.id} className="border-b last:border-0">
-                      <td className="py-2.5 font-medium">{o.nomeCliente}</td>
-                      <td className="py-2.5 text-muted-foreground">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</td>
-                      <td className="py-2.5 text-right">{fmt(o.valorFinal)}</td>
-                      <td className="py-2.5 text-right">{fmt(o.custoTotalObra)}</td>
-                      <td className="py-2.5 text-right font-semibold text-accent">{fmt(o.lucro)}</td>
-                      <td className="py-2.5 text-right">
+                    <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                      <td className="py-2.5 px-3 font-medium">{o.nomeCliente}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.valorFinal)}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.custoTotalObra)}</td>
+                      <td className="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmt(o.lucro)}</td>
+                      <td className="py-2.5 px-3 text-right">
                         <Badge variant={o.margem >= 40 ? 'default' : 'secondary'} className="text-[10px]">{fmtPct(o.margem)}</Badge>
                       </td>
                     </tr>
@@ -283,65 +306,61 @@ function LancamentosTab() {
     setDeleteTarget(null);
   };
 
-  const kpiCards = [
-    { title: 'Total Receitas', value: fmt(kpis.receitas), icon: TrendingUp, color: 'text-accent', bg: 'bg-accent/15' },
-    { title: 'Total Despesas', value: fmt(kpis.despesas), icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/15' },
-    { title: 'Saldo', value: fmt(kpis.saldo), icon: Wallet, color: kpis.saldo >= 0 ? 'text-accent' : 'text-destructive', bg: kpis.saldo >= 0 ? 'bg-accent/15' : 'bg-destructive/15' },
-  ];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-4">
       {/* Filters + New button */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
-        <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Mês Atual</SelectItem>
-            <SelectItem value="3months">Últimos 3 Meses</SelectItem>
-            <SelectItem value="year">Ano Atual</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={tipoFilter} onValueChange={(v) => setTipoFilter(v as TipoFilter)}>
-          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="receita">Receitas</SelectItem>
-            <SelectItem value="despesa">Despesas</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="sm:ml-auto">
-          <Button size="sm" onClick={handleNew} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-1" /> Novo Lançamento
-          </Button>
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Período</span>
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Mês Atual</SelectItem>
+                <SelectItem value="3months">Últimos 3 Meses</SelectItem>
+                <SelectItem value="year">Ano Atual</SelectItem>
+              </SelectContent>
+            </Select>
+            <Separator orientation="vertical" className="h-5 hidden sm:block" />
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Tipo</span>
+            <Select value={tipoFilter} onValueChange={(v) => setTipoFilter(v as TipoFilter)}>
+              <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="receita">Receitas</SelectItem>
+                <SelectItem value="despesa">Despesas</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="sm:ml-auto">
+              <Button size="sm" onClick={handleNew} className="w-full sm:w-auto h-9">
+                <Plus className="h-4 w-4 mr-1.5" /> Novo Lançamento
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
-        {kpiCards.map((kpi) => (
-          <Card key={kpi.title}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-medium text-muted-foreground">{kpi.title}</p>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${kpi.bg}`}>
-                  <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-                </div>
-              </div>
-              <p className={`text-lg lg:text-2xl font-bold ${kpi.color}`}>{kpi.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <KpiCard title="Total Receitas" value={fmt(kpis.receitas)} icon={TrendingUp} iconBg="bg-emerald-500/10" color="text-emerald-600 dark:text-emerald-400" />
+        <KpiCard title="Total Despesas" value={fmt(kpis.despesas)} icon={TrendingDown} iconBg="bg-red-500/10" color="text-red-600 dark:text-red-400" />
+        <KpiCard title="Saldo do Período" value={fmt(kpis.saldo)} icon={Wallet}
+          iconBg={kpis.saldo >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}
+          color={kpis.saldo >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
+          highlight
+        />
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="py-12 text-center">
+            <Wallet className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">Nenhum lançamento encontrado para o período selecionado.</p>
           </CardContent>
         </Card>
       ) : isMobile ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filtered.map((l) => (
             <Card key={l.id}>
               <CardContent className="p-3">
@@ -355,7 +374,7 @@ function LancamentosTab() {
                       <span className="text-[11px] text-muted-foreground">{l.categoria}</span>
                     </div>
                   </div>
-                  <p className={`text-sm font-bold ml-2 whitespace-nowrap ${l.tipo === 'receita' ? 'text-accent' : 'text-destructive'}`}>
+                  <p className={`text-sm font-bold ml-2 whitespace-nowrap ${l.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                     {l.tipo === 'receita' ? '+' : '−'} {fmt(l.valor)}
                   </p>
                 </div>
@@ -377,52 +396,57 @@ function LancamentosTab() {
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="pb-2 font-medium">Data</th>
-                    <th className="pb-2 font-medium">Tipo</th>
-                    <th className="pb-2 font-medium">Descrição</th>
-                    <th className="pb-2 font-medium">Categoria</th>
-                    <th className="pb-2 font-medium text-right">Valor</th>
-                    <th className="pb-2 font-medium text-right w-20">Ações</th>
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-[11px] text-muted-foreground bg-muted/30">
+                  <th className="py-2.5 px-3 font-medium w-24">Data</th>
+                  <th className="py-2.5 px-3 font-medium w-20">Tipo</th>
+                  <th className="py-2.5 px-3 font-medium">Descrição</th>
+                  <th className="py-2.5 px-3 font-medium w-28">Categoria</th>
+                  <th className="py-2.5 px-3 font-medium text-right w-28">Valor</th>
+                  <th className="py-2.5 px-3 font-medium text-right w-16">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((l) => (
+                  <tr key={l.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                    <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap tabular-nums">
+                      {new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Badge variant={l.tipo === 'receita' ? 'default' : 'destructive'} className="text-[10px]">
+                        {l.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                      </Badge>
+                    </td>
+                    <td className="py-2.5 px-3 font-medium max-w-[200px] truncate">{l.descricao}</td>
+                    <td className="py-2.5 px-3 text-muted-foreground text-xs">{l.categoria}</td>
+                    <td className={`py-2.5 px-3 text-right font-semibold whitespace-nowrap tabular-nums ${l.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {l.tipo === 'receita' ? '+' : '−'} {fmt(l.valor)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[120px]">
+                          <DropdownMenuItem onClick={() => handleEdit(l)} className="text-xs gap-2">
+                            <Pencil className="h-3.5 w-3.5" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteTarget(l.id)} className="text-xs gap-2 text-destructive focus:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((l) => (
-                    <tr key={l.id} className="border-b last:border-0">
-                      <td className="py-2.5 text-muted-foreground whitespace-nowrap">
-                        {new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="py-2.5">
-                        <Badge variant={l.tipo === 'receita' ? 'default' : 'destructive'} className="text-[10px]">
-                          {l.tipo === 'receita' ? 'Receita' : 'Despesa'}
-                        </Badge>
-                      </td>
-                      <td className="py-2.5 font-medium max-w-[200px] truncate">{l.descricao}</td>
-                      <td className="py-2.5 text-muted-foreground">{l.categoria}</td>
-                      <td className={`py-2.5 text-right font-semibold whitespace-nowrap ${l.tipo === 'receita' ? 'text-accent' : 'text-destructive'}`}>
-                        {l.tipo === 'receita' ? '+' : '−'} {fmt(l.valor)}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(l)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(l.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
@@ -462,16 +486,22 @@ function LancamentosTab() {
 // ═══════════════════════════════════════════════════
 export function Financeiro() {
   return (
-    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6">
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-4">
       <div>
         <h1 className="text-xl font-bold text-foreground">Financeiro</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e lançamentos</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e gestão de lançamentos</p>
       </div>
 
       <Tabs defaultValue="orcamentos" className="w-full">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="orcamentos" className="flex-1 sm:flex-none">Orçamentos</TabsTrigger>
-          <TabsTrigger value="lancamentos" className="flex-1 sm:flex-none">Lançamentos</TabsTrigger>
+        <TabsList className="w-full sm:w-auto h-10">
+          <TabsTrigger value="orcamentos" className="flex-1 sm:flex-none text-xs sm:text-sm px-4">
+            <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
+            Orçamentos
+          </TabsTrigger>
+          <TabsTrigger value="lancamentos" className="flex-1 sm:flex-none text-xs sm:text-sm px-4">
+            <Wallet className="h-3.5 w-3.5 mr-1.5" />
+            Lançamentos
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="orcamentos">
           <OrcamentosTab />
