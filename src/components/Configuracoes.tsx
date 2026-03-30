@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +23,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2, Layers, Calculator, BookOpen, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Upload, Save, Loader2, Layers, Calculator, BookOpen, FileText, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-// ─── Types for active entity tracking ───
 type EntitySection = 'motor1' | 'motor2' | 'insumos' | 'regras' | 'catalogo' | 'politicas';
 
-// ─── MinhaEmpresaForm (unchanged) ───
+// ─── MinhaEmpresaForm ───
 function MinhaEmpresaForm() {
   const { empresa: existing, isLoading, saveEmpresa } = useEmpresa();
   const [initialized, setInitialized] = useState(false);
@@ -97,139 +100,135 @@ function MinhaEmpresaForm() {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        title="Minha Empresa"
-        description="Dados institucionais, identidade visual e informações de contato."
-      />
+    <div className="space-y-6 max-w-2xl">
+      {/* Logo + Brand */}
       <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold text-primary">Dados da Empresa</h2>
+        <CardContent className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Identidade Visual</h3>
+              <p className="text-[11px] text-muted-foreground">Logomarca e cores do sistema e PDF</p>
+            </div>
           </div>
-
-          {/* Logo */}
-          <div>
-            <Label className="text-xs font-semibold">Logomarca</Label>
-            <div className="flex items-center gap-4 mt-1">
-              {form.logoUrl ? (
-                <img src={form.logoUrl} alt="Logo" className="h-16 w-16 rounded-lg object-contain border bg-background" />
-              ) : (
-                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                  <Upload className="h-5 w-5 text-muted-foreground/40" />
-                </div>
-              )}
-              <div>
-                <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                  {uploading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Upload className="mr-1 h-3 w-3" />}
-                  {uploading ? 'Enviando...' : 'Upload Logo'}
-                </Button>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, máx 2MB</p>
+          
+          <div className="flex items-center gap-4 mb-4">
+            {form.logoUrl ? (
+              <img src={form.logoUrl} alt="Logo" className="h-16 w-16 rounded-lg object-contain border bg-background" />
+            ) : (
+              <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-muted-foreground/40" />
               </div>
+            )}
+            <div>
+              <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                {uploading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Upload className="mr-1 h-3 w-3" />}
+                {uploading ? 'Enviando...' : 'Upload Logo'}
+              </Button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+              <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, máx 2MB</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs">Nome Fantasia</Label>
-              <Input value={form.nomeFantasia} onChange={e => set('nomeFantasia', e.target.value)} placeholder="Nome comercial" className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Razão Social</Label>
-              <Input value={form.razaoSocial} onChange={e => set('razaoSocial', e.target.value)} placeholder="Razão social" className="h-9" />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs">Slogan</Label>
-            <Input value={form.slogan} onChange={e => set('slogan', e.target.value)} placeholder="Ex: A solução está no nome" className="h-9" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">CNPJ / CPF</Label>
-              <Input value={form.cnpjCpf} onChange={e => set('cnpjCpf', e.target.value)} placeholder="00.000.000/0001-00" className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">WhatsApp</Label>
-              <Input value={form.telefoneWhatsApp} onChange={e => set('telefoneWhatsApp', e.target.value)} placeholder="(00) 00000-0000" className="h-9" />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs">E-mail de Contato</Label>
-            <Input type="email" value={form.emailContato} onChange={e => set('emailContato', e.target.value)} placeholder="contato@empresa.com" className="h-9" />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <Label className="text-xs">Endereço</Label>
-              <Input value={form.endereco} onChange={e => set('endereco', e.target.value)} placeholder="Rua / Av." className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Número</Label>
-              <Input value={form.numero} onChange={e => set('numero', e.target.value)} placeholder="Nº" className="h-9" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">Bairro</Label>
-              <Input value={form.bairro} onChange={e => set('bairro', e.target.value)} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Cidade</Label>
-              <Input value={form.cidade} onChange={e => set('cidade', e.target.value)} className="h-9" />
-            </div>
-            <div>
-              <Label className="text-xs">Estado</Label>
-              <Input value={form.estado} onChange={e => set('estado', e.target.value)} placeholder="UF" className="h-9" />
-            </div>
-          </div>
-
-          {/* Color pickers */}
-          <div className="space-y-3">
-            <Label className="text-xs font-semibold">Cores do App & PDF</Label>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">🎨 Cor Primária <span className="text-[10px]">(cabeçalhos, botões, navegação)</span></p>
-              <div className="flex items-center gap-3">
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
+              <div className="flex items-center gap-2">
                 <input type="color" value={form.corPrimaria} onChange={e => set('corPrimaria', e.target.value)}
-                  className="h-10 w-14 rounded-md border cursor-pointer" />
+                  className="h-9 w-12 rounded-md border cursor-pointer" />
                 <Input value={form.corPrimaria} onChange={e => set('corPrimaria', e.target.value)}
-                  placeholder="#0044CC" className="h-9 w-28 font-mono text-sm" />
-                <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corPrimaria }} />
+                  placeholder="#0044CC" className="h-9 font-mono text-xs flex-1" />
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">✨ Cor Destaque <span className="text-[10px]">(valor total, garantia, status aprovado)</span></p>
-              <div className="flex items-center gap-3">
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
+              <div className="flex items-center gap-2">
                 <input type="color" value={form.corDestaque} onChange={e => set('corDestaque', e.target.value)}
-                  className="h-10 w-14 rounded-md border cursor-pointer" />
+                  className="h-9 w-12 rounded-md border cursor-pointer" />
                 <Input value={form.corDestaque} onChange={e => set('corDestaque', e.target.value)}
-                  placeholder="#16A34A" className="h-9 w-28 font-mono text-sm" />
-                <div className="h-8 flex-1 rounded-md" style={{ backgroundColor: form.corDestaque }} />
+                  placeholder="#16A34A" className="h-9 font-mono text-xs flex-1" />
               </div>
             </div>
           </div>
-
-          <Button onClick={handleSave} disabled={saveEmpresa.isPending} className="w-full bg-primary text-primary-foreground h-11">
-            {saveEmpresa.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Dados da Empresa
-          </Button>
         </CardContent>
       </Card>
-    </div>
-  );
-}
 
-// ─── Reusable section header ───
-function SectionHeader({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="mb-2">
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      {/* Company Data */}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Dados da Empresa</h3>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Nome Fantasia</Label>
+                <Input value={form.nomeFantasia} onChange={e => set('nomeFantasia', e.target.value)} placeholder="Nome comercial" className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Razão Social</Label>
+                <Input value={form.razaoSocial} onChange={e => set('razaoSocial', e.target.value)} placeholder="Razão social" className="h-9 mt-1" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Slogan</Label>
+              <Input value={form.slogan} onChange={e => set('slogan', e.target.value)} placeholder="Ex: A solução está no nome" className="h-9 mt-1" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">CNPJ / CPF</Label>
+                <Input value={form.cnpjCpf} onChange={e => set('cnpjCpf', e.target.value)} placeholder="00.000.000/0001-00" className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">WhatsApp</Label>
+                <Input value={form.telefoneWhatsApp} onChange={e => set('telefoneWhatsApp', e.target.value)} placeholder="(00) 00000-0000" className="h-9 mt-1" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">E-mail de Contato</Label>
+              <Input type="email" value={form.emailContato} onChange={e => set('emailContato', e.target.value)} placeholder="contato@empresa.com" className="h-9 mt-1" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Address */}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Endereço</h3>
+          <div className="space-y-3">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="col-span-3">
+                <Label className="text-[11px] font-medium text-muted-foreground">Endereço</Label>
+                <Input value={form.endereco} onChange={e => set('endereco', e.target.value)} placeholder="Rua / Av." className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Número</Label>
+                <Input value={form.numero} onChange={e => set('numero', e.target.value)} placeholder="Nº" className="h-9 mt-1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Bairro</Label>
+                <Input value={form.bairro} onChange={e => set('bairro', e.target.value)} className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Cidade</Label>
+                <Input value={form.cidade} onChange={e => set('cidade', e.target.value)} className="h-9 mt-1" />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Estado</Label>
+                <Input value={form.estado} onChange={e => set('estado', e.target.value)} placeholder="UF" className="h-9 mt-1" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button onClick={handleSave} disabled={saveEmpresa.isPending} className="w-full h-10">
+        {saveEmpresa.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+        Salvar Dados da Empresa
+      </Button>
     </div>
   );
 }
@@ -239,72 +238,105 @@ function normalize(str: string) {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-// ─── Reusable sub-section with header + search + add button + list ───
+// ─── Reusable sub-section ───
 function SubSection({
-  title,
-  description,
-  onAdd,
-  isEmpty,
-  emptyText,
-  children,
-  searchValue,
-  onSearchChange,
-  totalCount,
-  filteredCount,
-  searchPlaceholder,
+  title, description, onAdd, isEmpty, emptyText, children,
+  searchValue, onSearchChange, totalCount, filteredCount, searchPlaceholder,
 }: {
-  title: string;
-  description: string;
-  onAdd: () => void;
-  isEmpty: boolean;
-  emptyText: string;
-  children: React.ReactNode;
-  searchValue?: string;
-  onSearchChange?: (v: string) => void;
-  totalCount?: number;
-  filteredCount?: number;
-  searchPlaceholder?: string;
+  title: string; description: string; onAdd: () => void; isEmpty: boolean; emptyText: string;
+  children: React.ReactNode; searchValue?: string; onSearchChange?: (v: string) => void;
+  totalCount?: number; filteredCount?: number; searchPlaceholder?: string;
 }) {
   const showSearch = onSearchChange !== undefined;
   const showCount = totalCount !== undefined && totalCount > 0;
   const isFiltering = searchValue && searchValue.length > 0;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            {showCount && (
-              <span className="text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-                {isFiltering ? `${filteredCount}/${totalCount}` : totalCount}
-              </span>
-            )}
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+              {showCount && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {isFiltering ? `${filteredCount}/${totalCount}` : totalCount}
+                </Badge>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
           </div>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <Button size="sm" onClick={onAdd} className="shrink-0 h-8">
+            <Plus className="mr-1 h-3 w-3" /> Novo
+          </Button>
         </div>
-        <Button size="sm" onClick={onAdd} className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus className="mr-1 h-3 w-3" /> Novo
-        </Button>
-      </div>
-      {showSearch && (totalCount ?? 0) > 0 && (
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder || 'Buscar...'}
-            value={searchValue || ''}
-            onChange={e => onSearchChange!(e.target.value)}
-            className="h-9 pl-9 text-sm"
-          />
-        </div>
-      )}
-      {isEmpty ? (
-        <div className="rounded-lg border border-dashed border-muted-foreground/25 py-8 text-center">
-          <p className="text-sm text-muted-foreground">{emptyText}</p>
-        </div>
-      ) : (
-        <div className="space-y-2">{children}</div>
-      )}
+        {showSearch && (totalCount ?? 0) > 0 && (
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder || 'Buscar...'}
+              value={searchValue || ''}
+              onChange={e => onSearchChange!(e.target.value)}
+              className="h-9 pl-9 text-sm"
+            />
+          </div>
+        )}
+        {isEmpty ? (
+          <div className="rounded-lg border border-dashed border-muted-foreground/20 py-8 text-center">
+            <p className="text-sm text-muted-foreground">{emptyText}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border -mx-5">
+            {children}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Item row with contextual menu ───
+function ItemRow({ children, item, section, onEdit, onDelete, deletingId }: {
+  children: React.ReactNode; item: any; section: EntitySection;
+  onEdit: (item: any, section: EntitySection) => void;
+  onDelete: (id: string, section: EntitySection) => void;
+  deletingId: string | null;
+}) {
+  return (
+    <div className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
+      <div className="min-w-0 flex-1">{children}</div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-2 shrink-0">
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[120px]">
+          <DropdownMenuItem onClick={() => onEdit(item, section)} className="text-xs gap-2">
+            <Pencil className="h-3.5 w-3.5" /> Editar
+          </DropdownMenuItem>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem onSelect={e => e.preventDefault()} className="text-xs gap-2 text-destructive focus:text-destructive">
+                {deletingId === item.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Excluir
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>Deseja remover este item? Esta ação não pode ser desfeita.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onDelete(item.id, section)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -312,10 +344,8 @@ function SubSection({
 // ─── Main Component ───
 export function Configuracoes() {
   const [tab, setTab] = useState('empresa');
-  // Tracks which entity type the dialog is editing (important for "materiais" tab)
   const [activeSection, setActiveSection] = useState<EntitySection>('motor1');
 
-  // All data from Supabase hooks (unchanged)
   const { motor1, isLoading: loadingM1, addMotor1, updateMotor1, deleteMotor1 } = useMotor1();
   const { motor2, isLoading: loadingM2, addMotor2, updateMotor2, deleteMotor2 } = useMotor2();
   const { insumos, isLoading: loadingIns, addInsumo, updateInsumo, deleteInsumo } = useInsumos();
@@ -333,7 +363,6 @@ export function Configuracoes() {
   const [form, setForm] = useState<Record<string, string>>({});
   const setField = (k: string, v: string) => setForm(prev => ({ ...prev, [k]: v }));
 
-  // ─── Search states ───
   const [searchMotor2, setSearchMotor2] = useState('');
   const [searchInsumos, setSearchInsumos] = useState('');
   const [searchRegras, setSearchRegras] = useState('');
@@ -361,7 +390,6 @@ export function Configuracoes() {
     setDialogOpen(true);
   };
 
-  // handleSave now uses activeSection instead of tab
   const handleSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
@@ -421,7 +449,6 @@ export function Configuracoes() {
     }
   };
 
-  // handleDelete now uses activeSection
   const handleDelete = async (id: string, section: EntitySection) => {
     if (deletingId) return;
     setDeletingId(id);
@@ -442,35 +469,6 @@ export function Configuracoes() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const renderItemActions = (item: any, section: EntitySection) => (
-    <div className="flex gap-1 shrink-0">
-      <button onClick={() => openEdit(item, section)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
-        <Pencil className="h-4 w-4" />
-      </button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <button disabled={deletingId === item.id} className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50">
-            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-          </button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Deseja remover este item? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDelete(item.id, section)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-
   const materiaisUnicos = [...new Set([...motor1.map(m => m.material), ...motor2.map(m => m.material)])];
   const regraName = (id: string) => regras.find(r => r.id === id)?.nomeRegra || '—';
 
@@ -486,51 +484,41 @@ export function Configuracoes() {
     setRegraItens(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // ─── Form renderers (unchanged logic) ───
-
+  // ─── Form renderers ───
   const renderRegraForm = () => (
     <div className="space-y-3">
       <div>
-        <Label className="text-xs">Nome da Regra</Label>
-        <Input value={form.nomeRegra || ''} onChange={e => setField('nomeRegra', e.target.value)} />
+        <Label className="text-[11px] font-medium text-muted-foreground">Nome da Regra</Label>
+        <Input value={form.nomeRegra || ''} onChange={e => setField('nomeRegra', e.target.value)} className="mt-1" />
       </div>
       <div>
         <div className="flex items-center justify-between mb-2">
-          <Label className="text-xs font-semibold">Insumos da Regra</Label>
+          <Label className="text-[11px] font-semibold">Insumos da Regra</Label>
           <Button type="button" size="sm" variant="outline" onClick={addRegraItem} className="h-7 text-xs">
-            <Plus className="mr-1 h-3 w-3" /> Adicionar Insumo
+            <Plus className="mr-1 h-3 w-3" /> Adicionar
           </Button>
         </div>
         {regraItens.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-4">Nenhum insumo adicionado. Clique em "+ Adicionar Insumo".</p>
+          <p className="text-xs text-muted-foreground text-center py-4">Nenhum insumo adicionado.</p>
         )}
         <div className="space-y-2">
           {regraItens.map((item, idx) => (
             <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-muted/20 p-2">
               <Select value={item.insumoId} onValueChange={v => updateRegraItem(idx, 'insumoId', v)}>
-                <SelectTrigger className="h-8 text-xs flex-1">
-                  <SelectValue placeholder="Insumo" />
-                </SelectTrigger>
+                <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="Insumo" /></SelectTrigger>
                 <SelectContent>
                   {insumos.map(ins => <SelectItem key={ins.id} value={ins.id}>{ins.nomeEmbalagemCompra}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={item.metodoCalculo} onValueChange={v => updateRegraItem(idx, 'metodoCalculo', v as MetodoCalculo)}>
-                <SelectTrigger className="h-8 text-xs w-28">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="multiplicar">Qtd por metro:</SelectItem>
                   <SelectItem value="dividir">A cada (m):</SelectItem>
                 </SelectContent>
               </Select>
-              <Input
-                type="number"
-                inputMode="decimal"
-                className="h-8 w-16 text-xs text-center"
-                value={item.fator}
-                onChange={e => updateRegraItem(idx, 'fator', parseFloat(e.target.value) || 0)}
-              />
+              <Input type="number" inputMode="decimal" className="h-8 w-16 text-xs text-center"
+                value={item.fator} onChange={e => updateRegraItem(idx, 'fator', parseFloat(e.target.value) || 0)} />
               <button onClick={() => removeRegraItem(idx)} className="p-1 text-muted-foreground hover:text-destructive shrink-0">
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -544,22 +532,20 @@ export function Configuracoes() {
   const renderCatalogoForm = () => (
     <div className="space-y-3">
       <div>
-        <Label className="text-xs">Nome do Serviço</Label>
-        <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} />
+        <Label className="text-[11px] font-medium text-muted-foreground">Nome do Serviço</Label>
+        <Input value={form.nomeServico || ''} onChange={e => setField('nomeServico', e.target.value)} className="mt-1" />
       </div>
       <div>
-        <Label className="text-xs">Regra de Cálculo</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Regra de Cálculo</Label>
         <Select value={form.regraId || ''} onValueChange={v => setField('regraId', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-          <SelectContent>
-            {regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}
-          </SelectContent>
+          <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>{regras.map(r => <SelectItem key={r.id} value={r.id}>{r.nomeRegra}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div>
-        <Label className="text-xs font-semibold">Motor</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Motor</Label>
         <Select value={form.motorType || 'motor1'} onValueChange={v => setField('motorType', v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
             <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
@@ -567,36 +553,34 @@ export function Configuracoes() {
         </Select>
       </div>
       <div>
-        <Label className="text-xs">Material Padrão</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Material Padrão</Label>
         <Select value={form.materialPadrao || ''} onValueChange={v => setField('materialPadrao', v)}>
-          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-          <SelectContent>
-            {materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-          </SelectContent>
+          <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <SelectContent>{materiaisUnicos.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs">Espessura (mm)</Label>
-          <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} />
+          <Label className="text-[11px] font-medium text-muted-foreground">Espessura (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.espessuraPadrao || ''} onChange={e => setField('espessuraPadrao', e.target.value)} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs">Corte (mm)</Label>
-          <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} />
+          <Label className="text-[11px] font-medium text-muted-foreground">Corte (mm)</Label>
+          <Input type="number" inputMode="decimal" value={form.cortePadrao || ''} onChange={e => setField('cortePadrao', e.target.value)} className="mt-1" />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <Label className="text-xs">Fator Fácil</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} />
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Fácil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeFacil || ''} onChange={e => setField('dificuldadeFacil', e.target.value)} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs">Fator Médio</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} />
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Médio</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeMedia || ''} onChange={e => setField('dificuldadeMedia', e.target.value)} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs">Fator Difícil</Label>
-          <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} />
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Difícil</Label>
+          <Input type="number" inputMode="decimal" value={form.dificuldadeDificil || ''} onChange={e => setField('dificuldadeDificil', e.target.value)} className="mt-1" />
         </div>
       </div>
     </div>
@@ -607,39 +591,35 @@ export function Configuracoes() {
   const renderPoliticaForm = () => (
     <div className="space-y-3">
       <div>
-        <Label className="text-xs">Nome da Política</Label>
-        <Input value={form.nomePolitica || ''} onChange={e => setField('nomePolitica', e.target.value)} placeholder="Ex: Padrão Residencial" />
+        <Label className="text-[11px] font-medium text-muted-foreground">Nome da Política</Label>
+        <Input value={form.nomePolitica || ''} onChange={e => setField('nomePolitica', e.target.value)} placeholder="Ex: Padrão Residencial" className="mt-1" />
       </div>
       <div>
-        <Label className="text-xs">Validade (dias)</Label>
-        <Input type="number" inputMode="numeric" value={form.validadeDias || ''} onChange={e => setField('validadeDias', e.target.value)} placeholder="15" />
+        <Label className="text-[11px] font-medium text-muted-foreground">Validade (dias)</Label>
+        <Input type="number" inputMode="numeric" value={form.validadeDias || ''} onChange={e => setField('validadeDias', e.target.value)} placeholder="15" className="mt-1" />
       </div>
       <div>
-        <Label className="text-xs font-semibold text-accent">Tempo de Garantia</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Tempo de Garantia</Label>
         <Select value={form.tempoGarantia || '1 ano'} onValueChange={v => setField('tempoGarantia', v)}>
-          <SelectTrigger className="h-9 border-accent/30">
-            <SelectValue placeholder="Selecione..." />
-          </SelectTrigger>
-          <SelectContent>
-            {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-          </SelectContent>
+          <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+          <SelectContent>{TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div>
-        <Label className="text-xs">Formas de Pagamento</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Formas de Pagamento</Label>
         <Textarea value={form.formasPagamento || ''} onChange={e => setField('formasPagamento', e.target.value)}
-          placeholder="Condições de pagamento padrão..." rows={2} className="text-sm" />
+          placeholder="Condições de pagamento padrão..." rows={2} className="text-sm mt-1" />
       </div>
       <div>
-        <Label className="text-xs">Termos de Garantia (detalhes)</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Termos de Garantia</Label>
         <Textarea value={form.garantia || ''} onChange={e => setField('garantia', e.target.value)}
-          placeholder="Detalhes dos termos de garantia..." rows={2} className="text-sm" />
+          placeholder="Detalhes dos termos de garantia..." rows={2} className="text-sm mt-1" />
       </div>
       <div>
-        <Label className="text-xs font-semibold text-accent">Termo de Recebimento (OS)</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Termo de Recebimento (OS)</Label>
         <Textarea value={form.termoRecebimentoOs || ''} onChange={e => setField('termoRecebimentoOs', e.target.value)}
-          placeholder="Texto do canhoto de entrega da Ordem de Serviço..." rows={3} className="text-sm" />
-        <p className="text-[10px] text-muted-foreground mt-1">Este texto será exibido no canhoto de entrega da OS.</p>
+          placeholder="Texto do canhoto de entrega da OS..." rows={3} className="text-sm mt-1" />
+        <p className="text-[10px] text-muted-foreground mt-1">Exibido no canhoto de entrega da OS.</p>
       </div>
     </div>
   );
@@ -672,32 +652,21 @@ export function Configuracoes() {
       <div className="space-y-3">
         {simpleFields[activeSection]?.map(f => (
           <div key={f.key}>
-            <Label className="text-xs">{f.label}</Label>
-            <Input
-              type={f.type || 'text'}
-              inputMode={f.type === 'number' ? 'decimal' : 'text'}
-              value={form[f.key] || ''}
-              onChange={e => setField(f.key, e.target.value)}
-            />
+            <Label className="text-[11px] font-medium text-muted-foreground">{f.label}</Label>
+            <Input type={f.type || 'text'} inputMode={f.type === 'number' ? 'decimal' : 'text'}
+              value={form[f.key] || ''} onChange={e => setField(f.key, e.target.value)} className="mt-1" />
           </div>
         ))}
       </div>
     );
   };
 
-  // ─── Dialog title with context ───
   const sectionLabels: Record<EntitySection, string> = {
-    motor1: 'Motor 1',
-    motor2: 'Motor 2',
-    insumos: 'Insumo',
-    regras: 'Regra de Cálculo',
-    catalogo: 'Serviço',
-    politicas: 'Política Comercial',
+    motor1: 'Motor 1', motor2: 'Motor 2', insumos: 'Insumo',
+    regras: 'Regra de Cálculo', catalogo: 'Serviço', politicas: 'Política Comercial',
   };
 
   const dialogTitle = `${editItem ? 'Editar' : 'Adicionar'} ${sectionLabels[activeSection]}`;
-
-  // ─── Tab content renderers ───
 
   // ─── Filtered lists ───
   const filteredMotor2 = useMemo(() => {
@@ -729,12 +698,7 @@ export function Configuracoes() {
   }, [servicos, searchCatalogo, regras]);
 
   const renderMateriaisTab = () => (
-    <div className="space-y-8">
-      <SectionHeader
-        title="Custos e Materiais"
-        description="Materiais, chapas e insumos usados como base de cálculo dos orçamentos."
-      />
-
+    <div className="space-y-6 max-w-3xl">
       {/* Motor 1 */}
       <SubSection
         title="Motor 1 — Chapas e Bobinas"
@@ -744,84 +708,61 @@ export function Configuracoes() {
         emptyText="Nenhum material cadastrado no Motor 1."
       >
         {motor1.map(e => (
-          <Card key={e.id}>
-            <CardContent className="flex items-center justify-between px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">{e.material}</p>
-                <p className="text-xs text-muted-foreground">{e.densidade} g/cm³ · {fmt(e.precoQuilo)}/kg</p>
-              </div>
-              {renderItemActions(e, 'motor1')}
-            </CardContent>
-          </Card>
+          <ItemRow key={e.id} item={e} section="motor1" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+            <p className="text-sm font-medium">{e.material}</p>
+            <p className="text-xs text-muted-foreground">{e.densidade} g/cm³ · {fmt(e.precoQuilo)}/kg</p>
+          </ItemRow>
         ))}
       </SubSection>
-
-      <div className="border-t border-border" />
 
       {/* Motor 2 */}
       <SubSection
         title="Motor 2 — Material Dobrado"
-        description="Materiais comprados já dobrados do fornecedor, com preço por metro linear."
+        description="Materiais comprados já dobrados, com preço por metro linear."
         onAdd={() => openAdd('motor2')}
         isEmpty={filteredMotor2.length === 0 && motor2.length === 0}
         emptyText="Nenhum material cadastrado no Motor 2."
-        searchValue={searchMotor2}
-        onSearchChange={setSearchMotor2}
-        totalCount={motor2.length}
-        filteredCount={filteredMotor2.length}
+        searchValue={searchMotor2} onSearchChange={setSearchMotor2}
+        totalCount={motor2.length} filteredCount={filteredMotor2.length}
         searchPlaceholder="Buscar por material, espessura..."
       >
         {filteredMotor2.length === 0 && motor2.length > 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchMotor2}"</p>
+          <p className="text-sm text-muted-foreground text-center py-4 px-5">Nenhum resultado para "{searchMotor2}"</p>
         ) : (
           filteredMotor2.map(e => (
-            <Card key={e.id}>
-              <CardContent className="flex items-center justify-between px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{e.material}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[10px] font-medium bg-muted text-muted-foreground rounded px-1.5 py-0.5">{e.espessura}mm</span>
-                    <span className="text-[10px] font-medium bg-muted text-muted-foreground rounded px-1.5 py-0.5">{e.corte}mm</span>
-                    <span className="text-[10px] font-semibold text-accent">{fmt(e.precoMetroLinear)}/m</span>
-                  </div>
-                </div>
-                {renderItemActions(e, 'motor2')}
-              </CardContent>
-            </Card>
+            <ItemRow key={e.id} item={e} section="motor2" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+              <p className="text-sm font-medium">{e.material}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{e.espessura}mm</Badge>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{e.corte}mm</Badge>
+                <span className="text-[11px] font-semibold text-primary">{fmt(e.precoMetroLinear)}/m</span>
+              </div>
+            </ItemRow>
           ))
         )}
       </SubSection>
 
-      <div className="border-t border-border" />
-
       {/* Insumos */}
       <SubSection
         title="Insumos"
-        description="Materiais consumíveis usados nas regras de cálculo (parafusos, silicone, etc)."
+        description="Materiais consumíveis usados nas regras de cálculo."
         onAdd={() => openAdd('insumos')}
         isEmpty={filteredInsumos.length === 0 && insumos.length === 0}
         emptyText="Nenhum insumo cadastrado."
-        searchValue={searchInsumos}
-        onSearchChange={setSearchInsumos}
-        totalCount={insumos.length}
-        filteredCount={filteredInsumos.length}
+        searchValue={searchInsumos} onSearchChange={setSearchInsumos}
+        totalCount={insumos.length} filteredCount={filteredInsumos.length}
         searchPlaceholder="Buscar por nome do insumo..."
       >
         {filteredInsumos.length === 0 && insumos.length > 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchInsumos}"</p>
+          <p className="text-sm text-muted-foreground text-center py-4 px-5">Nenhum resultado para "{searchInsumos}"</p>
         ) : (
           filteredInsumos.map(e => (
-            <Card key={e.id}>
-              <CardContent className="flex items-center justify-between px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{e.nomeEmbalagemCompra}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {e.nomeUnidadeConsumo} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} → <span className="font-semibold text-accent">{fmt(getCustoUnitario(e))}/un</span>
-                  </p>
-                </div>
-                {renderItemActions(e, 'insumos')}
-              </CardContent>
-            </Card>
+            <ItemRow key={e.id} item={e} section="insumos" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+              <p className="text-sm font-medium">{e.nomeEmbalagemCompra}</p>
+              <p className="text-xs text-muted-foreground">
+                {e.nomeUnidadeConsumo} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} → <span className="font-semibold text-primary">{fmt(getCustoUnitario(e))}/un</span>
+              </p>
+            </ItemRow>
           ))
         )}
       </SubSection>
@@ -829,21 +770,19 @@ export function Configuracoes() {
   );
 
   const renderRegrasTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl">
       <SubSection
         title="Regras de Cálculo"
-        description="Definem como os insumos entram no cálculo do orçamento. Cada regra pode ter vários insumos com métodos diferentes."
+        description="Definem como os insumos entram no cálculo do orçamento."
         onAdd={() => openAdd('regras')}
         isEmpty={filteredRegras.length === 0 && regras.length === 0}
-        emptyText="Nenhuma regra cadastrada. Crie uma para vincular insumos aos serviços."
-        searchValue={searchRegras}
-        onSearchChange={setSearchRegras}
-        totalCount={regras.length}
-        filteredCount={filteredRegras.length}
+        emptyText="Nenhuma regra cadastrada."
+        searchValue={searchRegras} onSearchChange={setSearchRegras}
+        totalCount={regras.length} filteredCount={filteredRegras.length}
         searchPlaceholder="Buscar por nome da regra..."
       >
         {filteredRegras.length === 0 && regras.length > 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchRegras}"</p>
+          <p className="text-sm text-muted-foreground text-center py-4 px-5">Nenhum resultado para "{searchRegras}"</p>
         ) : (
           filteredRegras.map(e => {
             const insNames = e.itensRegra
@@ -853,17 +792,12 @@ export function Configuracoes() {
               ? insNames.join(', ')
               : `${insNames.slice(0, 3).join(', ')} +${insNames.length - 3}`;
             return (
-              <Card key={e.id}>
-                <CardContent className="flex items-center justify-between px-4 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{e.nomeRegra}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {insNames.length > 0 ? displayNames : 'Nenhum insumo vinculado'}
-                    </p>
-                  </div>
-                  {renderItemActions(e, 'regras')}
-                </CardContent>
-              </Card>
+              <ItemRow key={e.id} item={e} section="regras" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+                <p className="text-sm font-medium">{e.nomeRegra}</p>
+                <p className="text-xs text-muted-foreground">
+                  {insNames.length > 0 ? displayNames : 'Nenhum insumo vinculado'}
+                </p>
+              </ItemRow>
             );
           })
         )}
@@ -872,42 +806,33 @@ export function Configuracoes() {
   );
 
   const renderCatalogoTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl">
       <SubSection
         title="Catálogo de Serviços"
-        description="Serviços disponíveis para orçamento, com motor, material padrão e fatores de dificuldade."
+        description="Serviços disponíveis para orçamento, com motor, material e fatores de dificuldade."
         onAdd={() => openAdd('catalogo')}
         isEmpty={filteredCatalogo.length === 0 && servicos.length === 0}
-        emptyText="Nenhum serviço cadastrado. Adicione para usar nos orçamentos."
-        searchValue={searchCatalogo}
-        onSearchChange={setSearchCatalogo}
-        totalCount={servicos.length}
-        filteredCount={filteredCatalogo.length}
+        emptyText="Nenhum serviço cadastrado."
+        searchValue={searchCatalogo} onSearchChange={setSearchCatalogo}
+        totalCount={servicos.length} filteredCount={filteredCatalogo.length}
         searchPlaceholder="Buscar por nome, material ou regra..."
       >
         {filteredCatalogo.length === 0 && servicos.length > 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">Nenhum resultado para "{searchCatalogo}"</p>
+          <p className="text-sm text-muted-foreground text-center py-4 px-5">Nenhum resultado para "{searchCatalogo}"</p>
         ) : (
           filteredCatalogo.map(e => (
-            <Card key={e.id}>
-              <CardContent className="flex items-center justify-between px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate">{e.nomeServico}</p>
-                    <span className={`text-[10px] font-bold rounded px-1.5 py-0.5 shrink-0 ${e.motorType === 'motor1' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'}`}>
-                      {e.motorType === 'motor1' ? 'M1' : 'M2'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                    {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/70 truncate">
-                    Regra: {regraName(e.regraId)}
-                  </p>
-                </div>
-                {renderItemActions(e, 'catalogo')}
-              </CardContent>
-            </Card>
+            <ItemRow key={e.id} item={e} section="catalogo" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{e.nomeServico}</p>
+                <Badge variant={e.motorType === 'motor1' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0">
+                  {e.motorType === 'motor1' ? 'M1' : 'M2'}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
+              </p>
+              <p className="text-[11px] text-muted-foreground/70">Regra: {regraName(e.regraId)}</p>
+            </ItemRow>
           ))
         )}
       </SubSection>
@@ -915,24 +840,20 @@ export function Configuracoes() {
   );
 
   const renderPoliticasTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl">
       <SubSection
         title="Políticas Comerciais"
-        description="Condições comerciais usadas no orçamento e na Ordem de Serviço: validade, pagamento, garantia e termos."
+        description="Condições comerciais usadas no orçamento e na Ordem de Serviço."
         onAdd={() => openAdd('politicas')}
         isEmpty={politicas.length === 0}
-        emptyText="Nenhuma política cadastrada. Crie uma para usar nos orçamentos."
+        emptyText="Nenhuma política cadastrada."
       >
         {politicas.map(e => (
-          <Card key={e.id}>
-            <CardContent className="flex items-center justify-between px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium truncate">{e.nomePolitica}</p>
-                <p className="text-xs text-muted-foreground truncate">{e.validadeDias} dias · Garantia: {e.tempoGarantia || '—'} · {e.formasPagamento.substring(0, 30)}...</p>
-              </div>
-              {renderItemActions(e, 'politicas')}
-            </CardContent>
-          </Card>
+          <ItemRow key={e.id} item={e} section="politicas" onEdit={openEdit} onDelete={handleDelete} deletingId={deletingId}>
+            <p className="text-sm font-medium">{e.nomePolitica}</p>
+            <p className="text-xs text-muted-foreground">{e.validadeDias} dias · Garantia: {e.tempoGarantia || '—'}</p>
+            {e.formasPagamento && <p className="text-[11px] text-muted-foreground/70 truncate max-w-[300px]">{e.formasPagamento}</p>}
+          </ItemRow>
         ))}
       </SubSection>
     </div>
@@ -940,7 +861,10 @@ export function Configuracoes() {
 
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
-      <h1 className="mb-5 text-xl font-bold text-foreground">Configurações</h1>
+      <div className="mb-5">
+        <h1 className="text-xl font-bold text-foreground">Configurações</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
+      </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full grid grid-cols-5 mb-6 h-auto">
@@ -990,7 +914,7 @@ export function Configuracoes() {
           {renderFormContent()}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isSaving} className="bg-primary text-primary-foreground">
+            <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : 'Salvar'}
             </Button>
           </DialogFooter>

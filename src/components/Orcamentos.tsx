@@ -33,11 +33,11 @@ interface OrcamentosProps {
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
-  pendente: { label: 'Pendente', color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
-  aprovado: { label: 'Aprovado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
-  rejeitado: { label: 'Rejeitado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
-  executado: { label: 'Executado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
-  cancelado: { label: 'Cancelado', color: 'bg-gray-500/20 text-gray-600 border-gray-500/30' },
+  pendente: { label: 'Pendente', color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30' },
+  aprovado: { label: 'Aprovado', color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' },
+  rejeitado: { label: 'Rejeitado', color: 'bg-red-500/15 text-red-600 border-red-500/30' },
+  executado: { label: 'Executado', color: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30' },
+  cancelado: { label: 'Cancelado', color: 'bg-gray-500/15 text-gray-600 border-gray-500/30' },
 };
 
 const allStatuses: StatusOrcamento[] = ['pendente', 'aprovado', 'rejeitado', 'executado', 'cancelado'];
@@ -60,6 +60,11 @@ const statusPriority: Record<string, number> = {
 
 const defaultActiveFilters = new Set<StatusOrcamento>(['pendente', 'aprovado']);
 
+const fmtDate = (d: string | null | undefined) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+};
+
 export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }: OrcamentosProps) {
   const { orcamentos, isLoading, updateOrcamento } = useOrcamentos();
   const { canCreateEditBudget } = useAuth();
@@ -74,21 +79,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   const toggleFilter = (status: StatusOrcamento) => {
     setActiveFilters(prev => {
       const next = new Set(prev);
-      if (next.has(status)) {
-        next.delete(status);
-      } else {
-        next.add(status);
-      }
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
       return next;
     });
   };
 
   const toggleAll = () => {
-    if (allSelected) {
-      setActiveFilters(new Set());
-    } else {
-      setActiveFilters(new Set(filterChips.map(f => f.key)));
-    }
+    if (allSelected) setActiveFilters(new Set());
+    else setActiveFilters(new Set(filterChips.map(f => f.key)));
   };
 
   const formatCurrency = (v: number) =>
@@ -155,9 +154,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     }
     const known = new Set(statusOrder);
     const rest = filtered.filter(o => !known.has(o.status));
-    if (rest.length > 0) {
-      groups.push({ status: 'outros', label: 'Outros', items: rest });
-    }
+    if (rest.length > 0) groups.push({ status: 'outros', label: 'Outros', items: rest });
     return groups;
   }, [filtered]);
 
@@ -167,7 +164,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     return null;
   };
 
-  // Shared status badge renderer
+  // Get the most relevant date for a given orcamento based on its lifecycle
+  const getRelevantDate = (o: Orcamento): { label: string; value: string } | null => {
+    if (o.dataPagamento) return { label: 'Pago', value: fmtDate(o.dataPagamento) };
+    if (o.dataFaturamento) return { label: 'Faturado', value: fmtDate(o.dataFaturamento) };
+    if (o.dataExecucao) return { label: 'Executado', value: fmtDate(o.dataExecucao) };
+    if (o.dataPrevista) return { label: 'Previsto', value: fmtDate(o.dataPrevista) };
+    return null;
+  };
+
   const renderStatusBadge = (o: Orcamento) => {
     const st = statusConfig[o.status ?? 'pendente'];
     const isUpdating = updatingId === o.id;
@@ -208,7 +213,6 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     );
   };
 
-  // Shared row actions menu
   const renderRowActions = (o: Orcamento) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
@@ -254,7 +258,9 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
 
       {orcamentos.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText className="mb-4 h-12 w-12 text-muted-foreground/30" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
+            <FileText className="h-8 w-8 text-muted-foreground/50" />
+          </div>
           <h2 className="mb-2 text-lg font-semibold text-foreground">Nenhum orçamento ainda</h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
             {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
@@ -267,7 +273,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Toolbar: Search + filters on same row */}
+          {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -312,7 +318,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             })}
           </div>
 
-          {/* Desktop: Table view */}
+          {/* Desktop: Table view with all operational dates */}
           {!isMobile ? (
             <div className="space-y-4">
               {groupedByStatus.map(group => (
@@ -329,17 +335,21 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                     </span>
                     <div className="flex-1 h-px bg-border/60" />
                   </div>
-                  <Card>
-                    <CardContent className="p-0">
+                  <Card className="overflow-hidden">
+                    <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b text-left text-[11px] text-muted-foreground">
+                          <tr className="border-b bg-muted/30 text-left text-[11px] text-muted-foreground">
                             <th className="py-2.5 px-3 font-medium w-16">#</th>
                             <th className="py-2.5 px-3 font-medium">Cliente</th>
                             <th className="py-2.5 px-3 font-medium w-24">Status</th>
-                            <th className="py-2.5 px-3 font-medium text-right w-32">Valor</th>
-                            <th className="py-2.5 px-3 font-medium w-24">Data</th>
-                            <th className="py-2.5 px-3 font-medium w-12">Motor</th>
+                            <th className="py-2.5 px-3 font-medium text-right w-28">Valor</th>
+                            <th className="py-2.5 px-3 font-medium w-20 text-center">Criação</th>
+                            <th className="py-2.5 px-3 font-medium w-20 text-center">Previsto</th>
+                            <th className="py-2.5 px-3 font-medium w-20 text-center">Execução</th>
+                            <th className="py-2.5 px-3 font-medium w-20 text-center">Faturado</th>
+                            <th className="py-2.5 px-3 font-medium w-20 text-center">Pago</th>
+                            <th className="py-2.5 px-3 font-medium w-12 text-center">Motor</th>
                             <th className="py-2.5 px-3 font-medium w-10 text-right">Ações</th>
                           </tr>
                         </thead>
@@ -350,24 +360,32 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                             return (
                               <tr
                                 key={o.id}
-                                className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                                className="border-b last:border-0 hover:bg-muted/40 cursor-pointer transition-colors"
                                 onClick={() => onViewOrcamento(o)}
                               >
-                                <td className="py-2.5 px-3 font-bold text-accent">#{o.numeroOrcamento ?? '—'}</td>
-                                <td className="py-2.5 px-3 font-medium truncate max-w-[200px]">{o.nomeCliente}</td>
+                                <td className="py-2.5 px-3 font-bold text-primary">#{o.numeroOrcamento ?? '—'}</td>
+                                <td className="py-2.5 px-3 font-medium truncate max-w-[180px]">{o.nomeCliente}</td>
                                 <td className="py-2.5 px-3">{renderStatusBadge(o)}</td>
-                                <td className="py-2.5 px-3 text-right font-semibold text-accent">{formatCurrency(displayValue)}</td>
-                                <td className="py-2.5 px-3 text-muted-foreground text-xs whitespace-nowrap">
-                                  {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
+                                <td className="py-2.5 px-3 text-right font-semibold tabular-nums">{formatCurrency(displayValue)}</td>
+                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataCriacao)}</td>
+                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataPrevista)}</td>
+                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataExecucao)}</td>
+                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataFaturamento)}</td>
+                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataPagamento)}</td>
+                                <td className="py-2.5 px-3 text-center">
+                                  {motor && (
+                                    <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-muted text-muted-foreground">
+                                      {motor}
+                                    </span>
+                                  )}
                                 </td>
-                                <td className="py-2.5 px-3 text-xs text-muted-foreground">{motor ?? '—'}</td>
                                 <td className="py-2.5 px-3 text-right">{renderRowActions(o)}</td>
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
-                    </CardContent>
+                    </div>
                   </Card>
                 </div>
               ))}
@@ -392,24 +410,30 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                   <div className="space-y-2">
                     {group.items.map(o => {
                       const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
+                      const relevantDate = getRelevantDate(o);
                       return (
-                        <Card key={o.id} className="overflow-hidden cursor-pointer card-hover hover:border-primary/30" onClick={() => onViewOrcamento(o)}>
+                        <Card key={o.id} className="overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/20 transition-all" onClick={() => onViewOrcamento(o)}>
                           <CardContent className="p-3">
                             {/* Row 1: number + status + menu + value */}
                             <div className="flex items-center gap-2 mb-1.5">
-                              <span className="text-sm font-bold text-accent shrink-0">#{o.numeroOrcamento ?? '—'}</span>
+                              <span className="text-sm font-bold text-primary shrink-0">#{o.numeroOrcamento ?? '—'}</span>
                               {renderStatusBadge(o)}
                               <span className="flex-1" />
                               {renderRowActions(o)}
-                              <p className="text-base font-bold text-accent shrink-0">{formatCurrency(displayValue)}</p>
+                              <p className="text-base font-bold text-foreground shrink-0">{formatCurrency(displayValue)}</p>
                             </div>
-                            {/* Row 2: client + meta */}
+                            {/* Row 2: client */}
                             <p className="text-sm font-medium text-foreground truncate mb-1">{o.nomeCliente}</p>
-                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                              <span>{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
-                              <span className="ml-auto">
-                                {new Date(o.dataCriacao).toLocaleDateString('pt-BR')}
-                              </span>
+                            {/* Row 3: dates */}
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+                              <span>{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                              {relevantDate && (
+                                <>
+                                  <span className="text-border">·</span>
+                                  <span className="font-medium">{relevantDate.label}: {relevantDate.value}</span>
+                                </>
+                              )}
+                              <span className="ml-auto text-[10px]">{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
                             </div>
                           </CardContent>
                         </Card>
