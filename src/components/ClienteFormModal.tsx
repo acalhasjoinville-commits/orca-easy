@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Cliente, TipoPessoa } from '@/lib/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, User, Building2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDraft } from '@/hooks/useDraft';
+import { Separator } from '@/components/ui/separator';
 
 interface Props {
   open: boolean;
@@ -85,24 +86,20 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Show restore toast once
   useEffect(() => {
     if (open && wasRestored) {
       toast.info('Rascunho restaurado.', { duration: 2000 });
     }
   }, [open, wasRestored]);
 
-  // When modal opens for editing a DIFFERENT client, reset draft to that client's data
   useEffect(() => {
     if (!open) return;
     if (editing) {
-      // If there's no saved draft for this edit key, load from the entity
       const stored = sessionStorage.getItem(draftKey);
       if (!stored) {
         setDraft(formFromCliente(editing));
       }
     } else {
-      // New client: if no draft exists, reset to empty
       const stored = sessionStorage.getItem('draft:cliente-new');
       if (!stored) {
         setDraft(EMPTY_FORM);
@@ -189,22 +186,46 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     onClose();
   };
 
+  // Progress indicator
+  const filledFields = [nome, documento, whatsapp].filter(f => f.trim().length > 0).length;
+  const totalRequired = 3;
+
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+          <DialogTitle>{editing ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}</DialogTitle>
+          <DialogDescription className="text-xs">
+            {editing
+              ? 'Atualize os dados do cliente abaixo.'
+              : 'Preencha os dados básicos para cadastrar o cliente. Campos com * são obrigatórios.'
+            }
+          </DialogDescription>
         </DialogHeader>
+
+        {/* Progress */}
+        {!editing && (
+          <div className="flex items-center gap-2 mb-1">
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(filledFields / totalRequired) * 100}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground">{filledFields}/{totalRequired} obrigatórios</span>
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* Tipo */}
           <div>
-            <Label className="text-xs">Tipo</Label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
+            <Label className="text-xs font-medium">Tipo de cliente</Label>
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
               {(['PF', 'PJ'] as TipoPessoa[]).map(t => (
                 <button key={t} onClick={() => { updateField('tipo', t); updateField('documento', ''); }}
-                  className={cn('rounded-md border px-3 py-2 text-sm font-medium transition-all',
-                    tipo === t ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground')}>
+                  className={cn('flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-all',
+                    tipo === t ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/30')}>
+                  {t === 'PF' ? <User className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
                   {t === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}
                 </button>
               ))}
@@ -213,15 +234,18 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Documento */}
           <div>
-            <Label className="text-xs">{tipo === 'PF' ? 'CPF' : 'CNPJ'}</Label>
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF *' : 'CNPJ *'}</Label>
+            <p className="text-[10px] text-muted-foreground mb-1">{tipo === 'PF' ? 'Digite os 11 dígitos do CPF' : 'Digite o CNPJ — busca automática disponível'}</p>
             <div className="flex gap-2">
               <Input value={documento}
                 onChange={e => updateField('documento', tipo === 'PF' ? formatCPF(e.target.value) : formatCNPJ(e.target.value))}
                 placeholder={tipo === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
                 className="flex-1" />
               {tipo === 'PJ' && (
-                <Button size="sm" variant="outline" onClick={buscarCNPJ} disabled={loadingCNPJ || rawDoc.length !== 14}>
+                <Button size="sm" variant="outline" onClick={buscarCNPJ} disabled={loadingCNPJ || rawDoc.length !== 14}
+                  className="gap-1">
                   {loadingCNPJ ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="hidden sm:inline text-xs">Buscar</span>
                 </Button>
               )}
             </div>
@@ -229,51 +253,63 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Nome */}
           <div>
-            <Label className="text-xs">{tipo === 'PF' ? 'Nome Completo' : 'Razão Social'}</Label>
-            <Input value={nome} onChange={e => updateField('nome', e.target.value)} placeholder={tipo === 'PF' ? 'João da Silva' : 'Empresa Ltda.'} />
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'Nome completo *' : 'Razão Social *'}</Label>
+            <Input value={nome} onChange={e => updateField('nome', e.target.value)}
+              placeholder={tipo === 'PF' ? 'Ex: João da Silva' : 'Ex: Empresa Ltda.'} className="mt-1" />
           </div>
 
           {/* WhatsApp */}
           <div>
-            <Label className="text-xs">WhatsApp *</Label>
+            <Label className="text-xs font-medium">WhatsApp *</Label>
+            <p className="text-[10px] text-muted-foreground mb-1">Número com DDD para contato rápido</p>
             <Input value={whatsapp} onChange={e => updateField('whatsapp', formatPhone(e.target.value))} placeholder="(11) 99999-9999" />
           </div>
 
-          {/* CEP */}
+          <Separator />
+
+          {/* Endereço section */}
           <div>
-            <Label className="text-xs">CEP</Label>
-            <div className="flex gap-2">
-              <Input value={cep} onChange={e => updateField('cep', formatCEP(e.target.value))} placeholder="00000-000" className="flex-1" />
-              <Button size="sm" variant="outline" onClick={buscarCEP} disabled={loadingCEP || rawCep.length !== 8}>
-                {loadingCEP ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
+            <p className="text-xs font-medium text-foreground flex items-center gap-1.5 mb-3">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Endereço <span className="text-muted-foreground font-normal">(opcional)</span>
+            </p>
+
+            {/* CEP */}
+            <div className="mb-3">
+              <Label className="text-xs">CEP</Label>
+              <p className="text-[10px] text-muted-foreground mb-1">Digite o CEP para preencher o endereço automaticamente</p>
+              <div className="flex gap-2">
+                <Input value={cep} onChange={e => updateField('cep', formatCEP(e.target.value))} placeholder="00000-000" className="flex-1" />
+                <Button size="sm" variant="outline" onClick={buscarCEP} disabled={loadingCEP || rawCep.length !== 8} className="gap-1">
+                  {loadingCEP ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="hidden sm:inline text-xs">Buscar</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <div className="col-span-2">
+                <Label className="text-xs">Endereço</Label>
+                <Input value={endereco} onChange={e => updateField('endereco', e.target.value)} placeholder="Rua, Avenida..." />
+              </div>
+              <div>
+                <Label className="text-xs">Nº</Label>
+                <Input value={numero} onChange={e => updateField('numero', e.target.value)} placeholder="123" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Bairro</Label>
+                <Input value={bairro} onChange={e => updateField('bairro', e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Cidade</Label>
+                <Input value={cidade} onChange={e => updateField('cidade', e.target.value)} />
+              </div>
             </div>
           </div>
 
-          {/* Endereço */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-2">
-              <Label className="text-xs">Endereço</Label>
-              <Input value={endereco} onChange={e => updateField('endereco', e.target.value)} placeholder="Rua..." />
-            </div>
-            <div>
-              <Label className="text-xs">Nº</Label>
-              <Input value={numero} onChange={e => updateField('numero', e.target.value)} placeholder="123" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Bairro</Label>
-              <Input value={bairro} onChange={e => updateField('bairro', e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Cidade</Label>
-              <Input value={cidade} onChange={e => updateField('cidade', e.target.value)} />
-            </div>
-          </div>
-
-          <Button onClick={handleSave} disabled={!canSave || isSaving} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
+          <Button onClick={handleSave} disabled={!canSave || isSaving} className="w-full h-11">
             {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> : editing ? 'Salvar Alterações' : 'Cadastrar Cliente'}
           </Button>
         </div>

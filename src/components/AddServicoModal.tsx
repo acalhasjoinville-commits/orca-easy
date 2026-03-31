@@ -5,12 +5,13 @@ import { Dificuldade, ItemServico, InsumoCalculado, MotorType } from '@/lib/type
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
-import { Loader2, Factory, Truck, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, Factory, Truck, Check, ChevronsUpDown, Ruler, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 /** Strip diacritics for accent-tolerant search */
 function normalizeStr(s: string): string {
@@ -131,6 +132,12 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
+  const dificuldadeHint: Record<Dificuldade, string> = {
+    facil: 'Acesso livre, sem obstáculos',
+    medio: 'Acesso parcial ou altura moderada',
+    dificil: 'Acesso restrito, altura elevada',
+  };
+
   const canSave = !!finalCalc && !!servicoId && !motorValidationError;
 
   const handleSave = () => {
@@ -164,19 +171,24 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     setDificuldade('facil');
     setEditQtds({});
     setPopoverOpen(false);
-    
   };
 
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) { resetForm(); onClose(); } }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-primary">{editingItem ? 'Editar Serviço' : 'Adicionar Serviço'}</DialogTitle>
+          <DialogTitle>{editingItem ? 'Editar Serviço' : 'Adicionar Serviço ao Orçamento'}</DialogTitle>
+          <DialogDescription className="text-xs">
+            {editingItem
+              ? 'Altere os dados do serviço e salve para atualizar o orçamento.'
+              : 'Escolha o serviço, defina a metragem e o nível de dificuldade. O valor será calculado automaticamente.'
+            }
+          </DialogDescription>
           <Badge variant="outline" className="w-fit text-[10px] mt-1">
             {motorType === 'motor1' ? (
-              <><Factory className="mr-1 h-3 w-3" /> Motor 1 — Fabricar</>
+              <><Factory className="mr-1 h-3 w-3" /> Motor 1 — Fabricação</>
             ) : (
-              <><Truck className="mr-1 h-3 w-3" /> Motor 2 — Comprar Dobrado</>
+              <><Truck className="mr-1 h-3 w-3" /> Motor 2 — Compra Dobrada</>
             )}
           </Badge>
         </DialogHeader>
@@ -187,15 +199,16 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Service selection */}
             <div>
-              <Label>Serviço</Label>
+              <Label className="text-xs font-medium">Qual serviço será realizado?</Label>
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
                     aria-expanded={popoverOpen}
-                    className="w-full justify-between h-auto min-h-10 font-normal"
+                    className="w-full justify-between h-auto min-h-10 font-normal mt-1"
                   >
                     {servico ? (
                       <div className="flex flex-col items-start text-left">
@@ -205,7 +218,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                         </span>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Buscar serviço...</span>
+                      <span className="text-muted-foreground">Buscar por nome, material ou espessura...</span>
                     )}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -221,8 +234,8 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                     <CommandList className="max-h-[220px]">
                       <CommandEmpty>
                         {servicosList.length === 0
-                          ? `Nenhum serviço cadastrado para ${motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}.`
-                          : 'Nenhum serviço encontrado.'}
+                          ? `Nenhum serviço cadastrado para ${motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}. Cadastre na aba Configurações.`
+                          : 'Nenhum serviço encontrado com este termo.'}
                       </CommandEmpty>
                       <CommandGroup>
                         {servicosList.map(s => (
@@ -252,10 +265,12 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
               </Popover>
             </div>
 
+            {/* Service details card */}
             {servico && regra && (
-              <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+              <div className="rounded-lg border bg-muted/30 p-3 text-xs space-y-1">
+                <p className="font-medium text-foreground text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Detalhes do serviço</p>
                 <p><span className="font-medium text-foreground">Material:</span> {servico.materialPadrao} · {servico.espessuraPadrao}mm · {servico.cortePadrao}mm</p>
-                <p><span className="font-medium text-foreground">Regra:</span> {regra.nomeRegra}</p>
+                <p><span className="font-medium text-foreground">Regra de cálculo:</span> {regra.nomeRegra}</p>
               </div>
             )}
 
@@ -266,15 +281,23 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
               </div>
             )}
 
+            {/* Metragem */}
             <div>
-              <Label>Metragem Total (m)</Label>
-              <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} />
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Ruler className="h-3 w-3 text-muted-foreground" /> Quantos metros serão executados?
+              </Label>
+              <Input type="number" inputMode="decimal" placeholder="Ex: 12.5" value={metragem} onChange={e => setMetragem(e.target.value)} className="mt-1" />
+              <p className="text-[10px] text-muted-foreground mt-1">Informe a metragem total em metros lineares.</p>
             </div>
 
+            {/* Dificuldade */}
             {servico && (
               <div>
-                <Label>Dificuldade</Label>
-                <div className="grid grid-cols-3 gap-2 mt-1">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Gauge className="h-3 w-3 text-muted-foreground" /> Nível de dificuldade da instalação
+                </Label>
+                <p className="text-[10px] text-muted-foreground mb-2">Quanto maior a dificuldade, maior o multiplicador sobre o custo.</p>
+                <div className="grid grid-cols-3 gap-2">
                   {(['facil', 'medio', 'dificil'] as Dificuldade[]).map(d => {
                     const fator = getFatorDificuldade(servico, d);
                     return (
@@ -284,12 +307,13 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                         className={cn(
                           'flex flex-col items-center gap-1 rounded-lg border-2 p-3 transition-all',
                           dificuldade === d
-                            ? 'border-accent bg-accent/10 text-accent'
+                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary/20'
                             : 'border-border text-muted-foreground hover:border-primary/30'
                         )}
                       >
                         <span className="text-sm font-semibold">{dificuldadeLabel[d]}</span>
-                        <span className="text-xs">×{fator}</span>
+                        <span className="text-[10px] text-muted-foreground">{dificuldadeHint[d]}</span>
+                        <span className="text-xs font-bold mt-0.5">×{fator}</span>
                       </button>
                     );
                   })}
@@ -297,13 +321,23 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
               </div>
             )}
 
+            {/* Calculation summary */}
             {finalCalc && (
-              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
-                <h4 className="text-xs font-semibold text-muted-foreground">Resumo do Item</h4>
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
+                <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  Cálculo do serviço
+                </h4>
                 <div className="flex justify-between text-sm">
-                  <span>Material ({metragem}m)</span>
-                  <span className="font-medium">{fmt(finalCalc.custoTotalMaterial)}</span>
+                  <span className="text-muted-foreground">Material ({metragem}m × {fmt(finalCalc.custoMetroLinear)}/m)</span>
+                  <span className="font-medium tabular-nums">{fmt(finalCalc.custoTotalMaterial)}</span>
                 </div>
+
+                {finalCalc.insumosFinais.length > 0 && (
+                  <>
+                    <Separator />
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Insumos (ajuste a quantidade se necessário)</p>
+                  </>
+                )}
 
                 {finalCalc.insumosFinais.map(ic => (
                   <div key={ic.insumoId} className="flex items-center justify-between gap-2">
@@ -318,7 +352,6 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                       onChange={e => {
                         const raw = e.target.value;
                         if (raw === '') {
-                          // Empty field = remove override (revert to calculated)
                           setEditQtds(prev => {
                             const next = { ...prev };
                             delete next[ic.insumoId];
@@ -331,19 +364,28 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                         setEditQtds(prev => ({ ...prev, [ic.insumoId]: parsed }));
                       }}
                     />
-                    <span className="text-xs w-16 text-right">{fmt(ic.custoTotal)}</span>
+                    <span className="text-xs w-16 text-right tabular-nums">{fmt(ic.custoTotal)}</span>
                   </div>
                 ))}
 
-                <div className="border-t pt-2 flex justify-between text-sm font-semibold">
-                  <span>Valor de Venda</span>
-                  <span className="text-accent">{fmt(finalCalc.valorVenda)}</span>
+                <Separator />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Custo total</span>
+                  <span className="font-medium tabular-nums">{fmt(finalCalc.custoTotalObra)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Multiplicador de dificuldade</span>
+                  <span className="font-medium">×{finalCalc.fatorDificuldade}</span>
+                </div>
+                <div className="flex justify-between text-sm font-semibold pt-1">
+                  <span>Valor de venda deste serviço</span>
+                  <span className="text-primary">{fmt(finalCalc.valorVenda)}</span>
                 </div>
               </div>
             )}
 
-            <Button onClick={handleSave} disabled={!canSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-11">
-              Salvar Serviço
+            <Button onClick={handleSave} disabled={!canSave} className="w-full h-11">
+              {editingItem ? 'Salvar Alterações' : 'Adicionar ao Orçamento'}
             </Button>
           </div>
         )}
