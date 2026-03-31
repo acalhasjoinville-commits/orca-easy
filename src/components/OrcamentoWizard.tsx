@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plus, Check, Trash2, ShoppingCart, Pencil, Save, X, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, Clock, CalendarDays, UserPlus, RotateCcw, Copy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Check, Trash2, ShoppingCart, Pencil, Save, Search, Users, FileText, Loader2, Factory, Truck, CreditCard, Shield, CalendarDays, UserPlus, RotateCcw, Copy, HelpCircle, Package } from 'lucide-react';
 
 import { toast } from 'sonner';
 import { AddServicoModal } from './AddServicoModal';
@@ -34,45 +34,51 @@ const statusOptions: { value: StatusOrcamento; label: string; color: string }[] 
 const FALLBACK_TERMO = 'CONCLUÍDO: Declaro que, nesta data, os serviços acima descritos foram conferidos, executados e entregues em perfeitas condições.';
 
 const steps = [
-  { key: 'cliente', label: 'Cliente' },
-  { key: 'motor', label: 'Motor' },
-  { key: 'carrinho', label: 'Carrinho' },
+  { key: 'cliente', label: 'Cliente', description: 'Quem é o cliente?' },
+  { key: 'motor', label: 'Tipo', description: 'Como calcular?' },
+  { key: 'carrinho', label: 'Orçamento', description: 'Monte o orçamento' },
 ];
 
 function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' }) {
   const currentIdx = steps.findIndex(s => s.key === current);
   return (
-    <div className="flex items-center justify-center gap-0 mb-6">
-      {steps.map((step, idx) => {
-        const isActive = idx === currentIdx;
-        const isDone = idx < currentIdx;
-        return (
-          <div key={step.key} className="flex items-center">
-            <div className="flex flex-col items-center">
-              <div className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all',
-                isActive ? 'bg-accent text-accent-foreground shadow-md' :
-                isDone ? 'bg-accent/20 text-accent' :
-                'bg-muted text-muted-foreground'
-              )}>
-                {isDone ? <Check className="h-4 w-4" /> : idx + 1}
+    <div className="mb-8">
+      {/* Step counter */}
+      <p className="text-xs font-medium text-muted-foreground mb-4 text-center">
+        Passo {currentIdx + 1} de {steps.length}
+      </p>
+      <div className="flex items-center justify-center gap-0">
+        {steps.map((step, idx) => {
+          const isActive = idx === currentIdx;
+          const isDone = idx < currentIdx;
+          return (
+            <div key={step.key} className="flex items-center">
+              <div className="flex flex-col items-center min-w-[72px]">
+                <div className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold transition-all',
+                  isActive ? 'bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20' :
+                  isDone ? 'bg-primary/20 text-primary' :
+                  'bg-muted text-muted-foreground'
+                )}>
+                  {isDone ? <Check className="h-4 w-4" /> : idx + 1}
+                </div>
+                <span className={cn(
+                  'text-[11px] mt-1.5 font-medium',
+                  isActive ? 'text-foreground' : isDone ? 'text-primary/70' : 'text-muted-foreground'
+                )}>
+                  {step.label}
+                </span>
               </div>
-              <span className={cn(
-                'text-[10px] mt-1 font-medium',
-                isActive ? 'text-accent' : isDone ? 'text-accent/70' : 'text-muted-foreground'
-              )}>
-                {step.label}
-              </span>
+              {idx < steps.length - 1 && (
+                <div className={cn(
+                  'h-[2px] w-10 sm:w-14 mx-1 mt-[-16px] transition-all rounded-full',
+                  idx < currentIdx ? 'bg-primary/40' : 'bg-border'
+                )} />
+              )}
             </div>
-            {idx < steps.length - 1 && (
-              <div className={cn(
-                'h-[2px] w-10 sm:w-16 mx-1 mt-[-12px] transition-all',
-                idx < currentIdx ? 'bg-accent/40' : 'bg-border'
-              )} />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -80,7 +86,6 @@ function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
 
-  // Draft key: distinguish new vs edit
   const draftKey = isEditing
     ? `draft:orcamento-edit:${editingOrcamento!.id}`
     : 'draft:orcamento-new';
@@ -121,7 +126,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const [draft, setDraft, clearDraft, wasRestored] = useDraft<WizardDraft>(draftKey, defaultDraft);
 
-  // Show toast once when draft was restored
   useEffect(() => {
     if (wasRestored) {
       toast.info('Rascunho restaurado.', { duration: 2500 });
@@ -129,7 +133,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Convenience setters
   const phase = draft.phase;
   const selectedClienteId = draft.selectedClienteId;
   const motorType = draft.motorType;
@@ -149,7 +152,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     setDraft(prev => ({ ...prev, ...partial }));
   }, [setDraft]);
 
-  // Track whether there's a meaningful draft (restored or user has started filling)
   const hasDraft = wasRestored || (
     !isEditing && (
       draft.selectedClienteId !== '' ||
@@ -371,17 +373,254 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     }
   };
 
-  // Phase 1: Client selection
+  // ─── Phase 1: Client selection ─────────────────────────────────
   if (phase === 'cliente') {
     return (
       <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
         <StepIndicator current="cliente" />
-        <div className="mb-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Selecionar Cliente</h1>
-              <p className="text-sm text-muted-foreground mt-1">Escolha o cliente para este orçamento</p>
+
+        {/* Welcome card */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-lg font-bold text-foreground">Escolha o cliente para começar</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selecione o cliente que receberá este orçamento. Você pode buscar pelo nome ou documento.
+                </p>
+              </div>
+              {hasDraft && !isEditing && (
+                <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-8 gap-1.5 text-xs shrink-0 ml-2">
+                      <RotateCcw className="h-3.5 w-3.5" /> Descartar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Descartar rascunho?</AlertDialogTitle>
+                      <AlertDialogDescription>Todo o progresso será perdido e você começará um orçamento do zero.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDiscardDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Descartar</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
+            {wasRestored && !isEditing && (
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-primary/70 bg-primary/10 rounded-md px-2.5 py-1.5 w-fit">
+                <RotateCcw className="h-3 w-3" /> Rascunho em andamento — continuando de onde parou
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          {/* Search + New Client */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar por nome ou documento..." value={clienteSearch}
+                onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
+            </div>
+            <Button variant="outline" className="shrink-0 h-10 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+              onClick={() => setClienteModalOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">Novo Cliente</span>
+            </Button>
+          </div>
+
+          {/* Client list */}
+          {loadingClientes ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+              {filteredClientes.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                    <Users className="mb-3 h-10 w-10 text-muted-foreground/30" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {clientes.length === 0 ? 'Nenhum cliente cadastrado ainda' : 'Nenhum cliente encontrado'}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      {clientes.length === 0
+                        ? 'Cadastre seu primeiro cliente para criar orçamentos'
+                        : 'Tente buscar com outro termo ou cadastre um novo'}
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4 border-primary/30 text-primary hover:bg-primary/10"
+                      onClick={() => setClienteModalOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-1.5" /> Cadastrar novo cliente
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredClientes.map(c => (
+                  <button key={c.id} onClick={() => updateDraft({ selectedClienteId: c.id })}
+                    className={cn(
+                      'w-full text-left rounded-lg border p-3.5 transition-all',
+                      selectedClienteId === c.id
+                        ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                        : 'border-border hover:border-primary/30 hover:bg-muted/30'
+                    )}>
+                    <div className="flex items-center gap-2.5">
+                      <div className={cn(
+                        'flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold shrink-0',
+                        selectedClienteId === c.id ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+                      )}>
+                        {c.nomeRazaoSocial.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium truncate">{c.nomeRazaoSocial}</p>
+                          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground shrink-0">{c.tipo}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{c.documento} · {c.whatsapp}</p>
+                      </div>
+                      {selectedClienteId === c.id && <Check className="h-5 w-5 text-primary shrink-0" />}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* CTA */}
+          <Button onClick={() => updateDraft({ phase: 'motor' })} disabled={!selectedClienteId}
+            className="w-full h-12 text-base font-semibold gap-2">
+            Continuar para tipo de orçamento
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <ClienteFormModal
+          open={clienteModalOpen}
+          onClose={() => setClienteModalOpen(false)}
+          onSave={handleNovoCliente}
+        />
+      </div>
+    );
+  }
+
+  // ─── Phase 2: Motor selection ──────────────────────────────────
+  if (phase === 'motor') {
+    return (
+      <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
+        <StepIndicator current="motor" />
+
+        <div className="mb-6">
+          <button onClick={() => hasItems ? updateDraft({ phase: 'carrinho' }) : updateDraft({ phase: 'cliente' })} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </button>
+
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-5">
+              <h1 className="text-lg font-bold text-foreground">Como este orçamento será calculado?</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Escolha o método de cálculo de acordo com o tipo de serviço que será prestado.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          {hasItems && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5">
+              <HelpCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs text-destructive">Motor travado: remova todos os itens do carrinho para alterar o tipo de cálculo.</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Motor 1 */}
+            <button
+              onClick={() => handleMotorSelect('motor1')}
+              disabled={hasItems}
+              className={cn(
+                'flex flex-col items-start gap-3 rounded-xl border-2 p-5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70',
+                motorType === 'motor1'
+                  ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                  : 'border-border hover:border-primary/30'
+              )}
+            >
+              <div className={cn(
+                'flex h-12 w-12 items-center justify-center rounded-xl',
+                motorType === 'motor1' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+              )}>
+                <Factory className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="text-sm font-bold block text-foreground">Motor 1 — Fabricação</span>
+                <span className="text-xs text-muted-foreground mt-1 block leading-relaxed">
+                  Para peças fabricadas na empresa. O cálculo considera peso do material, densidade e preço por quilo.
+                </span>
+              </div>
+              {motorType === 'motor1' && (
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <Check className="h-3.5 w-3.5" /> Selecionado
+                </div>
+              )}
+            </button>
+
+            {/* Motor 2 */}
+            <button
+              onClick={() => handleMotorSelect('motor2')}
+              disabled={hasItems}
+              className={cn(
+                'flex flex-col items-start gap-3 rounded-xl border-2 p-5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-70',
+                motorType === 'motor2'
+                  ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                  : 'border-border hover:border-primary/30'
+              )}
+            >
+              <div className={cn(
+                'flex h-12 w-12 items-center justify-center rounded-xl',
+                motorType === 'motor2' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+              )}>
+                <Truck className="h-6 w-6" />
+              </div>
+              <div>
+                <span className="text-sm font-bold block text-foreground">Motor 2 — Compra Dobrada</span>
+                <span className="text-xs text-muted-foreground mt-1 block leading-relaxed">
+                  Para peças compradas já dobradas. O cálculo usa preço por metro linear com base em material, espessura e corte.
+                </span>
+              </div>
+              {motorType === 'motor2' && (
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <Check className="h-3.5 w-3.5" /> Selecionado
+                </div>
+              )}
+            </button>
+          </div>
+
+          <Button onClick={() => updateDraft({ phase: 'carrinho' })}
+            className="w-full h-12 text-base font-semibold gap-2">
+            Continuar para montagem do orçamento
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Phase 3: Cart ─────────────────────────────────────────────
+  const currentStatus = statusOptions.find(s => s.value === status)!;
+  const corDestaque = empresa?.corDestaque || '#F57C00';
+
+  return (
+    <div className="px-4 pb-28 pt-4 max-w-2xl mx-auto">
+      {!isEditing && <StepIndicator current="carrinho" />}
+
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={handleBackFromCart} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" /> {isEditing ? 'Voltar para lista' : 'Voltar'}
+          </button>
+          <div className="flex items-center gap-2">
             {hasDraft && !isEditing && (
               <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
                 <AlertDialogTrigger asChild>
@@ -401,248 +640,103 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 </AlertDialogContent>
               </AlertDialog>
             )}
+            <Select value={status} onValueChange={v => updateDraft({ status: v as StatusOrcamento })}>
+              <SelectTrigger className={cn('h-8 w-auto text-xs font-semibold border rounded-md', currentStatus.color)}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map(s => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          {wasRestored && !isEditing && (
-            <p className="text-xs text-muted-foreground/70 mt-2 flex items-center gap-1.5">
-              <RotateCcw className="h-3 w-3" /> Rascunho em andamento
-            </p>
-          )}
         </div>
 
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar cliente..." value={clienteSearch}
-                onChange={e => setClienteSearch(e.target.value)} className="pl-9" autoFocus />
-            </div>
-            <Button variant="outline" size="icon" className="shrink-0 h-10 w-10 border-accent text-accent hover:bg-accent/10"
-              onClick={() => setClienteModalOpen(true)} title="Novo Cliente">
-              <UserPlus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {loadingClientes ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div className="max-h-72 overflow-y-auto space-y-2">
-              {filteredClientes.length === 0 ? (
-                <div className="text-center py-10">
-                  <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                  <p className="text-sm text-muted-foreground font-medium">
-                    {clientes.length === 0 ? 'Nenhum cliente cadastrado.' : 'Nenhum resultado.'}
-                  </p>
-                  {clientes.length === 0 && (
-                    <Button variant="outline" size="sm" className="mt-3 border-accent text-accent hover:bg-accent/10"
-                      onClick={() => setClienteModalOpen(true)}>
-                      <UserPlus className="h-4 w-4 mr-1.5" /> Cadastrar Cliente
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                filteredClientes.map(c => (
-                  <button key={c.id} onClick={() => updateDraft({ selectedClienteId: c.id })}
-                    className={cn(
-                      'w-full text-left rounded-lg border p-3.5 transition-all',
-                      selectedClienteId === c.id
-                        ? 'border-accent bg-accent/10 shadow-sm'
-                        : 'border-border hover:border-primary/30'
-                    )}>
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">{c.tipo}</span>
-                      <p className="text-sm font-medium truncate">{c.nomeRazaoSocial}</p>
-                      {selectedClienteId === c.id && <Check className="h-4 w-4 text-accent ml-auto shrink-0" />}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">{c.documento} · {c.whatsapp}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-
-          <Button onClick={() => updateDraft({ phase: 'motor' })} disabled={!selectedClienteId}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
-            Continuar
-          </Button>
-        </div>
-
-        <ClienteFormModal
-          open={clienteModalOpen}
-          onClose={() => setClienteModalOpen(false)}
-          onSave={handleNovoCliente}
-        />
-      </div>
-    );
-  }
-
-  // Phase 1.5: Motor selection
-  if (phase === 'motor') {
-    return (
-      <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
-        <StepIndicator current="motor" />
-        <div className="mb-5">
-          <button onClick={() => hasItems ? updateDraft({ phase: 'carrinho' }) : updateDraft({ phase: 'cliente' })} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-3 transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </button>
-          <h1 className="text-xl font-bold text-foreground">Tipo de Orçamento</h1>
-          <p className="text-sm text-muted-foreground mt-1">Selecione o motor de cálculo para este orçamento</p>
-        </div>
-
-        <div className="space-y-4">
-          {hasItems && (
-            <p className="text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-2">Motor travado: remova todos os itens para alterar.</p>
-          )}
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleMotorSelect('motor1')}
-              disabled={hasItems}
-              className={cn(
-                'flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all disabled:cursor-not-allowed disabled:opacity-70',
-                motorType === 'motor1'
-                  ? 'border-accent bg-accent/10 text-accent shadow-sm'
-                  : 'border-border text-muted-foreground hover:border-primary/30'
-              )}
-            >
-              <Factory className="h-10 w-10" />
-              <div className="text-center">
-                <span className="text-sm font-bold block">Motor 1</span>
-                <span className="text-[11px] text-muted-foreground">Fabricar</span>
-              </div>
-            </button>
-            <button
-              onClick={() => handleMotorSelect('motor2')}
-              disabled={hasItems}
-              className={cn(
-                'flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all disabled:cursor-not-allowed disabled:opacity-70',
-                motorType === 'motor2'
-                  ? 'border-accent bg-accent/10 text-accent shadow-sm'
-                  : 'border-border text-muted-foreground hover:border-primary/30'
-              )}
-            >
-              <Truck className="h-10 w-10" />
-              <div className="text-center">
-                <span className="text-sm font-bold block">Motor 2</span>
-                <span className="text-[11px] text-muted-foreground">Comprar Dobrado</span>
-              </div>
-            </button>
-          </div>
-          <Button onClick={() => updateDraft({ phase: 'carrinho' })}
-            className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base font-semibold">
-            Continuar
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const currentStatus = statusOptions.find(s => s.value === status)!;
-  const corDestaque = empresa?.corDestaque || '#F57C00';
-
-  // Phase 2: Cart
-  return (
-    <div className="px-4 pb-28 pt-4 max-w-2xl mx-auto">
-      {!isEditing && <StepIndicator current="carrinho" />}
-
-      {/* Header */}
-      <div className="mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={handleBackFromCart} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" /> {isEditing ? 'Voltar para lista' : 'Voltar'}
-          </button>
-          {hasDraft && !isEditing && (
-            <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive h-8 gap-1.5 text-xs">
-                  <RotateCcw className="h-3.5 w-3.5" /> Descartar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Descartar rascunho?</AlertDialogTitle>
-                  <AlertDialogDescription>Todo o progresso será perdido e você começará um orçamento do zero.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDiscardDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Descartar</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">
-              {isEditing ? `Orçamento #${editingOrcamento?.numeroOrcamento}` : 'Carrinho'}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <h1 className="text-lg font-bold text-foreground">
+              {isEditing ? `Editando Orçamento #${editingOrcamento?.numeroOrcamento}` : 'Monte o orçamento'}
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}
-              {' · '}{motorType === 'motor1' ? 'Motor 1' : 'Motor 2'}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
+              <span className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                {selectedCliente?.nomeRazaoSocial ?? editingOrcamento?.nomeCliente}
+              </span>
+              <span className="flex items-center gap-1">
+                {motorType === 'motor1' ? <Factory className="h-3.5 w-3.5" /> : <Truck className="h-3.5 w-3.5" />}
+                {motorType === 'motor1' ? 'Fabricação' : 'Compra Dobrada'}
+              </span>
+            </div>
             {wasRestored && !isEditing && (
-              <p className="text-xs text-muted-foreground/70 mt-1 flex items-center gap-1.5">
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-primary/70">
                 <RotateCcw className="h-3 w-3" /> Rascunho em andamento
-              </p>
+              </div>
             )}
-          </div>
-          <Select value={status} onValueChange={v => updateDraft({ status: v as StatusOrcamento })}>
-            <SelectTrigger className={cn('h-8 w-auto text-xs font-semibold border', currentStatus.color)}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map(s => (
-                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Services section */}
+      {/* ── Services section ─────────────────────── */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <div>
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Serviços</h2>
-            {hasItems && <p className="text-xs text-muted-foreground">{itens.length} {itens.length === 1 ? 'item' : 'itens'}</p>}
+            {hasItems && (
+              <span className="bg-muted text-muted-foreground text-[10px] font-bold rounded-full px-2 py-0.5">
+                {itens.length}
+              </span>
+            )}
           </div>
-          <Button onClick={() => setModalOpen(true)} size="sm"
-            className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-1.5 h-4 w-4" /> Adicionar
+          <Button onClick={() => setModalOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="h-4 w-4" /> Adicionar serviço
           </Button>
         </div>
 
         {itens.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed border-border">
-            <ShoppingCart className="mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground font-medium">Nenhum serviço adicionado</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Clique em "Adicionar" para começar</p>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <ShoppingCart className="mb-3 h-10 w-10 text-muted-foreground/30" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum serviço adicionado ainda</p>
+              <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                Adicione os serviços que farão parte deste orçamento clicando no botão acima.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {itens.map((item, idx) => (
-              <Card key={item.id} className="overflow-hidden">
+              <Card key={item.id} className="overflow-hidden hover:shadow-sm transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-start gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground mt-0.5 shrink-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary mt-0.5 shrink-0">
                         {idx + 1}
                       </span>
-                      <div>
-                        <p className="text-sm font-semibold">{item.nomeServico}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {item.metragem}m · {dificuldadeLabel[item.dificuldade]} · {item.materialId}
-                        </p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{item.nomeServico}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {item.metragem}m
+                          </span>
+                          <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {dificuldadeLabel[item.dificuldade]}
+                          </span>
+                          <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {item.materialId}
+                          </span>
+                        </div>
                         {(() => {
                           const svc = servicosList.find(s => s.id === item.servicoTemplateId);
                           const regraNome = svc ? regrasList.find(r => r.id === svc.regraId)?.nomeRegra : null;
                           return regraNome ? (
-                            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">Regra: {regraNome}</p>
+                            <p className="text-[11px] text-muted-foreground/60 mt-1 truncate">Regra: {regraNome}</p>
                           ) : null;
                         })()}
                       </div>
                     </div>
-                    <div className="flex gap-0.5 ml-2">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       <button onClick={() => {
                         const cloned: ItemServico = { ...item, id: crypto.randomUUID() };
                         updateDraft({
@@ -653,20 +747,20 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                           })(),
                         });
                         toast.success('Item duplicado!');
-                      }} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors" title="Duplicar item">
+                      }} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors" title="Duplicar">
                         <Copy className="h-3.5 w-3.5" />
                       </button>
-                      <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors">
+                      <button onClick={() => startEditItem(item)} className="text-muted-foreground hover:text-primary p-1.5 rounded-md hover:bg-muted transition-colors" title="Editar">
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors">
+                      <button onClick={() => handleRemoveItem(item.id)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors" title="Remover">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground ml-8.5 pl-[34px]">
-                    <span>Custo: {fmt(item.custoTotalObra)}</span>
-                    <span className="font-semibold text-accent text-sm">{fmt(item.valorVenda)}</span>
+                  <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-border/50 ml-10">
+                    <span className="text-xs text-muted-foreground">Custo: {fmt(item.custoTotalObra)}</span>
+                    <span className="font-bold text-primary text-sm">{fmt(item.valorVenda)}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -675,34 +769,36 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         )}
       </div>
 
-      {/* Financial summary inline card */}
+      {/* ── Financial summary ─────────────────────── */}
       {hasItems && (
-        <Card className="mb-6 border-accent/20">
+        <Card className="mb-6 border-primary/20">
           <CardContent className="p-4">
-            <h2 className="text-sm font-semibold text-foreground mb-3">Resumo Financeiro</h2>
+            <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-muted-foreground" /> Resumo Financeiro
+            </h2>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Custo Total</span>
-                <span className="font-medium">{fmt(totalCusto)}</span>
+                <span className="text-muted-foreground">Custo Total dos Materiais</span>
+                <span className="font-medium tabular-nums">{fmt(totalCusto)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Valor de Venda</span>
-                <span className="font-medium">{fmt(totalVenda)}</span>
+                <span className="font-medium tabular-nums">{fmt(totalVenda)}</span>
               </div>
               {descontoNum > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Desconto</span>
-                  <span className="font-medium text-destructive">-{fmt(descontoNum)}</span>
+                  <span className="text-muted-foreground">Desconto Aplicado</span>
+                  <span className="font-medium text-destructive tabular-nums">-{fmt(descontoNum)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between items-baseline">
-                <span className="text-sm font-semibold text-foreground">Valor Final</span>
-                <span className="text-xl font-bold text-accent">{fmt(valorFinal)}</span>
+                <span className="text-sm font-semibold text-foreground">Valor Final para o Cliente</span>
+                <span className="text-xl font-bold text-primary tabular-nums">{fmt(valorFinal)}</span>
               </div>
               {totalVenda > 0 && (
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Margem</span>
+                  <span className="text-muted-foreground">Margem de lucro estimada</span>
                   <span className={cn(
                     'font-medium',
                     ((1 - totalCusto / valorFinal) * 100) >= 30 ? 'text-green-600' : 'text-yellow-600'
@@ -716,18 +812,21 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
         </Card>
       )}
 
-      {/* Commercial details section */}
+      {/* ── Commercial conditions ─────────────────── */}
       {hasItems && (
         <Card className="mb-6">
           <CardContent className="p-4 space-y-4">
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Condições Comerciais</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Termos, prazos e garantias do orçamento</p>
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" /> Condições Comerciais
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Preencha os termos do orçamento. Estes dados aparecem no PDF.</p>
             </div>
 
             {politicas.length > 0 && (
-              <div>
-                <Label className="text-xs">Carregar Política Padrão</Label>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <Label className="text-xs font-medium">Aplicar Política Comercial Padrão</Label>
+                <p className="text-[11px] text-muted-foreground mb-2">Preenche automaticamente validade, pagamento e garantia.</p>
                 <Select onValueChange={loadPolitica}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Selecione uma política..." />
@@ -757,7 +856,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
             )}
 
-            {/* Validade + Desconto row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs flex items-center gap-1.5">
@@ -767,31 +865,30 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </div>
               <div>
                 <Label className="text-xs">Desconto (R$)</Label>
-                <Input type="number" inputMode="decimal" value={desconto} onChange={e => updateDraft({ desconto: e.target.value })} placeholder="0" className="h-9" />
+                <Input type="number" inputMode="decimal" value={desconto} onChange={e => updateDraft({ desconto: e.target.value })} placeholder="0,00" className="h-9" />
               </div>
             </div>
 
-            {/* Escopo */}
             <div>
               <Label className="text-xs flex items-center gap-1.5">
                 <FileText className="h-3 w-3 text-muted-foreground" /> Escopo do Serviço
               </Label>
+              <p className="text-[11px] text-muted-foreground mb-1.5">Descreva o que será executado neste orçamento.</p>
               <Textarea value={descricaoGeral} onChange={e => updateDraft({ descricaoGeral: e.target.value })}
                 placeholder="Ex: Instalação de calhas no beiral frontal e rufos na platibanda lateral..." rows={3} className="text-sm" />
             </div>
 
-            {/* Pagamento */}
             <div>
               <Label className="text-xs flex items-center gap-1.5">
                 <CreditCard className="h-3 w-3 text-muted-foreground" /> Formas de Pagamento
               </Label>
+              <p className="text-[11px] text-muted-foreground mb-1.5">Como o cliente pode pagar este orçamento.</p>
               <Textarea value={formasPagamento} onChange={e => updateDraft({ formasPagamento: e.target.value })}
-                placeholder="Condições de pagamento..." rows={2} className="text-sm" />
+                placeholder="Ex: 50% na aprovação, 50% na entrega..." rows={2} className="text-sm" />
             </div>
 
             <Separator />
 
-            {/* Garantia group */}
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Shield className="h-3.5 w-3.5 text-muted-foreground" /> Garantia
@@ -800,7 +897,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <Label className="text-xs">Tempo de Garantia</Label>
                 <Select value={tempoGarantia} onValueChange={v => updateDraft({ tempoGarantia: v })}>
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder="Selecione o prazo..." />
                   </SelectTrigger>
                   <SelectContent>
                     {TEMPO_GARANTIA_OPTIONS.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
@@ -808,23 +905,23 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Detalhes da Garantia</Label>
+                <Label className="text-xs">Detalhes e Condições da Garantia</Label>
                 <Textarea value={garantia} onChange={e => updateDraft({ garantia: e.target.value })}
-                  placeholder="Termos de garantia..." rows={2} className="text-sm" />
+                  placeholder="Ex: A garantia cobre defeitos de fabricação e instalação..." rows={2} className="text-sm" />
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Simplified sticky footer */}
+      {/* ── Sticky footer ─────────────────────────── */}
       {hasItems && (
         <div className="fixed bottom-16 lg:bottom-0 left-0 lg:left-64 right-0 z-40 border-t bg-card/95 backdrop-blur-sm shadow-lg">
           <div className="mx-auto max-w-2xl px-4 py-3">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Valor Final</p>
-                <p className="text-lg font-bold" style={{ color: corDestaque }}>{fmt(valorFinal)}</p>
+                <p className="text-lg font-bold tabular-nums" style={{ color: corDestaque }}>{fmt(valorFinal)}</p>
               </div>
               <div className="flex gap-2">
                 {isEditing && editingOrcamento && (
@@ -853,7 +950,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                   {isSaving ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
                   ) : (
-                    <><Save className="mr-2 h-4 w-4" /> Salvar</>
+                    <><Save className="mr-2 h-4 w-4" /> {isEditing ? 'Salvar Alterações' : 'Salvar Orçamento'}</>
                   )}
                 </Button>
               </div>
