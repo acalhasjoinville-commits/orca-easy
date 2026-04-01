@@ -3,7 +3,7 @@ import { Orcamento, StatusOrcamento } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, Hammer, CalendarClock, Receipt, Banknote } from 'lucide-react';
+import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -164,7 +164,6 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     return null;
   };
 
-  // Get the most relevant date for a given orcamento based on its lifecycle
   const getRelevantDate = (o: Orcamento): { label: string; value: string } | null => {
     if (o.dataPagamento) return { label: 'Pago', value: fmtDate(o.dataPagamento) };
     if (o.dataFaturamento) return { label: 'Faturado', value: fmtDate(o.dataFaturamento) };
@@ -184,7 +183,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             <button
               disabled={isUpdating}
               className={cn(
-                'rounded-md px-2 py-0.5 text-[10px] font-semibold border cursor-pointer transition-all',
+                'rounded-md px-2.5 py-1 text-[11px] font-semibold border cursor-pointer transition-all',
                 st.color,
                 isUpdating && 'opacity-50'
               )}
@@ -207,7 +206,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     }
 
     return (
-      <span className={cn('rounded-md px-2 py-0.5 text-[10px] font-semibold border', st.color)}>
+      <span className={cn('rounded-md px-2.5 py-1 text-[11px] font-semibold border', st.color)}>
         {st.label}
       </span>
     );
@@ -241,102 +240,113 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     );
   }
 
+  // Summary stats
+  const countByStatus = (s: StatusOrcamento) => orcamentos.filter(o => o.status === s).length;
+
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
       {/* Header */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-foreground">Orçamentos</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {orcamentos.length > 0
-              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? 's' : ''} cadastrado${orcamentos.length > 1 ? 's' : ''}`
+              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? 's' : ''} · ${countByStatus('pendente')} pendente${countByStatus('pendente') !== 1 ? 's' : ''} · ${countByStatus('aprovado')} aprovado${countByStatus('aprovado') !== 1 ? 's' : ''}`
               : 'Crie e acompanhe seus orçamentos de calhas e rufos'}
           </p>
         </div>
         {canCreateEditBudget && orcamentos.length > 0 && (
-          <Button onClick={onNewOrcamento} size="sm" className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="mr-1.5 h-4 w-4" /> Novo Orçamento
+          <Button onClick={onNewOrcamento} size="sm" className="hidden sm:flex gap-1.5">
+            <Plus className="h-4 w-4" /> Novo Orçamento
           </Button>
         )}
       </div>
 
       {orcamentos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
-            <FileText className="h-8 w-8 text-primary/40" />
-          </div>
-          <h2 className="mb-1.5 text-lg font-semibold text-foreground">Nenhum orçamento criado</h2>
-          <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
-            {canCreateEditBudget
-              ? 'Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda.'
-              : 'Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos.'}
-          </p>
-          {canCreateEditBudget && (
-            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
-              <Plus className="h-4 w-4" /> Criar Primeiro Orçamento
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por cliente, número ou valor..." value={search}
-                onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+              <FileText className="h-8 w-8 text-primary/40" />
             </div>
+            <h2 className="mb-1.5 text-lg font-semibold text-foreground">Nenhum orçamento criado</h2>
+            <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
+              {canCreateEditBudget
+                ? 'Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda.'
+                : 'Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos.'}
+            </p>
             {canCreateEditBudget && (
-              <Button onClick={onNewOrcamento} size="sm" className="sm:hidden bg-accent text-accent-foreground hover:bg-accent/90 shrink-0 h-9">
-                <Plus className="h-4 w-4" />
+              <Button onClick={onNewOrcamento} className="gap-2">
+                <Plus className="h-4 w-4" /> Criar Primeiro Orçamento
               </Button>
             )}
-          </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {/* Toolbar */}
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Buscar por cliente, número ou valor..." value={search}
+                    onChange={e => setSearch(e.target.value)} className="pl-9 h-9 bg-background" />
+                </div>
+                {canCreateEditBudget && (
+                  <Button onClick={onNewOrcamento} size="sm" className="sm:hidden shrink-0 h-9 gap-1.5">
+                    <Plus className="h-4 w-4" /> Novo
+                  </Button>
+                )}
+              </div>
 
-          {/* Filter chips */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-            <button
-              onClick={toggleAll}
-              className={cn(
-                'shrink-0 rounded-md px-2.5 py-1 text-[11px] font-medium border transition-colors',
-                allSelected
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-              )}
-            >
-              Todos
-            </button>
-            {filterChips.map(f => {
-              const isActive = activeFilters.has(f.key);
-              const chipColor = statusConfig[f.key].color;
-              return (
+              {/* Filter chips */}
+              <div className="flex gap-1.5 overflow-x-auto pt-3 -mx-1 px-1 scrollbar-none">
                 <button
-                  key={f.key}
-                  onClick={() => toggleFilter(f.key)}
+                  onClick={toggleAll}
                   className={cn(
-                    'shrink-0 rounded-md px-2.5 py-1 text-[11px] font-medium border transition-colors',
-                    isActive ? chipColor : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors',
+                    allSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
                   )}
                 >
-                  {f.label}
+                  Todos
                 </button>
-              );
-            })}
-          </div>
+                {filterChips.map(f => {
+                  const isActive = activeFilters.has(f.key);
+                  const count = countByStatus(f.key);
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => toggleFilter(f.key)}
+                      className={cn(
+                        'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors',
+                        isActive
+                          ? statusConfig[f.key].color
+                          : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                      )}
+                    >
+                      {f.label} {count > 0 && <span className="ml-0.5 opacity-70">({count})</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Desktop: Table view with all operational dates */}
+          {/* Desktop: Table view */}
           {!isMobile ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {groupedByStatus.map(group => (
                 <div key={group.status}>
-                  <div className="flex items-center gap-2.5 pt-2 pb-2">
+                  <div className="flex items-center gap-2.5 pb-2">
                     <span className={cn(
                       'text-[11px] font-bold uppercase tracking-wider',
                       statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
                     )}>
                       {group.label}
                     </span>
-                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-md px-1.5 py-0.5">
+                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
                       {group.items.length}
                     </span>
                     <div className="flex-1 h-px bg-border/60" />
@@ -345,18 +355,18 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b bg-muted/30 text-left text-[11px] text-muted-foreground">
-                            <th className="py-2.5 px-3 font-medium w-16">#</th>
-                            <th className="py-2.5 px-3 font-medium">Cliente</th>
-                            <th className="py-2.5 px-3 font-medium w-24">Status</th>
-                            <th className="py-2.5 px-3 font-medium text-right w-28">Valor</th>
-                            <th className="py-2.5 px-3 font-medium w-20 text-center">Criação</th>
-                            <th className="py-2.5 px-3 font-medium w-20 text-center">Previsto</th>
-                            <th className="py-2.5 px-3 font-medium w-20 text-center">Execução</th>
-                            <th className="py-2.5 px-3 font-medium w-20 text-center">Faturado</th>
-                            <th className="py-2.5 px-3 font-medium w-20 text-center">Pago</th>
-                            <th className="py-2.5 px-3 font-medium w-12 text-center">Motor</th>
-                            <th className="py-2.5 px-3 font-medium w-10 text-right">Ações</th>
+                          <tr className="border-b bg-muted/40 text-left text-[11px] text-muted-foreground uppercase tracking-wide">
+                            <th className="py-2.5 px-3 font-semibold w-16">#</th>
+                            <th className="py-2.5 px-3 font-semibold">Cliente</th>
+                            <th className="py-2.5 px-3 font-semibold w-24">Status</th>
+                            <th className="py-2.5 px-3 font-semibold text-right w-28">Valor</th>
+                            <th className="py-2.5 px-3 font-semibold w-20 text-center">Criação</th>
+                            <th className="py-2.5 px-3 font-semibold w-20 text-center">Previsto</th>
+                            <th className="py-2.5 px-3 font-semibold w-20 text-center">Execução</th>
+                            <th className="py-2.5 px-3 font-semibold w-20 text-center">Faturado</th>
+                            <th className="py-2.5 px-3 font-semibold w-20 text-center">Pago</th>
+                            <th className="py-2.5 px-3 font-semibold w-12 text-center">Motor</th>
+                            <th className="py-2.5 px-3 font-semibold w-10"></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -366,26 +376,37 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                             return (
                               <tr
                                 key={o.id}
-                                className="border-b last:border-0 hover:bg-muted/40 cursor-pointer transition-colors"
+                                className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
                                 onClick={() => onViewOrcamento(o)}
                               >
-                                <td className="py-2.5 px-3 font-bold text-primary">#{o.numeroOrcamento ?? '—'}</td>
-                                <td className="py-2.5 px-3 font-medium truncate max-w-[180px]">{o.nomeCliente}</td>
-                                <td className="py-2.5 px-3">{renderStatusBadge(o)}</td>
-                                <td className="py-2.5 px-3 text-right font-semibold tabular-nums">{formatCurrency(displayValue)}</td>
-                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataCriacao)}</td>
-                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataPrevista)}</td>
-                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataExecucao)}</td>
-                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataFaturamento)}</td>
-                                <td className="py-2.5 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataPagamento)}</td>
-                                <td className="py-2.5 px-3 text-center">
+                                <td className="py-3 px-3 font-bold text-primary text-sm">#{o.numeroOrcamento ?? '—'}</td>
+                                <td className="py-3 px-3">
+                                  <span className="font-medium text-foreground truncate block max-w-[200px]">{o.nomeCliente}</span>
+                                  <span className="text-[11px] text-muted-foreground">{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                                </td>
+                                <td className="py-3 px-3">{renderStatusBadge(o)}</td>
+                                <td className="py-3 px-3 text-right font-bold tabular-nums text-foreground">{formatCurrency(displayValue)}</td>
+                                <td className="py-3 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataCriacao)}</td>
+                                <td className="py-3 px-3 text-center text-xs tabular-nums">
+                                  <span className={o.dataPrevista ? 'text-foreground font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataPrevista)}</span>
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs tabular-nums">
+                                  <span className={o.dataExecucao ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataExecucao)}</span>
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs tabular-nums">
+                                  <span className={o.dataFaturamento ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataFaturamento)}</span>
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs tabular-nums">
+                                  <span className={o.dataPagamento ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataPagamento)}</span>
+                                </td>
+                                <td className="py-3 px-3 text-center">
                                   {motor && (
-                                    <span className="text-[10px] font-bold rounded px-1.5 py-0.5 bg-muted text-muted-foreground">
+                                    <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-muted text-muted-foreground">
                                       {motor}
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-2.5 px-3 text-right">{renderRowActions(o)}</td>
+                                <td className="py-3 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">{renderRowActions(o)}</td>
                               </tr>
                             );
                           })}
@@ -408,7 +429,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                     )}>
                       {group.label}
                     </span>
-                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-md px-1.5 py-0.5">
+                    <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
                       {group.items.length}
                     </span>
                     <div className="flex-1 h-px bg-border/60" />
@@ -419,19 +440,21 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                       const relevantDate = getRelevantDate(o);
                       return (
                         <Card key={o.id} className="overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/20 transition-all" onClick={() => onViewOrcamento(o)}>
-                          <CardContent className="p-3">
-                            {/* Row 1: number + status + menu + value */}
-                            <div className="flex items-center gap-2 mb-1.5">
+                          <CardContent className="p-3.5">
+                            {/* Row 1: number + status + value */}
+                            <div className="flex items-center gap-2 mb-2">
                               <span className="text-sm font-bold text-primary shrink-0">#{o.numeroOrcamento ?? '—'}</span>
                               {renderStatusBadge(o)}
                               <span className="flex-1" />
-                              {renderRowActions(o)}
-                              <p className="text-base font-bold text-foreground shrink-0">{formatCurrency(displayValue)}</p>
+                              <p className="text-base font-bold text-foreground shrink-0 tabular-nums">{formatCurrency(displayValue)}</p>
                             </div>
-                            {/* Row 2: client */}
-                            <p className="text-sm font-medium text-foreground truncate mb-1">{o.nomeCliente}</p>
-                            {/* Row 3: dates */}
-                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+                            {/* Row 2: client + actions */}
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-sm font-medium text-foreground truncate flex-1 mr-2">{o.nomeCliente}</p>
+                              {renderRowActions(o)}
+                            </div>
+                            {/* Row 3: dates + services count */}
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap pt-1.5 border-t border-border/50">
                               <span>{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</span>
                               {relevantDate && (
                                 <>
@@ -452,13 +475,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           )}
 
           {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm font-medium text-muted-foreground">Nenhum orçamento encontrado</p>
-              <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
-                Tente ajustar os filtros ou buscar por outro termo.
-              </p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum orçamento encontrado</p>
+                <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                  Tente ajustar os filtros ou buscar por outro termo.
+                </p>
+              </CardContent>
+            </Card>
           )}
         </div>
       )}
