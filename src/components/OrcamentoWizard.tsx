@@ -279,50 +279,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
-  const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
-    if (isSaving) return null;
-    if (itens.length === 0 || !selectedCliente) return null;
-    const base = {
-      clienteId: selectedCliente.id,
-      nomeCliente: selectedCliente.nomeRazaoSocial,
-      motorType,
-      itensServico: itens,
-      custoTotalObra: totalCusto,
-      valorVenda: totalVenda,
-      desconto: descontoNum,
-      valorFinal,
-      status,
-      validade,
-      descricaoGeral,
-      formasPagamento,
-      garantia,
-      tempoGarantia,
-      politicaComercialId: loadedPoliticaId ?? null,
-      politicaNomeSnapshot: politicaNomeSnapshot ?? null,
-      validadeSnapshot: validade,
-      formasPagamentoSnapshot: formasPagamento,
-      garantiaSnapshot: garantia,
-      tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: termoRecebimentoOs,
-    };
-    if (isEditing && editingOrcamento) {
-      const orc = { ...editingOrcamento, ...base };
-      await updateOrcamento.mutateAsync(orc);
-      clearDraft();
-      return orc;
-    } else {
-      const nextNum = await getNextNumero();
-      const orc: Orcamento = {
-        id: crypto.randomUUID(),
-        numeroOrcamento: nextNum,
-        dataCriacao: new Date().toISOString(),
-        ...base,
-      };
-      await addOrcamento.mutateAsync(orc);
-      clearDraft();
-      return orc;
-    }
-  };
 
   const [isSaving, setIsSaving] = useState(false);
 

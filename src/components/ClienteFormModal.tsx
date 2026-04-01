@@ -260,7 +260,8 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Nome */}
           <div>
-            <Label className="text-xs font-medium">{tipo === 'PF' ? 'Nome completo *' : 'Razão Social *'}</Label>
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'Nome completo' : 'Razão Social'} *</Label>
+            <p className="text-[10px] text-muted-foreground mb-1">Este é o nome que aparecerá no orçamento.</p>
             <Input value={nome} onChange={e => updateField('nome', e.target.value)}
               placeholder={tipo === 'PF' ? 'Ex: João da Silva' : 'Ex: Empresa Ltda.'} className="mt-1" />
           </div>
@@ -268,7 +269,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
           {/* WhatsApp */}
           <div>
             <Label className="text-xs font-medium">WhatsApp *</Label>
-            <p className="text-[10px] text-muted-foreground mb-1">Número com DDD para contato rápido</p>
+            <p className="text-[10px] text-muted-foreground mb-1">Número com DDD — usado para contato e envio do orçamento.</p>
             <Input value={whatsapp} onChange={e => updateField('whatsapp', formatPhone(e.target.value))} placeholder="(11) 99999-9999" />
           </div>
 
