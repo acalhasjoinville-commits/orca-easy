@@ -117,6 +117,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const rawCep = cep.replace(/\D/g, '');
   const rawPhone = whatsapp.replace(/\D/g, '');
 
+  // CPF/CNPJ is optional — only validate format if filled
+  const docValid = rawDoc.length === 0 || rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+
   const buscarCNPJ = async () => {
     if (rawDoc.length !== 14) { toast.error('CNPJ inválido', { duration: 5000 }); return; }
     setLoadingCNPJ(true);
