@@ -247,7 +247,11 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">Orçamentos</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus orçamentos de calhas e rufos</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {orcamentos.length > 0
+              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? 's' : ''} cadastrado${orcamentos.length > 1 ? 's' : ''}`
+              : 'Crie e acompanhe seus orçamentos de calhas e rufos'}
+          </p>
         </div>
         {canCreateEditBudget && orcamentos.length > 0 && (
           <Button onClick={onNewOrcamento} size="sm" className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
