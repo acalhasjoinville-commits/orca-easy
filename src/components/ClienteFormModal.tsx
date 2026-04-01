@@ -237,8 +237,12 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Documento */}
           <div>
-            <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF *' : 'CNPJ *'}</Label>
-            <p className="text-[10px] text-muted-foreground mb-1">{tipo === 'PF' ? 'Digite os 11 dígitos do CPF' : 'Digite o CNPJ — busca automática disponível'}</p>
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF' : 'CNPJ'} <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+            <p className="text-[10px] text-muted-foreground mb-1">
+              {tipo === 'PF'
+                ? 'Recomendado para organização do cadastro. Você pode preencher depois.'
+                : 'Opcional, mas ao preencher você pode buscar os dados da empresa automaticamente.'}
+            </p>
             <div className="flex gap-2">
               <Input value={documento}
                 onChange={e => updateField('documento', tipo === 'PF' ? formatCPF(e.target.value) : formatCNPJ(e.target.value))}
