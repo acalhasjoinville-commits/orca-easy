@@ -167,7 +167,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     }
   };
 
-  const canSave = nome.trim() && rawPhone.length >= 10 && rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+  const canSave = nome.trim() && rawPhone.length >= 10 && docValid;
 
   const handleSave = async () => {
     if (isSaving || !canSave) return;
