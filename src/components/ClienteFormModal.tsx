@@ -189,9 +189,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     onClose();
   };
 
-  // Progress indicator
-  const filledFields = [nome, documento, whatsapp].filter(f => f.trim().length > 0).length;
-  const totalRequired = 3;
+  // Progress indicator — only nome and whatsapp are truly required
+  const filledFields = [nome, whatsapp].filter(f => f.trim().length > 0).length;
+  const totalRequired = 2;
 
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
