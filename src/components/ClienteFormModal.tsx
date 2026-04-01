@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Search, Loader2, User, Building2, MapPin } from 'lucide-react';
+import { Search, Loader2, User, Building2, MapPin, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDraft } from '@/hooks/useDraft';
 import { Separator } from '@/components/ui/separator';
@@ -118,7 +118,18 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const rawPhone = whatsapp.replace(/\D/g, '');
 
   // CPF/CNPJ is optional — only validate format if filled
-  const docValid = rawDoc.length === 0 || rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+  const docComplete = rawDoc.length === 0 || rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+  const docPartiallyFilled = rawDoc.length > 0 && !docComplete;
+
+  const nomeValid = nome.trim().length > 0;
+  const phoneValid = rawPhone.length >= 10;
+
+  const canSave = nomeValid && phoneValid && docComplete;
+
+  // Progress: count satisfied conditions out of total blocking conditions
+  const progressChecks = [nomeValid, phoneValid, docComplete];
+  const progressDone = progressChecks.filter(Boolean).length;
+  const progressTotal = progressChecks.length;
 
   const buscarCNPJ = async () => {
     if (rawDoc.length !== 14) { toast.error('CNPJ inválido', { duration: 5000 }); return; }
@@ -167,8 +178,6 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     }
   };
 
-  const canSave = nome.trim() && rawPhone.length >= 10 && docValid;
-
   const handleSave = async () => {
     if (isSaving || !canSave) return;
     setIsSaving(true);
@@ -189,10 +198,6 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     onClose();
   };
 
-  // Progress indicator — only nome and whatsapp are truly required
-  const filledFields = [nome, whatsapp].filter(f => f.trim().length > 0).length;
-  const totalRequired = 2;
-
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -206,16 +211,21 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress */}
+        {/* Progress — synced with actual validation */}
         {!editing && (
           <div className="flex items-center gap-2 mb-1">
             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${(filledFields / totalRequired) * 100}%` }}
+                className={cn(
+                  'h-full rounded-full transition-all duration-300',
+                  canSave ? 'bg-emerald-500' : 'bg-primary'
+                )}
+                style={{ width: `${(progressDone / progressTotal) * 100}%` }}
               />
             </div>
-            <span className="text-[10px] text-muted-foreground">{filledFields}/{totalRequired} obrigatórios</span>
+            <span className="text-[10px] text-muted-foreground">
+              {canSave ? '✓ Pronto para salvar' : `${progressDone}/${progressTotal}`}
+            </span>
           </div>
         )}
 
@@ -240,14 +250,14 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
             <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF' : 'CNPJ'} <span className="text-muted-foreground font-normal">(opcional)</span></Label>
             <p className="text-[10px] text-muted-foreground mb-1">
               {tipo === 'PF'
-                ? 'Recomendado para organização do cadastro. Você pode preencher depois.'
-                : 'Opcional, mas ao preencher você pode buscar os dados da empresa automaticamente.'}
+                ? 'Opcional. Recomendado para organização do cadastro — você pode preencher depois.'
+                : 'Opcional. Ao preencher, você pode buscar os dados da empresa automaticamente.'}
             </p>
             <div className="flex gap-2">
               <Input value={documento}
                 onChange={e => updateField('documento', tipo === 'PF' ? formatCPF(e.target.value) : formatCNPJ(e.target.value))}
                 placeholder={tipo === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
-                className="flex-1" />
+                className={cn('flex-1', docPartiallyFilled && 'border-amber-400 focus-visible:ring-amber-400')} />
               {tipo === 'PJ' && (
                 <Button size="sm" variant="outline" onClick={buscarCNPJ} disabled={loadingCNPJ || rawDoc.length !== 14}
                   className="gap-1">
@@ -256,6 +266,12 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
                 </Button>
               )}
             </div>
+            {docPartiallyFilled && (
+              <p className="flex items-center gap-1 text-[10px] text-amber-600 mt-1">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                {tipo === 'PF' ? 'Complete os 11 dígitos do CPF ou apague para deixar em branco.' : 'Complete os 14 dígitos do CNPJ ou apague para deixar em branco.'}
+              </p>
+            )}
           </div>
 
           {/* Nome */}
