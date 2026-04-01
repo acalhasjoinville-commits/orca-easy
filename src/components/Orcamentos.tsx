@@ -261,17 +261,19 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       </div>
 
       {orcamentos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-            <FileText className="h-8 w-8 text-muted-foreground/50" />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+            <FileText className="h-8 w-8 text-primary/40" />
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-foreground">Nenhum orçamento ainda</h2>
-          <p className="mb-6 max-w-xs text-sm text-muted-foreground">
-            {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
+          <h2 className="mb-1.5 text-lg font-semibold text-foreground">Nenhum orçamento criado</h2>
+          <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
+            {canCreateEditBudget
+              ? 'Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda.'
+              : 'Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos.'}
           </p>
           {canCreateEditBudget && (
-            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
+            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+              <Plus className="h-4 w-4" /> Criar Primeiro Orçamento
             </Button>
           )}
         </div>
