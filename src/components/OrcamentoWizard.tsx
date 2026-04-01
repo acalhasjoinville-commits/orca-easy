@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from '@/hooks/useSupabaseTechnicalData';
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from '@/hooks/useSupabaseData';
-import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, PoliticaComercial, MotorType, Cliente } from '@/lib/types';
+import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, MotorType, Cliente } from '@/lib/types';
 import { useDraft } from '@/hooks/useDraft';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,12 +41,16 @@ const steps = [
 
 function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' }) {
   const currentIdx = steps.findIndex(s => s.key === current);
+  const currentStep = steps[currentIdx];
   return (
     <div className="mb-8">
-      {/* Step counter */}
-      <p className="text-xs font-medium text-muted-foreground mb-4 text-center">
-        Passo {currentIdx + 1} de {steps.length}
-      </p>
+      {/* Current step context */}
+      <div className="text-center mb-5">
+        <p className="text-xs font-medium text-primary">
+          Passo {currentIdx + 1} de {steps.length}
+        </p>
+        <h2 className="text-base font-bold text-foreground mt-1">{currentStep.description}</h2>
+      </div>
       <div className="flex items-center justify-center gap-0">
         {steps.map((step, idx) => {
           const isActive = idx === currentIdx;
@@ -275,50 +279,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
   };
 
-  const saveAndGetOrcamento = async (): Promise<Orcamento | null> => {
-    if (isSaving) return null;
-    if (itens.length === 0 || !selectedCliente) return null;
-    const base = {
-      clienteId: selectedCliente.id,
-      nomeCliente: selectedCliente.nomeRazaoSocial,
-      motorType,
-      itensServico: itens,
-      custoTotalObra: totalCusto,
-      valorVenda: totalVenda,
-      desconto: descontoNum,
-      valorFinal,
-      status,
-      validade,
-      descricaoGeral,
-      formasPagamento,
-      garantia,
-      tempoGarantia,
-      politicaComercialId: loadedPoliticaId ?? null,
-      politicaNomeSnapshot: politicaNomeSnapshot ?? null,
-      validadeSnapshot: validade,
-      formasPagamentoSnapshot: formasPagamento,
-      garantiaSnapshot: garantia,
-      tempoGarantiaSnapshot: tempoGarantia,
-      termoRecebimentoOsSnapshot: termoRecebimentoOs,
-    };
-    if (isEditing && editingOrcamento) {
-      const orc = { ...editingOrcamento, ...base };
-      await updateOrcamento.mutateAsync(orc);
-      clearDraft();
-      return orc;
-    } else {
-      const nextNum = await getNextNumero();
-      const orc: Orcamento = {
-        id: crypto.randomUUID(),
-        numeroOrcamento: nextNum,
-        dataCriacao: new Date().toISOString(),
-        ...base,
-      };
-      await addOrcamento.mutateAsync(orc);
-      clearDraft();
-      return orc;
-    }
-  };
 
   const [isSaving, setIsSaving] = useState(false);
 

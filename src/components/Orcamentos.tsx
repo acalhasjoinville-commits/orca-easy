@@ -247,7 +247,11 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       <div className="flex items-start justify-between mb-5">
         <div>
           <h1 className="text-xl font-bold text-foreground">Orçamentos</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus orçamentos de calhas e rufos</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {orcamentos.length > 0
+              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? 's' : ''} cadastrado${orcamentos.length > 1 ? 's' : ''}`
+              : 'Crie e acompanhe seus orçamentos de calhas e rufos'}
+          </p>
         </div>
         {canCreateEditBudget && orcamentos.length > 0 && (
           <Button onClick={onNewOrcamento} size="sm" className="hidden sm:flex bg-accent text-accent-foreground hover:bg-accent/90">
@@ -257,17 +261,19 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       </div>
 
       {orcamentos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-            <FileText className="h-8 w-8 text-muted-foreground/50" />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+            <FileText className="h-8 w-8 text-primary/40" />
           </div>
-          <h2 className="mb-2 text-lg font-semibold text-foreground">Nenhum orçamento ainda</h2>
-          <p className="mb-6 max-w-xs text-sm text-muted-foreground">
-            {canCreateEditBudget ? 'Crie seu primeiro orçamento e veja os cálculos automatizados em segundos.' : 'Nenhum orçamento cadastrado no sistema.'}
+          <h2 className="mb-1.5 text-lg font-semibold text-foreground">Nenhum orçamento criado</h2>
+          <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
+            {canCreateEditBudget
+              ? 'Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda.'
+              : 'Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos.'}
           </p>
           {canCreateEditBudget && (
-            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Plus className="mr-2 h-4 w-4" /> Novo Orçamento
+            <Button onClick={onNewOrcamento} className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+              <Plus className="h-4 w-4" /> Criar Primeiro Orçamento
             </Button>
           )}
         </div>
@@ -277,7 +283,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou número..." value={search}
+              <Input placeholder="Buscar por cliente, número ou valor..." value={search}
                 onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
             </div>
             {canCreateEditBudget && (
@@ -446,7 +452,13 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           )}
 
           {filtered.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">Nenhum orçamento encontrado.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum orçamento encontrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                Tente ajustar os filtros ou buscar por outro termo.
+              </p>
+            </div>
           )}
         </div>
       )}

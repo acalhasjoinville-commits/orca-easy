@@ -117,6 +117,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
   const rawCep = cep.replace(/\D/g, '');
   const rawPhone = whatsapp.replace(/\D/g, '');
 
+  // CPF/CNPJ is optional — only validate format if filled
+  const docValid = rawDoc.length === 0 || rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+
   const buscarCNPJ = async () => {
     if (rawDoc.length !== 14) { toast.error('CNPJ inválido', { duration: 5000 }); return; }
     setLoadingCNPJ(true);
@@ -164,7 +167,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     }
   };
 
-  const canSave = nome.trim() && rawPhone.length >= 10 && rawDoc.length >= (tipo === 'PF' ? 11 : 14);
+  const canSave = nome.trim() && rawPhone.length >= 10 && docValid;
 
   const handleSave = async () => {
     if (isSaving || !canSave) return;
@@ -186,9 +189,9 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
     onClose();
   };
 
-  // Progress indicator
-  const filledFields = [nome, documento, whatsapp].filter(f => f.trim().length > 0).length;
-  const totalRequired = 3;
+  // Progress indicator — only nome and whatsapp are truly required
+  const filledFields = [nome, whatsapp].filter(f => f.trim().length > 0).length;
+  const totalRequired = 2;
 
   return (
     <Dialog open={open} onOpenChange={v => !v && handleClose()}>
@@ -234,8 +237,12 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Documento */}
           <div>
-            <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF *' : 'CNPJ *'}</Label>
-            <p className="text-[10px] text-muted-foreground mb-1">{tipo === 'PF' ? 'Digite os 11 dígitos do CPF' : 'Digite o CNPJ — busca automática disponível'}</p>
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'CPF' : 'CNPJ'} <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+            <p className="text-[10px] text-muted-foreground mb-1">
+              {tipo === 'PF'
+                ? 'Recomendado para organização do cadastro. Você pode preencher depois.'
+                : 'Opcional, mas ao preencher você pode buscar os dados da empresa automaticamente.'}
+            </p>
             <div className="flex gap-2">
               <Input value={documento}
                 onChange={e => updateField('documento', tipo === 'PF' ? formatCPF(e.target.value) : formatCNPJ(e.target.value))}
@@ -253,7 +260,8 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
           {/* Nome */}
           <div>
-            <Label className="text-xs font-medium">{tipo === 'PF' ? 'Nome completo *' : 'Razão Social *'}</Label>
+            <Label className="text-xs font-medium">{tipo === 'PF' ? 'Nome completo' : 'Razão Social'} *</Label>
+            <p className="text-[10px] text-muted-foreground mb-1">Este é o nome que aparecerá no orçamento.</p>
             <Input value={nome} onChange={e => updateField('nome', e.target.value)}
               placeholder={tipo === 'PF' ? 'Ex: João da Silva' : 'Ex: Empresa Ltda.'} className="mt-1" />
           </div>
@@ -261,7 +269,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
           {/* WhatsApp */}
           <div>
             <Label className="text-xs font-medium">WhatsApp *</Label>
-            <p className="text-[10px] text-muted-foreground mb-1">Número com DDD para contato rápido</p>
+            <p className="text-[10px] text-muted-foreground mb-1">Número com DDD — usado para contato e envio do orçamento.</p>
             <Input value={whatsapp} onChange={e => updateField('whatsapp', formatPhone(e.target.value))} placeholder="(11) 99999-9999" />
           </div>
 
