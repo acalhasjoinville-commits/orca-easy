@@ -41,12 +41,16 @@ const steps = [
 
 function StepIndicator({ current }: { current: 'cliente' | 'motor' | 'carrinho' }) {
   const currentIdx = steps.findIndex(s => s.key === current);
+  const currentStep = steps[currentIdx];
   return (
     <div className="mb-8">
-      {/* Step counter */}
-      <p className="text-xs font-medium text-muted-foreground mb-4 text-center">
-        Passo {currentIdx + 1} de {steps.length}
-      </p>
+      {/* Current step context */}
+      <div className="text-center mb-5">
+        <p className="text-xs font-medium text-primary">
+          Passo {currentIdx + 1} de {steps.length}
+        </p>
+        <h2 className="text-base font-bold text-foreground mt-1">{currentStep.description}</h2>
+      </div>
       <div className="flex items-center justify-center gap-0">
         {steps.map((step, idx) => {
           const isActive = idx === currentIdx;
