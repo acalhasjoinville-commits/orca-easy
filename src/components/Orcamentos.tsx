@@ -452,7 +452,13 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           )}
 
           {filtered.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">Nenhum orçamento encontrado.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-8 w-8 text-muted-foreground/30 mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum orçamento encontrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
+                Tente ajustar os filtros ou buscar por outro termo.
+              </p>
+            </div>
           )}
         </div>
       )}
