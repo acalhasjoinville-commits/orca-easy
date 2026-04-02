@@ -30,7 +30,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -191,10 +190,10 @@ function MinhaEmpresaForm() {
       <Card className="border-dashed bg-muted/20">
         <CardContent className="p-4">
           <p className="text-sm font-medium text-foreground">
-            Esses dados aparecem no sistema, nos orcamentos e nos PDFs.
+            Esses dados aparecem no sistema, nos orçamentos e nos PDFs.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Ajuste logo, cores e dados institucionais aqui para manter a apresentacao da empresa consistente.
+            Ajuste logo, cores e dados institucionais aqui para manter a apresentação da empresa consistente.
           </p>
         </CardContent>
       </Card>
@@ -602,7 +601,7 @@ export function Configuracoes() {
       if (k !== "id" && k !== "itensRegra") f[k] = String(v);
     });
     setForm(f);
-    if (item.itensRegra) setRegraItens([...item.itensRegra]);
+    if ("itensRegra" in item && item.itensRegra) setRegraItens([...item.itensRegra]);
     setDialogOpen(true);
   };
 
@@ -726,10 +725,10 @@ export function Configuracoes() {
     <div className="space-y-3">
       <div className="rounded-lg border bg-muted/20 p-3">
         <p className="text-xs font-medium text-foreground">
-          Essa regra define o consumo padrao de insumos por servico.
+          Essa regra define o consumo padrão de insumos por serviço.
         </p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Ela permanece ajustavel no orcamento. Aqui voce cadastra somente a base automatica usada pelo sistema.
+          Ela permanece ajustável no orçamento. Aqui você cadastra somente a base automática usada pelo sistema.
         </p>
       </div>
       <div>
@@ -796,9 +795,9 @@ export function Configuracoes() {
   const renderCatalogoForm = () => (
     <div className="space-y-3">
       <div className="rounded-lg border bg-muted/20 p-3">
-        <p className="text-xs font-medium text-foreground">O catalogo conecta servico, material e regra.</p>
+        <p className="text-xs font-medium text-foreground">O catálogo conecta serviço, material e regra.</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Ao usar esse servico no orcamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos
+          Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos
           automaticamente.
         </p>
       </div>
@@ -916,7 +915,7 @@ export function Configuracoes() {
       <div className="rounded-lg border bg-muted/20 p-3">
         <p className="text-xs font-medium text-foreground">Esses textos padronizam o atendimento comercial.</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Use esta area para definir validade, garantia e condicoes que aparecem no orcamento e na OS.
+          Use esta área para definir validade, garantia e condições que aparecem no orçamento e na OS.
         </p>
       </div>
       <div>
@@ -1012,16 +1011,16 @@ export function Configuracoes() {
     motor1: {
       title: "Material calculado por peso",
       description:
-        "Use esta area para materiais do Motor 1. Ela continua disponivel, mas costuma ser menos usada no dia a dia.",
+        "Use esta área para materiais do Motor 1. Ela continua disponível, mas costuma ser menos usada no dia a dia.",
     },
     motor2: {
-      title: "Base principal do calculo",
-      description: "Cadastre material, espessura, corte e preco por metro. Essa e a combinacao principal do sistema.",
+      title: "Base principal do cálculo",
+      description: "Cadastre material, espessura, corte e preço por metro. Essa é a combinação principal do sistema.",
     },
     insumos: {
-      title: "Custo unitario automatico",
+      title: "Custo unitário automático",
       description:
-        "O sistema usa preco da embalagem e quantidade para calcular automaticamente o custo unitario de cada insumo.",
+        "O sistema usa preço da embalagem e quantidade para calcular automaticamente o custo unitário de cada insumo.",
     },
   };
 
@@ -1290,7 +1289,7 @@ export function Configuracoes() {
         totalCount={servicos.length}
         filteredCount={filteredCatalogo.length}
         searchPlaceholder="Buscar por nome, material ou regra..."
-        addLabel="Novo servico"
+        addLabel="Novo serviço"
       >
         {filteredCatalogo.length === 0 && servicos.length > 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 px-5">
@@ -1335,7 +1334,7 @@ export function Configuracoes() {
         totalCount={politicas.length}
         filteredCount={filteredPoliticas.length}
         searchPlaceholder="Buscar por nome, pagamento ou garantia..."
-        addLabel="Nova politica"
+        addLabel="Nova política"
         emptyText="Nenhuma política cadastrada."
       >
         {filteredPoliticas.length === 0 && politicas.length > 0 ? (
@@ -1367,12 +1366,12 @@ export function Configuracoes() {
   );
 
   const dialogDescription: Record<EntitySection, string> = {
-    motor1: "Cadastre materiais usados no calculo por peso. Essa area costuma ser menos frequente no uso diario.",
-    motor2: "Cadastre a base principal de material por metro: material, espessura, corte e preco.",
-    insumos: "Defina os itens de consumo. O custo unitario continua sendo calculado automaticamente pelo sistema.",
-    regras: "Monte a regra padrao de consumo que sera aplicada automaticamente aos servicos do catalogo.",
-    catalogo: "Conecte servico, material e regra sem alterar a estrutura do calculo existente.",
-    politicas: "Edite os textos e condicoes comerciais usados no orcamento e na ordem de servico.",
+    motor1: "Cadastre materiais usados no cálculo por peso. Essa área costuma ser menos frequente no uso diário.",
+    motor2: "Cadastre a base principal de material por metro: material, espessura, corte e preço.",
+    insumos: "Defina os itens de consumo. O custo unitário continua sendo calculado automaticamente pelo sistema.",
+    regras: "Monte a regra padrão de consumo que será aplicada automaticamente aos serviços do catálogo.",
+    catalogo: "Conecte serviço, material e regra sem alterar a estrutura do cálculo existente.",
+    politicas: "Edite os textos e condições comerciais usados no orçamento e na ordem de serviço.",
   };
 
   const dialogWidthClass =
@@ -1389,7 +1388,7 @@ export function Configuracoes() {
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as ConfigTab)}>
         <TabsList className="w-full grid grid-cols-5 gap-1 mb-6 h-auto">
           <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Building2 className="h-4 w-4" />
