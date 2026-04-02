@@ -1,84 +1,142 @@
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, LogIn, UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
+import { useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, LogIn, UserPlus, FileText, ShieldCheck, Users } from "lucide-react";
+import { toast } from "sonner";
+
+type LoginTab = "login" | "signup";
+
+const TAB_COPY: Record<LoginTab, { title: string; description: string; helper: string; button: string }> = {
+  login: {
+    title: "Entrar no sistema",
+    description: "Use seu e-mail e senha para continuar de onde parou.",
+    helper: "Se o acesso ainda não funcionar, confirme com um administrador se seu papel já foi liberado.",
+    button: "Entrar",
+  },
+  signup: {
+    title: "Criar sua conta",
+    description: "Cadastre seus dados para entrar na empresa e depois receber seu acesso.",
+    helper: "Depois do cadastro, um administrador precisa definir seu papel antes do primeiro uso.",
+    button: "Criar conta",
+  },
+};
+
+const HIGHLIGHTS = [
+  {
+    icon: FileText,
+    title: "Orçamentos organizados",
+    description: "Monte, revise e acompanhe cada orçamento com mais clareza.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Acesso controlado",
+    description: "Cada pessoa entra com o papel certo para a rotina dela.",
+  },
+  {
+    icon: Users,
+    title: "Equipe alinhada",
+    description: "Clientes, financeiro e operação no mesmo lugar.",
+  },
+];
 
 export function LoginPage() {
   const { signIn, signUp } = useAuth();
-  const [tab, setTab] = useState<'login' | 'signup'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [tab, setTab] = useState<LoginTab>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const currentCopy = useMemo(() => TAB_COPY[tab], [tab]);
+
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!email || !password) return;
+
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
+
     if (error) {
-      toast.error(error.message === 'Invalid login credentials'
-        ? 'Email ou senha inválidos.'
-        : error.message, { duration: 5000 });
+      toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha inválidos." : error.message, {
+        duration: 5000,
+      });
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!email || !password || !fullName) return;
+
     if (password.length < 6) {
-      toast.error('A senha deve ter no mínimo 6 caracteres.', { duration: 5000 });
+      toast.error("A senha deve ter no mínimo 6 caracteres.", { duration: 5000 });
       return;
     }
+
     setLoading(true);
     const { error } = await signUp(email, password, fullName);
     setLoading(false);
+
     if (error) {
       toast.error(error.message, { duration: 5000 });
     } else {
-      toast.success('Conta criada! Verifique seu e-mail para confirmar o cadastro.', { duration: 2500 });
-      setTab('login');
+      toast.success("Conta criada! Verifique seu e-mail para confirmar o cadastro.", { duration: 3000 });
+      setTab("login");
     }
   };
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left panel - branding */}
-      <div className="hidden lg:flex lg:w-[480px] bg-primary relative overflow-hidden flex-col justify-between p-10">
+      <div className="hidden lg:flex lg:w-[500px] bg-primary relative overflow-hidden flex-col justify-between p-10">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-8">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white font-bold text-lg">
               OC
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">OrçaCalhas</span>
           </div>
+
+          <div className="max-w-sm">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/60">Plataforma operacional</p>
+            <h2 className="text-3xl font-bold text-white leading-tight mt-3">
+              Gestão de orçamentos, clientes e operação em um só lugar
+            </h2>
+            <p className="text-white/75 text-sm leading-relaxed mt-4">
+              Uma base mais organizada para acompanhar orçamento, execução, financeiro e atendimento sem depender de
+              planilhas soltas.
+            </p>
+          </div>
         </div>
-        <div className="relative z-10">
-          <h2 className="text-3xl font-bold text-white leading-tight mb-3">
-            Gestão inteligente de<br />orçamentos e operações
-          </h2>
-          <p className="text-white/70 text-sm leading-relaxed max-w-sm">
-            Controle completo de calhas, rufos e serviços. Desde o orçamento até o faturamento.
-          </p>
+
+        <div className="relative z-10 space-y-3">
+          {HIGHLIGHTS.map((item) => (
+            <div key={item.title} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-xs text-white/70 mt-1">{item.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="relative z-10 text-white/40 text-xs">
-          © {new Date().getFullYear()} OrçaCalhas
-        </div>
-        {/* Decorative circles */}
-        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/5" />
-        <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-white/5" />
+
+        <div className="relative z-10 text-white/40 text-xs">© {new Date().getFullYear()} OrçaCalhas</div>
+
+        <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5" />
+        <div className="absolute top-1/3 -left-16 h-40 w-40 rounded-full bg-white/5" />
+        <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-white/5" />
       </div>
 
-      {/* Right panel - form */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm space-y-8">
-          {/* Mobile branding */}
+        <div className="w-full max-w-md space-y-6">
           <div className="lg:hidden text-center space-y-2">
             <div className="flex items-center justify-center gap-2.5 mb-1">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm">
@@ -86,31 +144,37 @@ export function LoginPage() {
               </div>
               <span className="text-2xl font-bold text-foreground tracking-tight">OrçaCalhas</span>
             </div>
-            <p className="text-sm text-muted-foreground">Sistema de gestão para calhas e rufos</p>
+            <p className="text-sm text-muted-foreground">Sistema de gestão para calhas, rufos e operação diária.</p>
           </div>
 
-          <div className="lg:block hidden">
-            <h1 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h1>
-            <p className="text-sm text-muted-foreground mt-1">Acesse sua conta para continuar</p>
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Acesso ao sistema</p>
+            <h1 className="text-2xl font-bold text-foreground">{currentCopy.title}</h1>
+            <p className="text-sm text-muted-foreground">{currentCopy.description}</p>
           </div>
 
           <Card className="shadow-lg border-border/50">
-            <CardContent className="p-6">
-              <Tabs value={tab} onValueChange={(v) => setTab(v as 'login' | 'signup')}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+            <CardContent className="p-6 space-y-6">
+              <Tabs value={tab} onValueChange={(value) => setTab(value as LoginTab)}>
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="login">Entrar</TabsTrigger>
-                  <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+                  <TabsTrigger value="signup">Criar conta</TabsTrigger>
                 </TabsList>
               </Tabs>
 
-              {tab === 'login' ? (
+              <div className="rounded-xl border bg-muted/20 p-3">
+                <p className="text-sm font-medium text-foreground">{currentCopy.title}</p>
+                <p className="text-xs text-muted-foreground mt-1">{currentCopy.helper}</p>
+              </div>
+
+              {tab === "login" ? (
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium">E-mail</Label>
                     <Input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(event) => setEmail(event.target.value)}
                       placeholder="seu@email.com"
                       autoComplete="email"
                       autoFocus
@@ -118,30 +182,32 @@ export function LoginPage() {
                       className="h-11"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium">Senha</Label>
                     <Input
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(event) => setPassword(event.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
                       required
                       className="h-11"
                     />
                   </div>
+
                   <Button type="submit" disabled={loading} className="w-full h-11 font-semibold">
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                    Entrar
+                    {currentCopy.button}
                   </Button>
                 </form>
               ) : (
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-medium">Nome Completo</Label>
+                    <Label className="text-xs font-medium">Nome completo</Label>
                     <Input
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(event) => setFullName(event.target.value)}
                       placeholder="Seu nome"
                       autoComplete="name"
                       autoFocus
@@ -149,24 +215,26 @@ export function LoginPage() {
                       className="h-11"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium">E-mail</Label>
                     <Input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(event) => setEmail(event.target.value)}
                       placeholder="seu@email.com"
                       autoComplete="email"
                       required
                       className="h-11"
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium">Senha</Label>
                     <Input
                       type="password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(event) => setPassword(event.target.value)}
                       placeholder="Mínimo 6 caracteres"
                       autoComplete="new-password"
                       minLength={6}
@@ -174,13 +242,23 @@ export function LoginPage() {
                       className="h-11"
                     />
                   </div>
-                  <Button type="submit" disabled={loading} className="w-full h-11 font-semibold bg-accent text-accent-foreground hover:bg-accent/90">
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                    Criar Conta
+
+                  <div className="rounded-xl border bg-muted/20 p-3">
+                    <p className="text-xs font-medium text-foreground">O que acontece depois do cadastro?</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Sua conta é criada primeiro. Depois, um administrador da empresa precisa liberar o papel certo
+                      para você usar o sistema.
+                    </p>
+                  </div>
+
+                  <Button type="submit" disabled={loading} className="w-full h-11 font-semibold">
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="mr-2 h-4 w-4" />
+                    )}
+                    {currentCopy.button}
                   </Button>
-                  <p className="text-[11px] text-muted-foreground text-center">
-                    Após criar a conta, um administrador precisa atribuir seu papel de acesso.
-                  </p>
                 </form>
               )}
             </CardContent>
