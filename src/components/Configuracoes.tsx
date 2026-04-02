@@ -602,7 +602,7 @@ export function Configuracoes() {
       if (k !== "id" && k !== "itensRegra") f[k] = String(v);
     });
     setForm(f);
-    if (item.itensRegra) setRegraItens([...item.itensRegra]);
+    if ('itensRegra' in item && (item as RegraCalculo).itensRegra) setRegraItens([...(item as RegraCalculo).itensRegra]);
     setDialogOpen(true);
   };
 
