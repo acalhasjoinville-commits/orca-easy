@@ -87,6 +87,7 @@ export type Database = {
           numero: string | null
           razao_social: string | null
           slogan: string | null
+          status: string
           telefone_whatsapp: string | null
           updated_at: string
         }
@@ -106,6 +107,7 @@ export type Database = {
           numero?: string | null
           razao_social?: string | null
           slogan?: string | null
+          status?: string
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -125,6 +127,7 @@ export type Database = {
           numero?: string | null
           razao_social?: string | null
           slogan?: string | null
+          status?: string
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -488,6 +491,54 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       politicas_comerciais: {
         Row: {
           created_at: string
@@ -720,6 +771,7 @@ export type Database = {
         Args: { _empresa_id: string; _table_name: string }
         Returns: boolean
       }
+      get_empresa_status: { Args: { _user_id?: string }; Returns: string }
       get_user_empresa_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -728,7 +780,59 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       next_orcamento_number: { Args: never; Returns: number }
+      sa_approve_user: {
+        Args: {
+          _empresa_id: string
+          _role?: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      sa_create_empresa: {
+        Args: {
+          _cnpj_cpf?: string
+          _email_contato?: string
+          _invite_email?: string
+          _invite_role?: Database["public"]["Enums"]["app_role"]
+          _nome_fantasia: string
+          _razao_social?: string
+          _telefone?: string
+        }
+        Returns: string
+      }
+      sa_create_invite: {
+        Args: {
+          _email: string
+          _empresa_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
+      sa_dashboard_stats: { Args: never; Returns: Json }
+      sa_delete_user_role: {
+        Args: { _empresa_id: string; _user_id: string }
+        Returns: undefined
+      }
+      sa_get_empresa_detail: { Args: { _empresa_id: string }; Returns: Json }
+      sa_list_all_invites: { Args: never; Returns: Json }
+      sa_list_all_users: { Args: never; Returns: Json }
+      sa_list_audit_log: { Args: { _limit?: number }; Returns: Json }
+      sa_list_empresas: { Args: never; Returns: Json }
+      sa_revoke_invite: { Args: { _invite_id: string }; Returns: undefined }
+      sa_update_empresa_status: {
+        Args: { _empresa_id: string; _new_status: string }
+        Returns: undefined
+      }
+      sa_upsert_user_role: {
+        Args: {
+          _empresa_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "vendedor" | "financeiro"
