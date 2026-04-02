@@ -602,7 +602,7 @@ export function Configuracoes() {
       if (k !== "id" && k !== "itensRegra") f[k] = String(v);
     });
     setForm(f);
-    if (item.itensRegra) setRegraItens([...item.itensRegra]);
+    if ('itensRegra' in item && (item as RegraCalculo).itensRegra) setRegraItens([...(item as RegraCalculo).itensRegra]);
     setDialogOpen(true);
   };
 
@@ -706,7 +706,7 @@ export function Configuracoes() {
   const materiaisUnicos = [...new Set([...motor1.map((m) => m.material), ...motor2.map((m) => m.material)])];
   const regraName = (id: string) => regras.find((r) => r.id === id)?.nomeRegra || "—";
 
-  const regraMap = useMemo(() => new Map(regras.map((r) => [r.id, r.nomeRegra])), [regras]);
+  const regraMap = useMemo(() => new Map<string, string>(regras.map((r) => [r.id, r.nomeRegra])), [regras]);
   const currentTabMeta = tabMeta[tab];
 
   const addRegraItem = () => {
@@ -1100,7 +1100,7 @@ export function Configuracoes() {
       (e) =>
         normalize(e.nomeServico).includes(q) ||
         normalize(e.materialPadrao).includes(q) ||
-        normalize(regraMap.get(e.regraId) || "").includes(q),
+        normalize(regraMap.get(e.regraId) ?? "").includes(q),
     );
   }, [servicos, searchCatalogo, regraMap]);
 
@@ -1389,7 +1389,7 @@ export function Configuracoes() {
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ConfigTab)}>
         <TabsList className="w-full grid grid-cols-5 gap-1 mb-6 h-auto">
           <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Building2 className="h-4 w-4" />
