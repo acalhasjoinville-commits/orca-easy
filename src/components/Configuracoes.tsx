@@ -1389,7 +1389,7 @@ export function Configuracoes() {
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ConfigTab)}>
         <TabsList className="w-full grid grid-cols-5 gap-1 mb-6 h-auto">
           <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Building2 className="h-4 w-4" />
