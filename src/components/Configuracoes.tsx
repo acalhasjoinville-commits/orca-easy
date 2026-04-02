@@ -69,7 +69,66 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type EntitySection = "motor1" | "motor2" | "insumos" | "regras" | "catalogo" | "politicas";
+/* ── Combobox com busca para seleção de insumos ── */
+function InsumoCombobox({
+  insumos,
+  value,
+  onSelect,
+}: {
+  insumos: InsumoEntry[];
+  value: string;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = insumos.find((i) => i.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-8 text-xs flex-1 justify-between font-normal"
+        >
+          <span className="truncate">
+            {selected ? selected.nomeEmbalagemCompra : "Buscar insumo..."}
+          </span>
+          <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Filtrar insumo..." className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty className="py-3 text-xs">Nenhum insumo encontrado.</CommandEmpty>
+            <CommandGroup>
+              {insumos.map((ins) => (
+                <CommandItem
+                  key={ins.id}
+                  value={ins.nomeEmbalagemCompra}
+                  onSelect={() => {
+                    onSelect(ins.id);
+                    setOpen(false);
+                  }}
+                  className="text-xs"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-3 w-3",
+                      value === ins.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {ins.nomeEmbalagemCompra}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 type ConfigTab = "empresa" | "materiais" | "regras" | "catalogo" | "politicas";
 type ConfigEntity = Motor1Entry | Motor2Entry | InsumoEntry | RegraCalculo | ServicoTemplate | PoliticaComercial;
 
