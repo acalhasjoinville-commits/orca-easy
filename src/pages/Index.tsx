@@ -14,17 +14,18 @@ import { EditarPerfil } from '@/components/EditarPerfil';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
+import { EmpresaSuspensa } from '@/components/EmpresaSuspensa';
 import { Orcamento } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
 
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { LogOut, Loader2, UserCircle } from 'lucide-react';
+import { LogOut, Loader2, UserCircle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, isSuperAdmin, empresaStatus, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
@@ -58,6 +59,17 @@ const Index = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Super admin without company role → redirect to super admin area
+  if (isSuperAdmin && !hasAnyRole) {
+    window.location.href = '/super-admin';
+    return null;
+  }
+
+  // Empresa suspensa ou bloqueada → tela de bloqueio (exceto super admin)
+  if (!isSuperAdmin && empresaStatus && empresaStatus !== 'ativa') {
+    return <EmpresaSuspensa />;
   }
 
   // Authenticated but no role → pending approval
@@ -311,6 +323,11 @@ const Index = () => {
             <h1 className="text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</h1>
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
+              {isSuperAdmin && (
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = '/super-admin'} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg" title="Super Admin">
+                  <Shield className="h-5 w-5" />
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
                 <UserCircle className="h-5 w-5" />
               </Button>
