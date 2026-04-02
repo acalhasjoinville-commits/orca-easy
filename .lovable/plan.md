@@ -1,69 +1,31 @@
 
 
-# Plano — Fase 2: Operacional ✅
+# Combobox com busca para seleção de insumos nas Regras
 
-## Features implementadas
-- Status "Cancelado"
-- Convite de Usuários
-- Edição de Perfil
-- Busca Global de Orçamentos
+## Problema
+Na tela de Configurações, ao cadastrar uma Regra de Cálculo e adicionar insumos, o seletor é um `<Select>` nativo (dropdown). Com muitos insumos cadastrados, a lista fica enorme e difícil de navegar — não há como digitar para filtrar.
 
----
+## Solução
+Substituir o `<Select>` de insumos (linhas ~751-761 de `Configuracoes.tsx`) por um **Combobox com busca** usando os componentes `Popover` + `Command` já existentes no projeto (`src/components/ui/popover.tsx` e `src/components/ui/command.tsx`).
 
-# Refinamento Global UX/UI ✅
+O usuário poderá digitar parte do nome do insumo para filtrar a lista em tempo real.
 
-## Mudanças aplicadas
+## Implementação
 
-### Design Tokens
-- `--radius`: 0.75rem → 0.5rem (mais sóbrio)
-- `.card-hover`: removido `-translate-y-0.5`, mantido apenas `hover:shadow`
+### Arquivo: `src/components/Configuracoes.tsx`
 
-### Dashboard
-- Consolidou blocos 2 (Status) + 3 (Resumo Comercial) em grid único com contagem + valor
-- Fundiu blocos Desempenho + Faturamento/Recebimento em grid 2x3
-- Últimos Orçamentos: de cards individuais para lista compacta com divide-y
-- Atalhos Rápidos: de cards h-20 para botões inline compactos (não removidos)
-- Títulos: text-foreground em vez de text-primary
+1. **Adicionar imports** de `Popover`, `PopoverTrigger`, `PopoverContent`, `Command`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem` e o ícone `ChevronsUpDown` / `Check`.
 
-### Orçamentos
-- Desktop: tabela com colunas #/Cliente/Status/Valor/Data/Motor/Ações
-- Mobile: cards compactos preservados
-- Status badges: rounded-md em vez de rounded-full
-- Filter chips: rounded-md
-- Todas funcionalidades preservadas: clique detalhes, menu 3 pontos, troca status inline
+2. **Substituir o bloco `<Select>` de insumo** (linhas 751-761) por um Combobox:
+   - `PopoverTrigger` exibe o nome do insumo selecionado ou placeholder "Buscar insumo..."
+   - `CommandInput` permite digitar para filtrar
+   - `CommandList` renderiza os insumos filtrados
+   - Ao selecionar, chama `updateRegraItem(idx, "insumoId", insId)` e fecha o popover
 
-### Clientes
-- Desktop: tabela com colunas Tipo/Nome/Documento/WhatsApp/Cidade/Ações
-- Mobile: cards com border-l-4 preservados
-- Ações agrupadas em menu 3 pontos (MoreVertical)
-- Contagem no subtitle do header
+3. **Corrigir o bug TS2345 na linha 1102**: cast `regraMap.get(e.regraId)` para `string` — `normalize((regraMap.get(e.regraId) ?? "") as string)`.
 
-### OrcamentoDetails
-- Pipeline circles h-7 w-7 (de h-6 w-6)
-- Status badge rounded-md
-- max-w-4xl (de max-w-3xl)
-- Todas seções preservadas: pipeline, action bar, resumo financeiro, itens, insumos
+### Nenhuma mudança em lógica de negócio
+- Mesmo `updateRegraItem` e `addRegraItem`
+- Mesma estrutura de dados `ItemRegra`
+- Apenas troca de componente visual
 
-### Configurações
-- Título text-foreground em vez de text-primary
-- Dialog max-w-md (de max-w-sm)
-- Tab triggers text-[11px] com truncate
-- Adicionado lg:px-6
-
-### Financeiro
-- Título text-xl (de text-2xl)
-- Consistência de header com demais telas
-
-### Usuarios
-- Header padronizado com title + description
-- Padding lg:px-6
-
-### Shell
-- Sidebar active: bg-primary/10 text-primary (de bg-accent, evita conflito com cor configurável)
-- Header desktop: text-foreground no label, separador visual antes de perfil/logout
-- Login: shadow-sm no card
-
-### Integridade
-- Zero alterações em: calcEngine, PDFs, hooks, types, queries, mutations, auth, permissões
-- Todas funcionalidades preservadas
-- Cores primária/destaque configuráveis intactas
