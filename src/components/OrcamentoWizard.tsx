@@ -248,10 +248,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const hasItems = itens.length > 0;
   const margemPercentual = valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null;
   const servicoTemplateMap = useMemo(
-    () => new Map(servicosList.map((servico) => [servico.id, servico])),
+    () => new Map<string, (typeof servicosList)[number]>(servicosList.map((servico) => [servico.id, servico] as const)),
     [servicosList],
   );
-  const regraMap = useMemo(() => new Map(regrasList.map((regra) => [regra.id, regra.nomeRegra])), [regrasList]);
+  const regraMap = useMemo(
+    () => new Map<string, string>(regrasList.map((regra) => [regra.id, regra.nomeRegra] as const)),
+    [regrasList],
+  );
   const itensComAjusteManual = itens.filter(
     (item) => item.insumosOverrides && Object.keys(item.insumosOverrides).length > 0,
   ).length;
@@ -264,7 +267,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     ? (politicas.find((politica) => politica.id === loadedPoliticaId)?.nomePolitica ?? politicaNomeSnapshot)
     : politicaNomeSnapshot;
 
-  const getRegraName = (item: ItemServico) => {
+  const getRegraName = (item: ItemServico): string | null => {
     const servico = servicoTemplateMap.get(item.servicoTemplateId);
     return servico ? (regraMap.get(servico.regraId) ?? null) : null;
   };
