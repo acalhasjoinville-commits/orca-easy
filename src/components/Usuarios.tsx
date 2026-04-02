@@ -1,18 +1,33 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth, AppRole } from '@/hooks/useAuth';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Users, Plus, Trash2, Loader2, ShieldCheck, ShieldAlert, Mail, Send, X, MoreVertical } from 'lucide-react';
-import { toast } from 'sonner';
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { AppRole, useAuth } from "@/hooks/useAuth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Users,
+  Plus,
+  Loader2,
+  ShieldCheck,
+  ShieldAlert,
+  Mail,
+  Send,
+  X,
+  MoreVertical,
+  Search,
+  UserPlus,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 interface UserProfile {
   id: string;
@@ -29,282 +44,617 @@ interface Invite {
   used_at: string | null;
 }
 
+interface ProfileRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  empresa_id: string | null;
+}
+
+interface UserRoleRow {
+  user_id: string;
+  role: AppRole;
+}
+
 const ROLE_LABELS: Record<AppRole, string> = {
-  admin: 'Administrador',
-  vendedor: 'Vendedor',
-  financeiro: 'Financeiro',
+  admin: "Administrador",
+  vendedor: "Vendedor",
+  financeiro: "Financeiro",
+};
+
+const ROLE_HELPERS: Record<AppRole, string> = {
+  admin: "Gerencia usuários, permissões e configurações.",
+  vendedor: "Acessa clientes e orçamentos.",
+  financeiro: "Acompanha e registra movimentações financeiras.",
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
-  admin: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-  vendedor: 'bg-primary/10 text-primary border-primary/20',
-  financeiro: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  admin: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+  vendedor: "bg-primary/10 text-primary border-primary/20",
+  financeiro: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
 };
+
+const ROLE_OPTIONS: AppRole[] = ["admin", "vendedor", "financeiro"];
+
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return null;
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("pt-BR");
+}
+
+function getInitials(name: string, email: string) {
+  const base = name.trim() || email.trim();
+  const parts = base.split(" ").filter(Boolean);
+  if (parts.length === 0) return "US";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+}
 
 export function Usuarios() {
   const { empresaId, user } = useAuth();
   const qc = useQueryClient();
-  const [addingRoleFor, setAddingRoleFor] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<AppRole>('vendedor');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<AppRole>('vendedor');
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<AppRole>("vendedor");
+  const [approvalRoles, setApprovalRoles] = useState<Record<string, AppRole>>({});
+  const [search, setSearch] = useState("");
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ['empresa-users', empresaId],
+    queryKey: ["empresa-users", empresaId],
     queryFn: async () => {
       if (!empresaId) return [];
-      const { data: profiles, error: pErr } = await (supabase as any)
-        .from('profiles').select('id, full_name, email, empresa_id').eq('empresa_id', empresaId);
-      if (pErr) throw pErr;
-      const { data: roles, error: rErr } = await (supabase as any)
-        .from('user_roles').select('user_id, role').eq('empresa_id', empresaId);
-      if (rErr) throw rErr;
+
+      const { data: profilesRaw, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, empresa_id")
+        .eq("empresa_id", empresaId);
+      if (profileError) throw profileError;
+
+      const { data: rolesRaw, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .eq("empresa_id", empresaId);
+      if (rolesError) throw rolesError;
+
+      const profiles = (profilesRaw ?? []) as ProfileRow[];
+      const roles = (rolesRaw ?? []) as UserRoleRow[];
       const roleMap = new Map<string, AppRole[]>();
-      (roles || []).forEach((r: any) => {
-        const existing = roleMap.get(r.user_id) || [];
-        existing.push(r.role);
-        roleMap.set(r.user_id, existing);
+
+      roles.forEach((roleRow) => {
+        const existing = roleMap.get(roleRow.user_id) || [];
+        existing.push(roleRow.role);
+        roleMap.set(roleRow.user_id, existing);
       });
-      return (profiles || []).map((p: any): UserProfile => ({
-        id: p.id, fullName: p.full_name || '', email: p.email || '—',
-        roles: roleMap.get(p.id) || [],
-      }));
+
+      return profiles.map(
+        (profile): UserProfile => ({
+          id: profile.id,
+          fullName: profile.full_name || "",
+          email: profile.email || "—",
+          roles: roleMap.get(profile.id) || [],
+        }),
+      );
     },
     enabled: !!empresaId,
   });
 
   const { data: invites = [] } = useQuery({
-    queryKey: ['invites', empresaId],
+    queryKey: ["invites", empresaId],
     queryFn: async () => {
       if (!empresaId) return [];
-      const { data, error } = await (supabase as any)
-        .from('invites').select('id, email, role, created_at, used_at')
-        .eq('empresa_id', empresaId).is('used_at', null).order('created_at', { ascending: false });
+
+      const { data, error } = await supabase
+        .from("invites")
+        .select("id, email, role, created_at, used_at")
+        .eq("empresa_id", empresaId)
+        .is("used_at", null)
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
-      return (data || []) as Invite[];
+      return (data ?? []) as Invite[];
     },
     enabled: !!empresaId,
   });
 
   const addRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      if (!empresaId) throw new Error('Sem empresa');
-      const { error } = await (supabase as any).from('user_roles').insert({ user_id: userId, role, empresa_id: empresaId });
+      if (!empresaId) throw new Error("Sem empresa vinculada.");
+
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: userId,
+        role,
+        empresa_id: empresaId,
+      });
+
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['empresa-users'] }); setAddingRoleFor(null); toast.success('Role adicionada!', { duration: 2500 }); },
-    onError: (err: any) => {
-      if (err?.message?.includes('duplicate')) toast.error('Usuário já possui essa role.', { duration: 5000 });
-      else toast.error('Erro ao adicionar role.', { duration: 5000 });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["empresa-users", empresaId] });
+      toast.success("Acesso atualizado!", { duration: 2500 });
+    },
+    onError: (error) => {
+      const message = getErrorMessage(error);
+      if (message?.includes("duplicate")) toast.error("Este usuário já possui esse acesso.", { duration: 5000 });
+      else toast.error(message || "Erro ao adicionar acesso.", { duration: 5000 });
     },
   });
 
   const removeRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      if (!empresaId) throw new Error('Sem empresa');
-      const { error } = await (supabase as any).from('user_roles').delete().eq('user_id', userId).eq('role', role).eq('empresa_id', empresaId);
+      if (!empresaId) throw new Error("Sem empresa vinculada.");
+
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", role)
+        .eq("empresa_id", empresaId);
+
       if (error) {
-        if (error.message?.includes('último administrador')) throw new Error('Não é possível remover o último administrador da empresa.');
+        if (error.message?.includes("último administrador")) {
+          throw new Error("Não é possível remover o último administrador da empresa.");
+        }
         throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['empresa-users'] }); toast.success('Role removida.', { duration: 2500 }); },
-    onError: (err: any) => { toast.error(err?.message || 'Erro ao remover role.', { duration: 5000 }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["empresa-users", empresaId] });
+      toast.success("Acesso removido.", { duration: 2500 });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error) || "Erro ao remover acesso.", { duration: 5000 });
+    },
   });
 
   const createInvite = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: AppRole }) => {
-      if (!empresaId || !user) throw new Error('Sem empresa');
-      const { error } = await (supabase as any).from('invites').insert({
-        empresa_id: empresaId, email: email.toLowerCase().trim(), role, invited_by: user.id,
+      if (!empresaId || !user) throw new Error("Sem empresa vinculada.");
+
+      const { error } = await supabase.from("invites").insert({
+        empresa_id: empresaId,
+        email: email.toLowerCase().trim(),
+        role,
+        invited_by: user.id,
       });
+
       if (error) {
-        if (error.message?.includes('duplicate') || error.code === '23505') throw new Error('Já existe um convite para este email.');
+        if (error.message?.includes("duplicate") || error.code === "23505") {
+          throw new Error("Já existe um convite pendente para este e-mail.");
+        }
         throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invites'] }); setInviteEmail(''); toast.success('Convite criado!', { duration: 5000 }); },
-    onError: (err: any) => { toast.error(err?.message || 'Erro ao criar convite.', { duration: 5000 }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invites", empresaId] });
+      setInviteEmail("");
+      toast.success("Convite criado!", { duration: 4000 });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error) || "Erro ao criar convite.", { duration: 5000 });
+    },
   });
 
   const revokeInvite = useMutation({
     mutationFn: async (inviteId: string) => {
-      const { error } = await (supabase as any).from('invites').delete().eq('id', inviteId);
+      const { error } = await supabase.from("invites").delete().eq("id", inviteId);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invites'] }); toast.success('Convite revogado.', { duration: 2500 }); },
-    onError: () => { toast.error('Erro ao revogar convite.', { duration: 5000 }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invites", empresaId] });
+      toast.success("Convite revogado.", { duration: 2500 });
+    },
+    onError: () => {
+      toast.error("Erro ao revogar convite.", { duration: 5000 });
+    },
   });
 
   const handleSendInvite = () => {
     const email = inviteEmail.trim();
-    if (!email || !email.includes('@')) { toast.error('Informe um email válido.'); return; }
+    if (!email || !email.includes("@")) {
+      toast.error("Informe um e-mail válido.", { duration: 4000 });
+      return;
+    }
+
     createInvite.mutate({ email, role: inviteRole });
   };
 
+  const getAvailableRoles = (roles: AppRole[]) => ROLE_OPTIONS.filter((role) => !roles.includes(role));
+
+  const searchQuery = normalize(search.trim());
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return users;
+    return users.filter(
+      (profile) => normalize(profile.fullName).includes(searchQuery) || normalize(profile.email).includes(searchQuery),
+    );
+  }, [searchQuery, users]);
+
+  const filteredInvites = useMemo(() => {
+    if (!searchQuery) return invites;
+    return invites.filter(
+      (invite) =>
+        normalize(invite.email).includes(searchQuery) || normalize(ROLE_LABELS[invite.role]).includes(searchQuery),
+    );
+  }, [invites, searchQuery]);
+
+  const usersWithRoles = filteredUsers.filter((profile) => profile.roles.length > 0);
+  const usersPending = filteredUsers.filter((profile) => profile.roles.length === 0);
+  const hasAnyResult = filteredUsers.length > 0 || filteredInvites.length > 0;
+
   if (isLoading) {
-    return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  const usersWithRoles = users.filter(u => u.roles.length > 0);
-  const usersPending = users.filter(u => u.roles.length === 0);
-
   return (
-    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6 max-w-3xl mx-auto">
+    <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6 max-w-4xl mx-auto">
       <div>
         <h1 className="text-xl font-bold text-foreground">Usuários</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Convide e gerencie os membros da sua equipe</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Convide, aprove e organize os acessos da equipe.</p>
       </div>
 
-      {/* Invite Section */}
-      <Card>
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Mail className="h-4 w-4 text-primary" />
+      <Card className="border-dashed bg-muted/20">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Convidar Usuário</h3>
-              <p className="text-[11px] text-muted-foreground">O usuário será vinculado ao se cadastrar com este email</p>
+            <div className="space-y-2 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Como funcionam os acessos</p>
+              <p className="text-xs text-muted-foreground">
+                Cada papel libera partes diferentes do sistema. Você pode convidar alguém por e-mail, aprovar quem já
+                entrou na empresa e ajustar acessos sem mexer no restante da conta.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((role) => (
+                  <div key={role} className="rounded-lg border bg-background/80 px-2.5 py-2">
+                    <p className="text-xs font-semibold text-foreground">{ROLE_LABELS[role]}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{ROLE_HELPERS[role]}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Input placeholder="email@exemplo.com" value={inviteEmail}
-              onChange={e => setInviteEmail(e.target.value)} className="flex-1 h-9" type="email" />
-            <Select value={inviteRole} onValueChange={v => setInviteRole(v as AppRole)}>
-              <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Usuários ativos</p>
+            <p className="text-2xl font-bold text-foreground mt-2">
+              {users.filter((profile) => profile.roles.length > 0).length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Membros com acesso liberado ao sistema.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Aguardando aprovação
+            </p>
+            <p className="text-2xl font-bold text-foreground mt-2">
+              {users.filter((profile) => profile.roles.length === 0).length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Pessoas que já entraram, mas ainda sem papel definido.</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Convites pendentes</p>
+            <p className="text-2xl font-bold text-foreground mt-2">{invites.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Convites enviados e ainda não utilizados.</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Mail className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-foreground">Convidar alguém para a equipe</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                O convite fica vinculado ao e-mail informado. Quando a pessoa entrar com esse e-mail, o sistema já
+                saberá qual acesso liberar.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+            <Input
+              placeholder="email@empresa.com"
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              className="h-10"
+              type="email"
+            />
+            <Select value={inviteRole} onValueChange={(value) => setInviteRole(value as AppRole)}>
+              <SelectTrigger className="h-10">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {(['vendedor', 'financeiro', 'admin'] as AppRole[]).map(r => (
-                  <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+                {ROLE_OPTIONS.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleSendInvite} disabled={createInvite.isPending} size="sm" className="h-9 px-4">
-              {createInvite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Button onClick={handleSendInvite} disabled={createInvite.isPending} className="h-10 gap-2">
+              {createInvite.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Criar convite
+                </>
+              )}
             </Button>
           </div>
 
-          {invites.length > 0 && (
-            <div className="space-y-1.5 pt-2">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Convites pendentes</p>
-              {invites.map(inv => (
-                <div key={inv.id} className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="text-sm truncate">{inv.email}</p>
-                    <p className="text-[10px] text-muted-foreground">{ROLE_LABELS[inv.role]} · {new Date(inv.created_at).toLocaleDateString('pt-BR')}</p>
+          {filteredInvites.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Convites pendentes
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Revogue apenas se o convite não for mais necessário.
+                </p>
+              </div>
+              <div className="space-y-2">
+                {filteredInvites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 px-3 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{invite.email}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {ROLE_LABELS[invite.role]} · Enviado em {formatDate(invite.created_at)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1.5 text-destructive hover:text-destructive"
+                      onClick={() => revokeInvite.mutate(invite.id)}
+                      disabled={revokeInvite.isPending}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Revogar</span>
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive"
-                    onClick={() => revokeInvite.mutate(inv.id)} disabled={revokeInvite.isPending}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Active users */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Usuários Ativos</h3>
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{usersWithRoles.length}</Badge>
-        </div>
-        {usersWithRoles.map(user => (
-          <Card key={user.id}>
-            <CardContent className="px-5 py-3">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{user.fullName || 'Sem nome'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-1.5 ml-3">
-                  {user.roles.map(role => (
-                    <Badge key={role} variant="outline" className={`text-[10px] ${ROLE_COLORS[role]}`}>
-                      {ROLE_LABELS[role]}
-                      <button onClick={() => removeRole.mutate({ userId: user.id, role })}
-                        className="ml-1 hover:text-destructive" title="Remover role">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                  {addingRoleFor === user.id ? (
-                    <div className="flex items-center gap-1">
-                      <Select value={selectedRole} onValueChange={v => setSelectedRole(v as AppRole)}>
-                        <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {(['admin', 'vendedor', 'financeiro'] as AppRole[])
-                            .filter(r => !user.roles.includes(r))
-                            .map(r => (<SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" className="h-7 text-xs"
-                        onClick={() => addRole.mutate({ userId: user.id, role: selectedRole })}
-                        disabled={addRole.isPending}>OK</Button>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingRoleFor(null)}>✕</Button>
-                    </div>
-                  ) : (
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground"
-                      onClick={() => {
-                        const available = (['admin', 'vendedor', 'financeiro'] as AppRole[]).filter(r => !user.roles.includes(r));
-                        if (available.length === 0) { toast.info('Usuário já possui todas as roles.'); return; }
-                        setSelectedRole(available[0]);
-                        setAddingRoleFor(user.id);
-                      }}>
-                      <Plus className="h-3 w-3 mr-0.5" /> Role
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Pending users */}
-      {usersPending.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="h-4 w-4 text-amber-500" />
-            <h3 className="text-sm font-semibold text-foreground">Aguardando Aprovação</h3>
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{usersPending.length}</Badge>
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar por nome, e-mail ou papel..."
+              className="h-10 pl-9"
+            />
           </div>
-          {usersPending.map(user => (
-            <Card key={user.id} className="border-dashed border-amber-500/30">
-              <CardContent className="px-5 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{user.fullName || 'Sem nome'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 ml-3">
-                    <Select value={selectedRole} onValueChange={v => setSelectedRole(v as AppRole)}>
-                      <SelectTrigger className="h-7 text-xs w-32"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {(['admin', 'vendedor', 'financeiro'] as AppRole[]).map(r => (
-                          <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button size="sm" className="h-7 text-xs"
-                      onClick={() => addRole.mutate({ userId: user.id, role: selectedRole })}
-                      disabled={addRole.isPending}>Aprovar</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+        </CardContent>
+      </Card>
 
-      {users.length === 0 && (
+      {!hasAnyResult && (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Nenhum usuário encontrado nesta empresa.</p>
+            <p className="text-sm font-medium text-foreground">Nenhum resultado encontrado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ajuste a busca ou limpe o filtro para visualizar usuários e convites.
+            </p>
           </CardContent>
         </Card>
+      )}
+
+      {hasAnyResult && (
+        <>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold text-foreground">Usuários ativos</h2>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {usersWithRoles.length}
+              </Badge>
+            </div>
+
+            {usersWithRoles.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center">
+                  <ShieldCheck className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground">Nenhum usuário ativo nesta busca</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Quando um usuário receber um papel, ele aparecerá aqui.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              usersWithRoles.map((profile) => {
+                const availableRoles = getAvailableRoles(profile.roles);
+                return (
+                  <Card key={profile.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
+                            {getInitials(profile.fullName, profile.email)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground truncate">
+                                {profile.fullName || "Sem nome"}
+                              </p>
+                              {profile.id === user?.id && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  Você
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mt-1">{profile.email}</p>
+                            <p className="text-[11px] text-muted-foreground mt-2">
+                              Use o menu para adicionar ou remover acessos deste usuário.
+                            </p>
+                          </div>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            {availableRoles.map((role) => (
+                              <DropdownMenuItem
+                                key={`add-${profile.id}-${role}`}
+                                onClick={() => addRole.mutate({ userId: profile.id, role })}
+                                className="text-xs gap-2"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                Adicionar {ROLE_LABELS[role]}
+                              </DropdownMenuItem>
+                            ))}
+                            {profile.roles.map((role) => (
+                              <DropdownMenuItem
+                                key={`remove-${profile.id}-${role}`}
+                                onClick={() => removeRole.mutate({ userId: profile.id, role })}
+                                className="text-xs gap-2 text-destructive focus:text-destructive"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Remover {ROLE_LABELS[role]}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {profile.roles.map((role) => (
+                          <Badge
+                            key={role}
+                            variant="outline"
+                            className={cn("text-[10px] px-2 py-1", ROLE_COLORS[role])}
+                          >
+                            {ROLE_LABELS[role]}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-foreground">Aguardando aprovação</h2>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {usersPending.length}
+              </Badge>
+            </div>
+
+            {usersPending.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-10 text-center">
+                  <UserPlus className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground">Nenhum usuário aguardando aprovação</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Quando alguém entrar sem papel definido, aparecerá aqui para você liberar o acesso.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              usersPending.map((profile) => {
+                const selectedApprovalRole = approvalRoles[profile.id] || "vendedor";
+                return (
+                  <Card key={profile.id} className="border-dashed border-amber-500/30 bg-amber-500/5">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {profile.fullName || "Sem nome"}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate mt-1">{profile.email}</p>
+                          <p className="text-[11px] text-muted-foreground mt-2">
+                            Esta pessoa já pertence à empresa, mas ainda não consegue usar o sistema porque não tem
+                            papel definido.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                          <Select
+                            value={selectedApprovalRole}
+                            onValueChange={(value) =>
+                              setApprovalRoles((current) => ({ ...current, [profile.id]: value as AppRole }))
+                            }
+                          >
+                            <SelectTrigger className="h-9 w-full sm:w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ROLE_OPTIONS.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {ROLE_LABELS[role]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            className="h-9 gap-2"
+                            onClick={() => addRole.mutate({ userId: profile.id, role: selectedApprovalRole })}
+                            disabled={addRole.isPending}
+                          >
+                            {addRole.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <ShieldCheck className="h-4 w-4" />
+                            )}
+                            Aprovar acesso
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
     </div>
   );
