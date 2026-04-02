@@ -133,8 +133,6 @@ function InsumoCombobox({
   );
 }
 
-type ConfigTab = "empresa" | "materiais" | "regras" | "catalogo" | "politicas";
-type ConfigEntity = Motor1Entry | Motor2Entry | InsumoEntry | RegraCalculo | ServicoTemplate | PoliticaComercial;
 
 const tabMeta: Record<ConfigTab, { title: string; description: string; helper: string; icon: React.ElementType }> = {
   empresa: {
