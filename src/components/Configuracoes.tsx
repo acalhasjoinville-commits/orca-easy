@@ -69,6 +69,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type EntitySection = "motor1" | "motor2" | "insumos" | "regras" | "catalogo" | "politicas";
+type ConfigTab = "empresa" | "materiais" | "regras" | "catalogo" | "politicas";
+type ConfigEntity = Motor1Entry | Motor2Entry | InsumoEntry | RegraCalculo | ServicoTemplate | PoliticaComercial;
+
 /* ── Combobox com busca para seleção de insumos ── */
 function InsumoCombobox({
   insumos,
