@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
 export type AppRole = 'admin' | 'vendedor' | 'financeiro';
+export type EmpresaStatus = 'ativa' | 'suspensa' | 'bloqueada';
 
 interface AuthContextType {
   user: User | null;
@@ -11,9 +12,11 @@ interface AuthContextType {
   rolesLoaded: boolean;
   roles: AppRole[];
   empresaId: string | null;
+  empresaStatus: EmpresaStatus | null;
   isAdmin: boolean;
   isVendedor: boolean;
   isFinanceiro: boolean;
+  isSuperAdmin: boolean;
   hasAnyRole: boolean;
   canManageSettings: boolean;
   canDeleteBudget: boolean;
@@ -35,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [rolesLoaded, setRolesLoaded] = useState(false);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [empresaStatus, setEmpresaStatus] = useState<EmpresaStatus | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const fetchRolesAndEmpresa = useCallback(async (userId: string) => {
     try {
@@ -62,10 +67,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setEmpresaId(profile?.empresa_id || null);
       }
+
+      // Fetch isSuperAdmin via RPC
+      const { data: saData, error: saErr } = await supabase.rpc('is_platform_admin' as any, { _user_id: userId });
+      if (saErr) {
+        console.error('Error checking platform admin:', saErr);
+        setIsSuperAdmin(false);
+      } else {
+        setIsSuperAdmin(!!saData);
+      }
+
+      // Fetch empresa status via RPC
+      const { data: statusData, error: statusErr } = await supabase.rpc('get_empresa_status' as any, { _user_id: userId });
+      if (statusErr) {
+        console.error('Error fetching empresa status:', statusErr);
+        setEmpresaStatus(null);
+      } else {
+        setEmpresaStatus((statusData as EmpresaStatus) || null);
+      }
     } catch (err) {
       console.error('Error fetching roles/empresa:', err);
       setRoles([]);
       setEmpresaId(null);
+      setIsSuperAdmin(false);
+      setEmpresaStatus(null);
     } finally {
       setRolesLoaded(true);
     }
@@ -82,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setRoles([]);
           setEmpresaId(null);
+          setIsSuperAdmin(false);
+          setEmpresaStatus(null);
           setRolesLoaded(true);
         }
       }
@@ -113,9 +140,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     rolesLoaded,
     roles,
     empresaId,
+    empresaStatus,
     isAdmin,
     isVendedor,
     isFinanceiro,
+    isSuperAdmin,
     hasAnyRole,
     canManageSettings: isAdmin,
     canDeleteBudget: isAdmin,
@@ -139,6 +168,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       setRoles([]);
       setEmpresaId(null);
+      setIsSuperAdmin(false);
+      setEmpresaStatus(null);
     },
   };
 
