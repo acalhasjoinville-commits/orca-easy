@@ -752,18 +752,11 @@ export function Configuracoes() {
         <div className="space-y-2">
           {regraItens.map((item, idx) => (
             <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-muted/20 p-2">
-              <Select value={item.insumoId} onValueChange={(v) => updateRegraItem(idx, "insumoId", v)}>
-                <SelectTrigger className="h-8 text-xs flex-1">
-                  <SelectValue placeholder="Insumo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {insumos.map((ins) => (
-                    <SelectItem key={ins.id} value={ins.id}>
-                      {ins.nomeEmbalagemCompra}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <InsumoCombobox
+                insumos={insumos}
+                value={item.insumoId}
+                onSelect={(v) => updateRegraItem(idx, "insumoId", v)}
+              />
               <Select
                 value={item.metodoCalculo}
                 onValueChange={(v) => updateRegraItem(idx, "metodoCalculo", v as MetodoCalculo)}
