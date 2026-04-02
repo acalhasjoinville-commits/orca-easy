@@ -21,7 +21,7 @@ import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData'
 
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { LogOut, Loader2, UserCircle } from 'lucide-react';
+import { LogOut, Loader2, UserCircle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
