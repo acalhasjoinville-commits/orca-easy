@@ -24,7 +24,7 @@ import { LogOut, Loader2, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
+  const { user, loading, rolesLoaded, hasAnyRole, isSuperAdmin, empresaStatus, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
 
   const [tab, setTab] = useState<Tab>('dashboard');
   const [wizardKey, setWizardKey] = useState(0);
@@ -58,6 +58,17 @@ const Index = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Super admin without company role → redirect to super admin area
+  if (isSuperAdmin && !hasAnyRole) {
+    window.location.href = '/super-admin';
+    return null;
+  }
+
+  // Empresa suspensa ou bloqueada → tela de bloqueio (exceto super admin)
+  if (!isSuperAdmin && empresaStatus && empresaStatus !== 'ativa') {
+    return <EmpresaSuspensa />;
   }
 
   // Authenticated but no role → pending approval
