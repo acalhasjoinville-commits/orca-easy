@@ -1096,7 +1096,7 @@ export function Configuracoes() {
       (e) =>
         normalize(e.nomeServico).includes(q) ||
         normalize(e.materialPadrao).includes(q) ||
-        normalize(regraMap.get(e.regraId) || "").includes(q),
+        normalize((regraMap.get(e.regraId) ?? "") as string).includes(q),
     );
   }, [servicos, searchCatalogo, regraMap]);
 
