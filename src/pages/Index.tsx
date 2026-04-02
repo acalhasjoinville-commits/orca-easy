@@ -14,6 +14,7 @@ import { EditarPerfil } from '@/components/EditarPerfil';
 import { LoginPage } from '@/components/LoginPage';
 import { PendingApproval } from '@/components/PendingApproval';
 import { AccessDenied } from '@/components/AccessDenied';
+import { EmpresaSuspensa } from '@/components/EmpresaSuspensa';
 import { Orcamento } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
