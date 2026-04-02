@@ -706,7 +706,7 @@ export function Configuracoes() {
   const materiaisUnicos = [...new Set([...motor1.map((m) => m.material), ...motor2.map((m) => m.material)])];
   const regraName = (id: string) => regras.find((r) => r.id === id)?.nomeRegra || "—";
 
-  const regraMap = useMemo(() => new Map(regras.map((r) => [r.id, r.nomeRegra])), [regras]);
+  const regraMap = useMemo(() => new Map<string, string>(regras.map((r) => [r.id, r.nomeRegra])), [regras]);
   const currentTabMeta = tabMeta[tab];
 
   const addRegraItem = () => {
