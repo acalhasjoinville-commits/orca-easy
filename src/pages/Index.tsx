@@ -323,6 +323,11 @@ const Index = () => {
             <h1 className="text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</h1>
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
+              {isSuperAdmin && (
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = '/super-admin'} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg" title="Super Admin">
+                  <Shield className="h-5 w-5" />
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
                 <UserCircle className="h-5 w-5" />
               </Button>
