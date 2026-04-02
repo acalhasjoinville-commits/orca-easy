@@ -54,7 +54,11 @@ import {
   BookOpen,
   FileText,
   MoreVertical,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -68,6 +72,67 @@ import {
 type EntitySection = "motor1" | "motor2" | "insumos" | "regras" | "catalogo" | "politicas";
 type ConfigTab = "empresa" | "materiais" | "regras" | "catalogo" | "politicas";
 type ConfigEntity = Motor1Entry | Motor2Entry | InsumoEntry | RegraCalculo | ServicoTemplate | PoliticaComercial;
+
+/* ── Combobox com busca para seleção de insumos ── */
+function InsumoCombobox({
+  insumos,
+  value,
+  onSelect,
+}: {
+  insumos: InsumoEntry[];
+  value: string;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = insumos.find((i) => i.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-8 text-xs flex-1 justify-between font-normal"
+        >
+          <span className="truncate">
+            {selected ? selected.nomeEmbalagemCompra : "Buscar insumo..."}
+          </span>
+          <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[280px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Filtrar insumo..." className="h-8 text-xs" />
+          <CommandList>
+            <CommandEmpty className="py-3 text-xs">Nenhum insumo encontrado.</CommandEmpty>
+            <CommandGroup>
+              {insumos.map((ins) => (
+                <CommandItem
+                  key={ins.id}
+                  value={ins.nomeEmbalagemCompra}
+                  onSelect={() => {
+                    onSelect(ins.id);
+                    setOpen(false);
+                  }}
+                  className="text-xs"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-3 w-3",
+                      value === ins.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {ins.nomeEmbalagemCompra}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 
 const tabMeta: Record<ConfigTab, { title: string; description: string; helper: string; icon: React.ElementType }> = {
   empresa: {
@@ -748,18 +813,11 @@ export function Configuracoes() {
         <div className="space-y-2">
           {regraItens.map((item, idx) => (
             <div key={item.id} className="flex items-center gap-2 rounded-lg border bg-muted/20 p-2">
-              <Select value={item.insumoId} onValueChange={(v) => updateRegraItem(idx, "insumoId", v)}>
-                <SelectTrigger className="h-8 text-xs flex-1">
-                  <SelectValue placeholder="Insumo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {insumos.map((ins) => (
-                    <SelectItem key={ins.id} value={ins.id}>
-                      {ins.nomeEmbalagemCompra}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <InsumoCombobox
+                insumos={insumos}
+                value={item.insumoId}
+                onSelect={(v) => updateRegraItem(idx, "insumoId", v)}
+              />
               <Select
                 value={item.metodoCalculo}
                 onValueChange={(v) => updateRegraItem(idx, "metodoCalculo", v as MetodoCalculo)}
@@ -1099,7 +1157,7 @@ export function Configuracoes() {
       (e) =>
         normalize(e.nomeServico).includes(q) ||
         normalize(e.materialPadrao).includes(q) ||
-        normalize(regraMap.get(e.regraId) || "").includes(q),
+        normalize((regraMap.get(e.regraId) ?? "") as string).includes(q),
     );
   }, [servicos, searchCatalogo, regraMap]);
 
