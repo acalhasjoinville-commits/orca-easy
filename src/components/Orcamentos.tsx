@@ -77,6 +77,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Orcamento | null>(null);
+  const [activeTab, setActiveTab] = useState<'lista' | 'followup'>('lista');
 
   const allSelected = filterChips.every((f) => activeFilters.has(f.key));
 
