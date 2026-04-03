@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
+import { FollowUpBlock } from './FollowUpBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
