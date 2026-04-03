@@ -1,37 +1,52 @@
-import { useState } from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar, Tab } from '@/components/AppSidebar';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
-import { Dashboard } from '@/components/Dashboard';
-import { Orcamentos } from '@/components/Orcamentos';
-import { OrcamentoWizard } from '@/components/OrcamentoWizard';
-import { OrcamentoDetails } from '@/components/OrcamentoDetails';
-import { Configuracoes } from '@/components/Configuracoes';
-import { Clientes } from '@/components/Clientes';
-import { Financeiro } from '@/components/Financeiro';
-import { Usuarios } from '@/components/Usuarios';
-import { EditarPerfil } from '@/components/EditarPerfil';
-import { LoginPage } from '@/components/LoginPage';
-import { PendingApproval } from '@/components/PendingApproval';
-import { AccessDenied } from '@/components/AccessDenied';
-import { EmpresaSuspensa } from '@/components/EmpresaSuspensa';
-import { Orcamento } from '@/lib/types';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useOrcamentos, useClientes, useEmpresa } from '@/hooks/useSupabaseData';
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar, Tab } from "@/components/AppSidebar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { Dashboard } from "@/components/Dashboard";
+import { Orcamentos } from "@/components/Orcamentos";
+import { OrcamentoWizard } from "@/components/OrcamentoWizard";
+import { OrcamentoDetails } from "@/components/OrcamentoDetails";
+import { Configuracoes } from "@/components/Configuracoes";
+import { Clientes } from "@/components/Clientes";
+import { Financeiro } from "@/components/Financeiro";
+import { Usuarios } from "@/components/Usuarios";
+import { EditarPerfil } from "@/components/EditarPerfil";
+import { LoginPage } from "@/components/LoginPage";
+import { PendingApproval } from "@/components/PendingApproval";
+import { AccessDenied } from "@/components/AccessDenied";
+import { EmpresaSuspensa } from "@/components/EmpresaSuspensa";
+import { Orcamento } from "@/lib/types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useOrcamentos, useClientes, useEmpresa } from "@/hooks/useSupabaseData";
 
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-import { LogOut, Loader2, UserCircle, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { LogOut, Loader2, UserCircle, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { user, loading, rolesLoaded, hasAnyRole, isSuperAdmin, empresaStatus, signOut, canManageSettings, canViewFinanceiro, canCreateEditBudget, canManageClientes, canManageUsers } = useAuth();
+  const {
+    user,
+    loading,
+    rolesLoaded,
+    hasAnyRole,
+    isSuperAdmin,
+    empresaStatus,
+    signOut,
+    canManageSettings,
+    canViewFinanceiro,
+    canCreateEditBudget,
+    canManageClientes,
+    canManageUsers,
+  } = useAuth();
 
-  const [tab, setTab] = useState<Tab>('dashboard');
+  const [tab, setTab] = useState<Tab>("dashboard");
   const [wizardKey, setWizardKey] = useState(0);
   const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
@@ -63,12 +78,11 @@ const Index = () => {
 
   // Super admin without company role → redirect to super admin area
   if (isSuperAdmin && !hasAnyRole) {
-    window.location.href = '/super-admin';
-    return null;
+    return <Navigate to="/super-admin" replace />;
   }
 
   // Empresa suspensa ou bloqueada → tela de bloqueio (exceto super admin)
-  if (!isSuperAdmin && empresaStatus && empresaStatus !== 'ativa') {
+  if (!isSuperAdmin && empresaStatus && empresaStatus !== "ativa") {
     return <EmpresaSuspensa />;
   }
 
@@ -79,59 +93,59 @@ const Index = () => {
 
   // Guard navigation: redirect to dashboard if user navigates to restricted tab
   const guardedNavigate = (newTab: Tab) => {
-    if (newTab === 'config' && !canManageSettings) {
-      toast.error('Sem permissão para acessar Configurações.');
+    if (newTab === "config" && !canManageSettings) {
+      toast.error("Sem permissão para acessar Configurações.");
       return;
     }
-    if (newTab === 'financeiro' && !canViewFinanceiro) {
-      toast.error('Sem permissão para acessar Financeiro.');
+    if (newTab === "financeiro" && !canViewFinanceiro) {
+      toast.error("Sem permissão para acessar Financeiro.");
       return;
     }
-    if (newTab === 'clientes' && !canManageClientes) {
-      toast.error('Sem permissão para acessar Clientes.');
+    if (newTab === "clientes" && !canManageClientes) {
+      toast.error("Sem permissão para acessar Clientes.");
       return;
     }
-    if (newTab === 'orcamento-novo' && !canCreateEditBudget) {
-      toast.error('Sem permissão para criar/editar orçamentos.');
+    if (newTab === "orcamento-novo" && !canCreateEditBudget) {
+      toast.error("Sem permissão para criar/editar orçamentos.");
       return;
     }
-    if (newTab === 'usuarios' && !canManageUsers) {
-      toast.error('Sem permissão para gerenciar usuários.');
+    if (newTab === "usuarios" && !canManageUsers) {
+      toast.error("Sem permissão para gerenciar usuários.");
       return;
     }
     setTab(newTab);
   };
 
-  const goToList = () => setTab('orcamentos');
+  const goToList = () => setTab("orcamentos");
 
   const goToNew = () => {
     if (!canCreateEditBudget) {
-      toast.error('Sem permissão para criar orçamentos.');
+      toast.error("Sem permissão para criar orçamentos.");
       return;
     }
     setEditingOrcamento(null);
-    setWizardKey(k => k + 1);
-    setTab('orcamento-novo');
+    setWizardKey((k) => k + 1);
+    setTab("orcamento-novo");
   };
 
   const goToDetails = (orc: Orcamento) => {
     setSelectedOrcamento(orc);
-    setTab('orcamento-detalhes');
+    setTab("orcamento-detalhes");
   };
 
   const goToEdit = (orc: Orcamento) => {
     if (!canCreateEditBudget) {
-      toast.error('Sem permissão para editar orçamentos.');
+      toast.error("Sem permissão para editar orçamentos.");
       return;
     }
     setEditingOrcamento(orc);
-    setWizardKey(k => k + 1);
-    setTab('orcamento-novo');
+    setWizardKey((k) => k + 1);
+    setTab("orcamento-novo");
   };
 
   const handleDuplicate = async (orc: Orcamento) => {
     if (!canCreateEditBudget) {
-      toast.error('Sem permissão para duplicar orçamentos.');
+      toast.error("Sem permissão para duplicar orçamentos.");
       return;
     }
     try {
@@ -141,14 +155,14 @@ const Index = () => {
         id: crypto.randomUUID(),
         numeroOrcamento: novoNumero,
         dataCriacao: new Date().toISOString(),
-        status: 'pendente',
+        status: "pendente",
         dataExecucao: null,
       };
       await addOrcamento.mutateAsync(novoOrcamento);
       toast.success(`Orçamento #${novoNumero} duplicado com sucesso!`);
       goToDetails(novoOrcamento);
     } catch {
-      toast.error('Erro ao duplicar orçamento.');
+      toast.error("Erro ao duplicar orçamento.");
     }
   };
 
@@ -156,20 +170,20 @@ const Index = () => {
     try {
       const updated: Orcamento = {
         ...orc,
-        status: 'executado',
+        status: "executado",
         dataExecucao: new Date().toISOString(),
       };
       await updateOrcamento.mutateAsync(updated);
       setSelectedOrcamento(updated);
-      toast.success('Orçamento marcado como executado!');
+      toast.success("Orçamento marcado como executado!");
     } catch {
-      toast.error('Erro ao marcar como executado.');
+      toast.error("Erro ao marcar como executado.");
     }
   };
 
   const handleMarkFaturado = async (orc: Orcamento) => {
     if (orc.dataFaturamento) {
-      toast.error('Orçamento já foi faturado.');
+      toast.error("Orçamento já foi faturado.");
       return;
     }
     try {
@@ -179,15 +193,15 @@ const Index = () => {
       };
       await updateOrcamento.mutateAsync(updated);
       setSelectedOrcamento(updated);
-      toast.success('Orçamento marcado como faturado!');
+      toast.success("Orçamento marcado como faturado!");
     } catch {
-      toast.error('Erro ao marcar como faturado.');
+      toast.error("Erro ao marcar como faturado.");
     }
   };
 
   const handleMarkPago = async (orc: Orcamento) => {
     if (orc.dataPagamento) {
-      toast.error('Orçamento já foi marcado como pago.');
+      toast.error("Orçamento já foi marcado como pago.");
       return;
     }
     try {
@@ -197,9 +211,9 @@ const Index = () => {
       };
       await updateOrcamento.mutateAsync(updated);
       setSelectedOrcamento(updated);
-      toast.success('Orçamento marcado como pago!');
+      toast.success("Orçamento marcado como pago!");
     } catch {
-      toast.error('Erro ao marcar como pago.');
+      toast.error("Erro ao marcar como pago.");
     }
   };
 
@@ -211,9 +225,9 @@ const Index = () => {
       };
       await updateOrcamento.mutateAsync(updated);
       setSelectedOrcamento(updated);
-      toast.success(date ? 'Data prevista atualizada!' : 'Data prevista removida.');
+      toast.success(date ? "Data prevista atualizada!" : "Data prevista removida.");
     } catch {
-      toast.error('Erro ao atualizar data prevista.');
+      toast.error("Erro ao atualizar data prevista.");
     }
   };
 
@@ -221,39 +235,52 @@ const Index = () => {
     try {
       const updated: Orcamento = {
         ...orc,
-        status: 'cancelado',
+        status: "cancelado",
         dataCancelamento: new Date().toISOString(),
       };
       await updateOrcamento.mutateAsync(updated);
       setSelectedOrcamento(updated);
-      toast.success('Orçamento cancelado.');
+      toast.success("Orçamento cancelado.");
     } catch {
-      toast.error('Erro ao cancelar orçamento.');
+      toast.error("Erro ao cancelar orçamento.");
     }
   };
 
   const getHeaderLabel = () => {
     switch (tab) {
-      case 'dashboard': return 'Dashboard';
-      case 'orcamentos': return 'Orçamentos';
-      case 'orcamento-detalhes': return 'Detalhes do Orçamento';
-      case 'orcamento-novo': return editingOrcamento ? 'Editar Orçamento' : 'Novo Orçamento';
-      case 'clientes': return 'Clientes';
-      case 'financeiro': return 'Financeiro';
-      case 'usuarios': return 'Usuários';
-      case 'config': return 'Configurações';
-      default: return '';
+      case "dashboard":
+        return "Dashboard";
+      case "orcamentos":
+        return "Orçamentos";
+      case "orcamento-detalhes":
+        return "Detalhes do Orçamento";
+      case "orcamento-novo":
+        return editingOrcamento ? "Editar Orçamento" : "Novo Orçamento";
+      case "clientes":
+        return "Clientes";
+      case "financeiro":
+        return "Financeiro";
+      case "usuarios":
+        return "Usuários";
+      case "config":
+        return "Configurações";
+      default:
+        return "";
     }
   };
 
   const content = (
     <>
-      {tab === 'dashboard' && <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />}
-      {tab === 'orcamentos' && <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />}
-      {tab === 'orcamento-detalhes' && selectedOrcamento && (
+      {tab === "dashboard" && (
+        <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
+      )}
+      {tab === "orcamentos" && (
+        <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
+      )}
+      {tab === "orcamento-detalhes" && selectedOrcamento && (
         <OrcamentoDetails
           orcamento={selectedOrcamento}
-          cliente={clientes.find(c => c.id === selectedOrcamento.clienteId)}
+          cliente={clientes.find((c) => c.id === selectedOrcamento.clienteId)}
           empresa={empresa}
           onBack={goToList}
           onEdit={goToEdit}
@@ -265,29 +292,35 @@ const Index = () => {
           onCancelOrcamento={handleCancelOrcamento}
         />
       )}
-      {tab === 'orcamento-novo' && (
-        canCreateEditBudget ? (
+      {tab === "orcamento-novo" &&
+        (canCreateEditBudget ? (
           <OrcamentoWizard
             key={wizardKey}
-            onDone={() => { setEditingOrcamento(null); setTab('orcamentos'); }}
+            onDone={() => {
+              setEditingOrcamento(null);
+              setTab("orcamentos");
+            }}
             editingOrcamento={editingOrcamento}
           />
         ) : (
           <AccessDenied message="Você não tem permissão para criar ou editar orçamentos." />
-        )
-      )}
-      {tab === 'clientes' && (
-        canManageClientes ? <Clientes /> : <AccessDenied message="Você não tem permissão para acessar Clientes." />
-      )}
-      {tab === 'financeiro' && (
-        canViewFinanceiro ? <Financeiro /> : <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
-      )}
-      {tab === 'usuarios' && (
-        canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />
-      )}
-      {tab === 'config' && (
-        canManageSettings ? <Configuracoes /> : <AccessDenied message="Você não tem permissão para acessar Configurações." />
-      )}
+        ))}
+      {tab === "clientes" &&
+        (canManageClientes ? <Clientes /> : <AccessDenied message="Você não tem permissão para acessar Clientes." />)}
+      {tab === "financeiro" &&
+        (canViewFinanceiro ? (
+          <Financeiro />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
+        ))}
+      {tab === "usuarios" &&
+        (canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />)}
+      {tab === "config" &&
+        (canManageSettings ? (
+          <Configuracoes />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar Configurações." />
+        ))}
     </>
   );
 
@@ -299,10 +332,20 @@ const Index = () => {
             OC
           </div>
           <span className="ml-3 text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</span>
-          <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setProfileOpen(true)}
+            className="text-muted-foreground hover:text-foreground h-9 w-9 p-0"
+          >
             <UserCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="text-muted-foreground hover:text-foreground h-9 w-9 p-0"
+          >
             <LogOut className="h-5 w-5" />
           </Button>
         </header>
@@ -324,14 +367,30 @@ const Index = () => {
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
               {isSuperAdmin && (
-                <Button variant="ghost" size="sm" onClick={() => window.location.href = '/super-admin'} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg" title="Super Admin">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/super-admin")}
+                  className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
+                  title="Super Admin"
+                >
                   <Shield className="h-5 w-5" />
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={() => setProfileOpen(true)} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setProfileOpen(true)}
+                className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
+              >
                 <UserCircle className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
+              >
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
