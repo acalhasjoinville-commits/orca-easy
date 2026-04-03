@@ -243,8 +243,3 @@ export const TIPO_INTERACAO_CONFIG: Record<TipoInteracao, { label: string }> = {
   encerrado: { label: 'Encerrado' },
   observacao: { label: 'Observação' },
 };
-  'Receita Avulsa',
-  'Entrada Manual',
-  'Ajuste Positivo',
-  'Outros',
-] as const;
