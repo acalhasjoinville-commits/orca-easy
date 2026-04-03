@@ -152,6 +152,9 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
       {/* Pipeline */}
       {showPipeline && <PipelineBar orcamento={orcamento} />}
 
+      {/* Follow-up Comercial */}
+      <FollowUpBlock orcamentoId={orcamento.id} />
+
       {/* Header Card */}
       <Card className="mb-6">
         <CardContent className="p-5">
