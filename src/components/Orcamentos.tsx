@@ -624,6 +624,8 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </>
+      )}
     </div>
   );
 }
