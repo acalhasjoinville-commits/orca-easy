@@ -3,12 +3,13 @@ import { Orcamento, StatusOrcamento } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from "lucide-react";
+import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, MessageCircle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { FilaComercial } from "./FilaComercial";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -76,6 +77,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Orcamento | null>(null);
+  const [activeTab, setActiveTab] = useState<'lista' | 'followup'>('lista');
 
   const allSelected = filterChips.every((f) => activeFilters.has(f.key));
 
@@ -260,6 +262,38 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
         )}
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex items-center gap-1 mb-4 border-b border-border">
+        <button
+          onClick={() => setActiveTab('lista')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'lista'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <FileText className="h-3.5 w-3.5 inline mr-1.5" />
+          Lista
+        </button>
+        <button
+          onClick={() => setActiveTab('followup')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'followup'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          )}
+        >
+          <MessageCircle className="h-3.5 w-3.5 inline mr-1.5" />
+          Follow-up
+        </button>
+      </div>
+
+      {activeTab === 'followup' ? (
+        <FilaComercial onViewOrcamento={onViewOrcamento} orcamentos={orcamentos} />
+      ) : (
+      <>
       <Card className="mb-4 border-dashed bg-muted/20">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -590,6 +624,8 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </>
+      )}
     </div>
   );
 }

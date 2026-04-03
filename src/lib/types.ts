@@ -196,3 +196,50 @@ export const CATEGORIAS_RECEITA = [
   'Ajuste Positivo',
   'Outros',
 ] as const;
+
+// ─── FOLLOW-UP COMERCIAL ───
+
+export type StatusFollowUp = 'sem_retorno' | 'agendado' | 'em_negociacao' | 'aguardando_cliente' | 'concluido';
+export type TipoInteracao = 'contato' | 'retorno_agendado' | 'negociacao' | 'cliente_sem_resposta' | 'aprovado' | 'encerrado' | 'observacao';
+
+export interface OrcamentoFollowUp {
+  id: string;
+  orcamentoId: string;
+  empresaId: string;
+  statusFollowUp: StatusFollowUp;
+  proximaAcao: string;
+  dataRetorno: string | null;
+  responsavelId: string | null;
+  responsavelNome: string;
+  ultimaInteracaoEm: string | null;
+  observacoes: string;
+}
+
+export interface FollowUpLog {
+  id: string;
+  orcamentoId: string;
+  empresaId: string;
+  userId: string;
+  userName: string;
+  tipo: TipoInteracao;
+  descricao: string;
+  createdAt: string;
+}
+
+export const STATUS_FOLLOWUP_CONFIG: Record<StatusFollowUp, { label: string; color: string }> = {
+  sem_retorno: { label: 'Sem retorno', color: 'bg-gray-500/15 text-gray-600 border-gray-500/30' },
+  agendado: { label: 'Agendado', color: 'bg-blue-500/15 text-blue-700 border-blue-500/30' },
+  em_negociacao: { label: 'Em negociação', color: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
+  aguardando_cliente: { label: 'Aguardando cliente', color: 'bg-purple-500/15 text-purple-700 border-purple-500/30' },
+  concluido: { label: 'Concluído', color: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
+};
+
+export const TIPO_INTERACAO_CONFIG: Record<TipoInteracao, { label: string }> = {
+  contato: { label: 'Contato realizado' },
+  retorno_agendado: { label: 'Retorno agendado' },
+  negociacao: { label: 'Negociação' },
+  cliente_sem_resposta: { label: 'Cliente sem resposta' },
+  aprovado: { label: 'Aprovado' },
+  encerrado: { label: 'Encerrado' },
+  observacao: { label: 'Observação' },
+};

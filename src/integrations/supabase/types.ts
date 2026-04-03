@@ -364,6 +364,114 @@ export type Database = {
           },
         ]
       }
+      orcamento_followup_logs: {
+        Row: {
+          created_at: string
+          descricao: string
+          empresa_id: string
+          id: string
+          orcamento_id: string
+          tipo: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string
+          empresa_id: string
+          id?: string
+          orcamento_id: string
+          tipo: string
+          user_id: string
+          user_name?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          orcamento_id?: string
+          tipo?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_followup_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_followup_logs_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orcamento_followups: {
+        Row: {
+          created_at: string
+          data_retorno: string | null
+          empresa_id: string
+          id: string
+          observacoes: string
+          orcamento_id: string
+          proxima_acao: string
+          responsavel_id: string | null
+          responsavel_nome: string
+          status_followup: string
+          ultima_interacao_em: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_retorno?: string | null
+          empresa_id: string
+          id?: string
+          observacoes?: string
+          orcamento_id: string
+          proxima_acao?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status_followup?: string
+          ultima_interacao_em?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_retorno?: string | null
+          empresa_id?: string
+          id?: string
+          observacoes?: string
+          orcamento_id?: string
+          proxima_acao?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status_followup?: string
+          ultima_interacao_em?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_followups_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_followups_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: true
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orcamentos: {
         Row: {
           cliente_id: string | null

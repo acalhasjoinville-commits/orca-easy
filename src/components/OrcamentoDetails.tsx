@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from '@/lib/types';
+import { FollowUpBlock } from './FollowUpBlock';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -150,6 +151,9 @@ export function OrcamentoDetails({ orcamento, cliente, empresa, onBack, onEdit, 
 
       {/* Pipeline */}
       {showPipeline && <PipelineBar orcamento={orcamento} />}
+
+      {/* Follow-up Comercial */}
+      <FollowUpBlock orcamentoId={orcamento.id} />
 
       {/* Header Card */}
       <Card className="mb-6">
