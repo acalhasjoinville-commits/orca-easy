@@ -3,12 +3,13 @@ import { Orcamento, StatusOrcamento } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from "lucide-react";
+import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, MessageCircle } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { FilaComercial } from "./FilaComercial";
 import {
   DropdownMenu,
   DropdownMenuContent,
