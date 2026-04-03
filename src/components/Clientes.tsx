@@ -29,7 +29,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const getDocumentoLabel = (cliente: Cliente) => {
   const documento = cliente.documento?.trim();
-  return documento ? documento : "Nao informado";
+  return documento ? documento : "Não informado";
 };
 
 export function Clientes() {
@@ -123,19 +123,30 @@ export function Clientes() {
         </Button>
       </div>
 
-      <Card className="mb-4">
-        <CardContent className="p-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, documento, WhatsApp ou cidade..."
-              className="pl-9 h-9 bg-background"
-            />
+      <Card className="mb-4 border-dashed bg-muted/20">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">Base de clientes da operação</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Consulte contatos, documentos e cidade com mais rapidez antes de abrir novos orçamentos.
+              </p>
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por nome, documento, WhatsApp ou cidade..."
+                  className="h-9 bg-background pl-9"
+                />
+              </div>
+            </div>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Clientes sem CPF/CNPJ continuam disponiveis para orcamento e aparecem como "Nao informado".
+            Clientes sem CPF/CNPJ continuam disponíveis para orçamento e aparecem como "Não informado".
           </p>
         </CardContent>
       </Card>
@@ -147,7 +158,7 @@ export function Clientes() {
             {clientes.length === 0 ? "Nenhum cliente cadastrado" : "Nenhum resultado"}
           </h2>
           <p className="mb-6 max-w-xs text-sm text-muted-foreground">
-            {clientes.length === 0 ? "Cadastre seu primeiro cliente para comecar." : "Tente outra busca."}
+            {clientes.length === 0 ? "Cadastre seu primeiro cliente para começar." : "Tente outra busca."}
           </p>
           {clientes.length === 0 && (
             <Button
@@ -299,9 +310,9 @@ export function Clientes() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusao</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja remover o cliente <strong>{deleteTarget?.nomeRazaoSocial}</strong>? Esta acao nao pode ser
+              Deseja remover o cliente <strong>{deleteTarget?.nomeRazaoSocial}</strong>? Esta ação não pode ser
               desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

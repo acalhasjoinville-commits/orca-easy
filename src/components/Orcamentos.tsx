@@ -1,20 +1,20 @@
-import { useOrcamentos } from '@/hooks/useSupabaseData';
-import { Orcamento, StatusOrcamento } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from 'lucide-react';
-import { useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { toast } from 'sonner';
+import { useOrcamentos } from "@/hooks/useSupabaseData";
+import { Orcamento, StatusOrcamento } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil } from "lucide-react";
+import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 interface OrcamentosProps {
   onNewOrcamento: () => void;
@@ -33,21 +33,24 @@ interface OrcamentosProps {
 }
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
-  pendente: { label: 'Pendente', color: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30' },
-  aprovado: { label: 'Aprovado', color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' },
-  rejeitado: { label: 'Rejeitado', color: 'bg-red-500/15 text-red-600 border-red-500/30' },
-  executado: { label: 'Executado', color: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30' },
-  cancelado: { label: 'Cancelado', color: 'bg-gray-500/15 text-gray-600 border-gray-500/30' },
+  pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" },
+  aprovado: {
+    label: "Aprovado",
+    color: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  },
+  rejeitado: { label: "Rejeitado", color: "bg-red-500/15 text-red-600 border-red-500/30" },
+  executado: { label: "Executado", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30" },
+  cancelado: { label: "Cancelado", color: "bg-gray-500/15 text-gray-600 border-gray-500/30" },
 };
 
-const allStatuses: StatusOrcamento[] = ['pendente', 'aprovado', 'rejeitado', 'executado', 'cancelado'];
+const allStatuses: StatusOrcamento[] = ["pendente", "aprovado", "rejeitado", "executado", "cancelado"];
 
 const filterChips: { key: StatusOrcamento; label: string }[] = [
-  { key: 'pendente', label: 'Pendentes' },
-  { key: 'aprovado', label: 'Aprovados' },
-  { key: 'executado', label: 'Executados' },
-  { key: 'rejeitado', label: 'Rejeitados' },
-  { key: 'cancelado', label: 'Cancelados' },
+  { key: "pendente", label: "Pendentes" },
+  { key: "aprovado", label: "Aprovados" },
+  { key: "executado", label: "Executados" },
+  { key: "rejeitado", label: "Rejeitados" },
+  { key: "cancelado", label: "Cancelados" },
 ];
 
 const statusPriority: Record<string, number> = {
@@ -58,26 +61,26 @@ const statusPriority: Record<string, number> = {
   cancelado: 4,
 };
 
-const defaultActiveFilters = new Set<StatusOrcamento>(['pendente', 'aprovado']);
+const defaultActiveFilters = new Set<StatusOrcamento>(["pendente", "aprovado"]);
 
 const fmtDate = (d: string | null | undefined) => {
-  if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 };
 
 export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }: OrcamentosProps) {
   const { orcamentos, isLoading, updateOrcamento } = useOrcamentos();
   const { canCreateEditBudget } = useAuth();
   const isMobile = useIsMobile();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Orcamento | null>(null);
 
-  const allSelected = filterChips.every(f => activeFilters.has(f.key));
+  const allSelected = filterChips.every((f) => activeFilters.has(f.key));
 
   const toggleFilter = (status: StatusOrcamento) => {
-    setActiveFilters(prev => {
+    setActiveFilters((prev) => {
       const next = new Set(prev);
       if (next.has(status)) next.delete(status);
       else next.add(status);
@@ -87,15 +90,14 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
 
   const toggleAll = () => {
     if (allSelected) setActiveFilters(new Set());
-    else setActiveFilters(new Set(filterChips.map(f => f.key)));
+    else setActiveFilters(new Set(filterChips.map((f) => f.key)));
   };
 
-  const formatCurrency = (v: number) =>
-    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   const handleStatusChange = async (orc: Orcamento, newStatus: StatusOrcamento) => {
     if (newStatus === orc.status) return;
-    if (newStatus === 'rejeitado') {
+    if (newStatus === "rejeitado") {
       setPendingReject(orc);
       return;
     }
@@ -109,7 +111,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       await updateOrcamento.mutateAsync({ ...orc, status: newStatus });
       toast.success(`Status alterado para ${statusConfig[newStatus].label}.`, { duration: 2500 });
     } catch {
-      toast.error('Erro ao alterar status.', { duration: 5000 });
+      toast.error("Erro ao alterar status.", { duration: 5000 });
     } finally {
       setUpdatingId(null);
     }
@@ -117,19 +119,19 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
 
   const confirmReject = async () => {
     if (!pendingReject) return;
-    await applyStatusChange(pendingReject, 'rejeitado');
+    await applyStatusChange(pendingReject, "rejeitado");
     setPendingReject(null);
   };
 
   const filtered = useMemo(() => {
     const showAll = activeFilters.size === 0;
-    const result = orcamentos.filter(o => {
+    const result = orcamentos.filter((o) => {
       if (!showAll && !activeFilters.has(o.status as StatusOrcamento)) return false;
       const q = search.toLowerCase().trim();
       if (!q) return true;
       return (
         o.nomeCliente.toLowerCase().includes(q) ||
-        String(o.numeroOrcamento ?? '').includes(q) ||
+        String(o.numeroOrcamento ?? "").includes(q) ||
         formatCurrency(o.valorFinal).toLowerCase().includes(q)
       );
     });
@@ -143,60 +145,60 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   }, [orcamentos, activeFilters, search]);
 
   const groupedByStatus = useMemo(() => {
-    const statusOrder: string[] = ['pendente', 'aprovado', 'executado', 'rejeitado', 'cancelado'];
+    const statusOrder: string[] = ["pendente", "aprovado", "executado", "rejeitado", "cancelado"];
     const groups: { status: string; label: string; items: typeof filtered }[] = [];
     for (const s of statusOrder) {
-      const items = filtered.filter(o => o.status === s);
+      const items = filtered.filter((o) => o.status === s);
       if (items.length > 0) {
         const label = statusConfig[s as StatusOrcamento]?.label ?? s;
         groups.push({ status: s, label: `${label}s`, items });
       }
     }
     const known = new Set(statusOrder);
-    const rest = filtered.filter(o => !known.has(o.status));
-    if (rest.length > 0) groups.push({ status: 'outros', label: 'Outros', items: rest });
+    const rest = filtered.filter((o) => !known.has(o.status));
+    if (rest.length > 0) groups.push({ status: "outros", label: "Outros", items: rest });
     return groups;
   }, [filtered]);
 
   const motorLabel = (mt?: string) => {
-    if (mt === 'motor1') return 'M1';
-    if (mt === 'motor2') return 'M2';
+    if (mt === "motor1") return "M1";
+    if (mt === "motor2") return "M2";
     return null;
   };
 
   const getRelevantDate = (o: Orcamento): { label: string; value: string } | null => {
-    if (o.dataPagamento) return { label: 'Pago', value: fmtDate(o.dataPagamento) };
-    if (o.dataFaturamento) return { label: 'Faturado', value: fmtDate(o.dataFaturamento) };
-    if (o.dataExecucao) return { label: 'Executado', value: fmtDate(o.dataExecucao) };
-    if (o.dataPrevista) return { label: 'Previsto', value: fmtDate(o.dataPrevista) };
+    if (o.dataPagamento) return { label: "Pago", value: fmtDate(o.dataPagamento) };
+    if (o.dataFaturamento) return { label: "Faturado", value: fmtDate(o.dataFaturamento) };
+    if (o.dataExecucao) return { label: "Executado", value: fmtDate(o.dataExecucao) };
+    if (o.dataPrevista) return { label: "Previsto", value: fmtDate(o.dataPrevista) };
     return null;
   };
 
   const renderStatusBadge = (o: Orcamento) => {
-    const st = statusConfig[o.status ?? 'pendente'];
+    const st = statusConfig[o.status ?? "pendente"];
     const isUpdating = updatingId === o.id;
 
     if (canCreateEditBudget) {
       return (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <button
               disabled={isUpdating}
               className={cn(
-                'rounded-md px-2.5 py-1 text-[11px] font-semibold border cursor-pointer transition-all',
+                "rounded-md px-2.5 py-1 text-[11px] font-semibold border cursor-pointer transition-all",
                 st.color,
-                isUpdating && 'opacity-50'
+                isUpdating && "opacity-50",
               )}
             >
               {isUpdating ? <Loader2 className="h-3 w-3 animate-spin inline" /> : st.label}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
-            {allStatuses.map(s => (
+          <DropdownMenuContent align="start" className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
+            {allStatuses.map((s) => (
               <DropdownMenuItem key={s} onClick={() => handleStatusChange(o, s)} className="text-xs gap-2">
                 {s === o.status && <Check className="h-3 w-3" />}
                 {s !== o.status && <span className="w-3" />}
-                <span className={cn('rounded-full w-2 h-2 shrink-0', statusConfig[s].color.split(' ')[0])} />
+                <span className={cn("rounded-full w-2 h-2 shrink-0", statusConfig[s].color.split(" ")[0])} />
                 {statusConfig[s].label}
               </DropdownMenuItem>
             ))}
@@ -205,21 +207,17 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       );
     }
 
-    return (
-      <span className={cn('rounded-md px-2.5 py-1 text-[11px] font-semibold border', st.color)}>
-        {st.label}
-      </span>
-    );
+    return <span className={cn("rounded-md px-2.5 py-1 text-[11px] font-semibold border", st.color)}>{st.label}</span>;
   };
 
   const renderRowActions = (o: Orcamento) => (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
           <MoreVertical className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]" onClick={e => e.stopPropagation()}>
+      <DropdownMenuContent align="end" className="min-w-[140px]" onClick={(e) => e.stopPropagation()}>
         <DropdownMenuItem onClick={() => onViewOrcamento(o)} className="text-xs gap-2">
           <Eye className="h-3.5 w-3.5" /> Ver detalhes
         </DropdownMenuItem>
@@ -241,7 +239,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
   }
 
   // Summary stats
-  const countByStatus = (s: StatusOrcamento) => orcamentos.filter(o => o.status === s).length;
+  const countByStatus = (s: StatusOrcamento) => orcamentos.filter((o) => o.status === s).length;
 
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
@@ -251,8 +249,8 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           <h1 className="text-xl font-bold text-foreground">Orçamentos</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {orcamentos.length > 0
-              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? 's' : ''} · ${countByStatus('pendente')} pendente${countByStatus('pendente') !== 1 ? 's' : ''} · ${countByStatus('aprovado')} aprovado${countByStatus('aprovado') !== 1 ? 's' : ''}`
-              : 'Crie e acompanhe seus orçamentos de calhas e rufos'}
+              ? `${orcamentos.length} orçamento${orcamentos.length > 1 ? "s" : ""} · ${countByStatus("pendente")} pendente${countByStatus("pendente") !== 1 ? "s" : ""} · ${countByStatus("aprovado")} aprovado${countByStatus("aprovado") !== 1 ? "s" : ""}`
+              : "Crie e acompanhe seus orçamentos de calhas e rufos"}
           </p>
         </div>
         {canCreateEditBudget && orcamentos.length > 0 && (
@@ -261,6 +259,23 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           </Button>
         )}
       </div>
+
+      <Card className="mb-4 border-dashed bg-muted/20">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Visão operacional dos orçamentos</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Acompanhe o que ainda está pendente, o que já foi aprovado e quais propostas já avançaram para execução,
+                faturamento ou pagamento.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {orcamentos.length === 0 ? (
         <Card className="border-dashed">
@@ -271,8 +286,8 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
             <h2 className="mb-1.5 text-lg font-semibold text-foreground">Nenhum orçamento criado</h2>
             <p className="mb-6 max-w-sm text-sm text-muted-foreground leading-relaxed">
               {canCreateEditBudget
-                ? 'Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda.'
-                : 'Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos.'}
+                ? "Comece criando seu primeiro orçamento. O sistema calcula automaticamente materiais, insumos e valores de venda."
+                : "Ainda não há orçamentos cadastrados. Entre em contato com o responsável para criar novos orçamentos."}
             </p>
             {canCreateEditBudget && (
               <Button onClick={onNewOrcamento} className="gap-2">
@@ -289,8 +304,12 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Buscar por cliente, número ou valor..." value={search}
-                    onChange={e => setSearch(e.target.value)} className="pl-9 h-9 bg-background" />
+                  <Input
+                    placeholder="Buscar por cliente, número ou valor..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9 bg-background"
+                  />
                 </div>
                 {canCreateEditBudget && (
                   <Button onClick={onNewOrcamento} size="sm" className="sm:hidden shrink-0 h-9 gap-1.5">
@@ -304,15 +323,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                 <button
                   onClick={toggleAll}
                   className={cn(
-                    'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors',
+                    "shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors",
                     allSelected
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted",
                   )}
                 >
                   Todos
                 </button>
-                {filterChips.map(f => {
+                {filterChips.map((f) => {
                   const isActive = activeFilters.has(f.key);
                   const count = countByStatus(f.key);
                   return (
@@ -320,10 +339,10 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                       key={f.key}
                       onClick={() => toggleFilter(f.key)}
                       className={cn(
-                        'shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors',
+                        "shrink-0 rounded-full px-3 py-1 text-[11px] font-medium border transition-colors",
                         isActive
                           ? statusConfig[f.key].color
-                          : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                          : "bg-background text-muted-foreground border-border hover:bg-muted",
                       )}
                     >
                       {f.label} {count > 0 && <span className="ml-0.5 opacity-70">({count})</span>}
@@ -337,13 +356,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           {/* Desktop: Table view */}
           {!isMobile ? (
             <div className="space-y-5">
-              {groupedByStatus.map(group => (
+              {groupedByStatus.map((group) => (
                 <div key={group.status}>
                   <div className="flex items-center gap-2.5 pb-2">
-                    <span className={cn(
-                      'text-[11px] font-bold uppercase tracking-wider',
-                      statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[11px] font-bold uppercase tracking-wider",
+                        statusConfig[group.status as StatusOrcamento]?.color.split(" ")[1] ?? "text-muted-foreground",
+                      )}
+                    >
                       {group.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
@@ -370,7 +391,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                           </tr>
                         </thead>
                         <tbody>
-                          {group.items.map(o => {
+                          {group.items.map((o) => {
                             const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
                             const motor = motorLabel(o.motorType);
                             return (
@@ -379,25 +400,63 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                                 className="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors group"
                                 onClick={() => onViewOrcamento(o)}
                               >
-                                <td className="py-3 px-3 font-bold text-primary text-sm">#{o.numeroOrcamento ?? '—'}</td>
+                                <td className="py-3 px-3 font-bold text-primary text-sm">
+                                  #{o.numeroOrcamento ?? "—"}
+                                </td>
                                 <td className="py-3 px-3">
-                                  <span className="font-medium text-foreground truncate block max-w-[200px]">{o.nomeCliente}</span>
-                                  <span className="text-[11px] text-muted-foreground">{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                                  <span className="font-medium text-foreground truncate block max-w-[200px]">
+                                    {o.nomeCliente}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {o.itensServico.length} {o.itensServico.length === 1 ? "serviço" : "serviços"}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-3">{renderStatusBadge(o)}</td>
-                                <td className="py-3 px-3 text-right font-bold tabular-nums text-foreground">{formatCurrency(displayValue)}</td>
-                                <td className="py-3 px-3 text-center text-xs text-muted-foreground tabular-nums">{fmtDate(o.dataCriacao)}</td>
-                                <td className="py-3 px-3 text-center text-xs tabular-nums">
-                                  <span className={o.dataPrevista ? 'text-foreground font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataPrevista)}</span>
+                                <td className="py-3 px-3 text-right font-bold tabular-nums text-foreground">
+                                  {formatCurrency(displayValue)}
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs text-muted-foreground tabular-nums">
+                                  {fmtDate(o.dataCriacao)}
                                 </td>
                                 <td className="py-3 px-3 text-center text-xs tabular-nums">
-                                  <span className={o.dataExecucao ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataExecucao)}</span>
+                                  <span
+                                    className={o.dataPrevista ? "text-foreground font-medium" : "text-muted-foreground"}
+                                  >
+                                    {fmtDate(o.dataPrevista)}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-3 text-center text-xs tabular-nums">
-                                  <span className={o.dataFaturamento ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataFaturamento)}</span>
+                                  <span
+                                    className={
+                                      o.dataExecucao
+                                        ? "text-blue-600 dark:text-blue-400 font-medium"
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    {fmtDate(o.dataExecucao)}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-3 text-center text-xs tabular-nums">
-                                  <span className={o.dataPagamento ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-muted-foreground'}>{fmtDate(o.dataPagamento)}</span>
+                                  <span
+                                    className={
+                                      o.dataFaturamento
+                                        ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    {fmtDate(o.dataFaturamento)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-center text-xs tabular-nums">
+                                  <span
+                                    className={
+                                      o.dataPagamento
+                                        ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    {fmtDate(o.dataPagamento)}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-3 text-center">
                                   {motor && (
@@ -406,7 +465,9 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-3 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">{renderRowActions(o)}</td>
+                                <td className="py-3 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {renderRowActions(o)}
+                                </td>
                               </tr>
                             );
                           })}
@@ -420,13 +481,15 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           ) : (
             /* Mobile: Cards view */
             <div>
-              {groupedByStatus.map(group => (
+              {groupedByStatus.map((group) => (
                 <div key={group.status}>
                   <div className="flex items-center gap-2.5 pt-3 pb-2">
-                    <span className={cn(
-                      'text-[11px] font-bold uppercase tracking-wider',
-                      statusConfig[group.status as StatusOrcamento]?.color.split(' ')[1] ?? 'text-muted-foreground'
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[11px] font-bold uppercase tracking-wider",
+                        statusConfig[group.status as StatusOrcamento]?.color.split(" ")[1] ?? "text-muted-foreground",
+                      )}
+                    >
                       {group.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
@@ -435,34 +498,48 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
                     <div className="flex-1 h-px bg-border/60" />
                   </div>
                   <div className="space-y-2">
-                    {group.items.map(o => {
+                    {group.items.map((o) => {
                       const displayValue = (o.desconto ?? 0) > 0 ? (o.valorFinal ?? o.valorVenda) : o.valorVenda;
                       const relevantDate = getRelevantDate(o);
                       return (
-                        <Card key={o.id} className="overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/20 transition-all" onClick={() => onViewOrcamento(o)}>
+                        <Card
+                          key={o.id}
+                          className="overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/20 transition-all"
+                          onClick={() => onViewOrcamento(o)}
+                        >
                           <CardContent className="p-3.5">
                             {/* Row 1: number + status + value */}
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm font-bold text-primary shrink-0">#{o.numeroOrcamento ?? '—'}</span>
+                              <span className="text-sm font-bold text-primary shrink-0">
+                                #{o.numeroOrcamento ?? "—"}
+                              </span>
                               {renderStatusBadge(o)}
                               <span className="flex-1" />
-                              <p className="text-base font-bold text-foreground shrink-0 tabular-nums">{formatCurrency(displayValue)}</p>
+                              <p className="text-base font-bold text-foreground shrink-0 tabular-nums">
+                                {formatCurrency(displayValue)}
+                              </p>
                             </div>
                             {/* Row 2: client + actions */}
                             <div className="flex items-center justify-between mb-1.5">
-                              <p className="text-sm font-medium text-foreground truncate flex-1 mr-2">{o.nomeCliente}</p>
+                              <p className="text-sm font-medium text-foreground truncate flex-1 mr-2">
+                                {o.nomeCliente}
+                              </p>
                               {renderRowActions(o)}
                             </div>
                             {/* Row 3: dates + services count */}
                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap pt-1.5 border-t border-border/50">
-                              <span>{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</span>
+                              <span>{new Date(o.dataCriacao).toLocaleDateString("pt-BR")}</span>
                               {relevantDate && (
                                 <>
                                   <span className="text-border">·</span>
-                                  <span className="font-medium">{relevantDate.label}: {relevantDate.value}</span>
+                                  <span className="font-medium">
+                                    {relevantDate.label}: {relevantDate.value}
+                                  </span>
                                 </>
                               )}
-                              <span className="ml-auto text-[10px]">{o.itensServico.length} {o.itensServico.length === 1 ? 'serviço' : 'serviços'}</span>
+                              <span className="ml-auto text-[10px]">
+                                {o.itensServico.length} {o.itensServico.length === 1 ? "serviço" : "serviços"}
+                              </span>
                             </div>
                           </CardContent>
                         </Card>
@@ -489,7 +566,12 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
       )}
 
       {/* Rejection confirmation dialog */}
-      <AlertDialog open={!!pendingReject} onOpenChange={open => { if (!open) setPendingReject(null); }}>
+      <AlertDialog
+        open={!!pendingReject}
+        onOpenChange={(open) => {
+          if (!open) setPendingReject(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Marcar como Rejeitado?</AlertDialogTitle>
@@ -499,7 +581,10 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmReject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmReject}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Rejeitar
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -246,28 +246,33 @@ const Index = () => {
     }
   };
 
-  const getHeaderLabel = () => {
+  const getHeaderMeta = () => {
     switch (tab) {
       case "dashboard":
-        return "Dashboard";
+        return { title: "Dashboard", helper: "Resumo rápido da operação e dos números principais." };
       case "orcamentos":
-        return "Orçamentos";
+        return { title: "Orçamentos", helper: "Acompanhe status, datas operacionais e próximos passos." };
       case "orcamento-detalhes":
-        return "Detalhes do Orçamento";
+        return { title: "Detalhes do orçamento", helper: "Revise itens, dados do cliente e situação comercial." };
       case "orcamento-novo":
-        return editingOrcamento ? "Editar Orçamento" : "Novo Orçamento";
+        return {
+          title: editingOrcamento ? "Editar orçamento" : "Novo orçamento",
+          helper: "Fluxo guiado para montar a proposta com mais clareza.",
+        };
       case "clientes":
-        return "Clientes";
+        return { title: "Clientes", helper: "Base cadastral, contatos e histórico operacional." };
       case "financeiro":
-        return "Financeiro";
+        return { title: "Financeiro", helper: "Movimentações, leitura dos números e rotina financeira." };
       case "usuarios":
-        return "Usuários";
+        return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "config":
-        return "Configurações";
+        return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
       default:
-        return "";
+        return { title: "", helper: "" };
     }
   };
+
+  const headerMeta = getHeaderMeta();
 
   const content = (
     <>
@@ -331,7 +336,7 @@ const Index = () => {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
             OC
           </div>
-          <span className="ml-3 text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</span>
+          <span className="ml-3 text-sm font-semibold text-foreground flex-1">{headerMeta.title}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -361,9 +366,12 @@ const Index = () => {
       <div className="min-h-screen flex w-full">
         <AppSidebar active={tab} onNavigate={guardedNavigate} />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-sm px-5 shrink-0 sticky top-0 z-40">
+          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b bg-card/85 px-5 backdrop-blur-sm">
             <SidebarTrigger className="mr-4 text-muted-foreground hover:text-foreground" />
-            <h1 className="text-sm font-semibold text-foreground flex-1">{getHeaderLabel()}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm font-semibold text-foreground">{headerMeta.title}</h1>
+              <p className="hidden text-xs text-muted-foreground sm:block">{headerMeta.helper}</p>
+            </div>
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
               {isSuperAdmin && (
