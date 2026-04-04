@@ -50,7 +50,6 @@ export default defineConfig(({ mode }) => ({
             return "router-vendor";
           }
           if (packageName.startsWith("@radix-ui/")) return "radix-vendor";
-          if (packageName === "recharts") return "charts-vendor";
           if (packageName === "date-fns" || packageName === "react-day-picker") return "date-vendor";
           if (packageName === "react" || packageName === "react-dom" || packageName === "scheduler") {
             return "react-vendor";
