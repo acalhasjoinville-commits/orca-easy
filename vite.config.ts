@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => ({
             return "form-vendor";
           }
 
-          return `vendor-${sanitizeChunkName(packageName)}`;
+          return undefined;
         },
       },
     },
