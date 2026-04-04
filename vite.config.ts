@@ -3,6 +3,22 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+function getPackageName(id: string) {
+  const normalized = id.split("node_modules/")[1];
+  if (!normalized) return null;
+
+  const parts = normalized.split("/");
+  if (parts[0].startsWith("@")) {
+    return `${parts[0]}/${parts[1]}`;
+  }
+
+  return parts[0];
+}
+
+function sanitizeChunkName(packageName: string) {
+  return packageName.replace("@", "").replace(/[\\/]/g, "-");
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -18,5 +34,34 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
     dedupe: ["react", "react-dom"],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          const packageName = getPackageName(id);
+          if (!packageName) return;
+
+          if (packageName.startsWith("@react-pdf/")) return `pdf-${sanitizeChunkName(packageName)}`;
+          if (packageName.startsWith("@supabase/")) return "supabase-vendor";
+          if (packageName.startsWith("@tanstack/")) return "query-vendor";
+          if (packageName === "react-router-dom" || packageName === "@remix-run/router") {
+            return "router-vendor";
+          }
+          if (packageName.startsWith("@radix-ui/")) return "radix-vendor";
+          if (packageName === "recharts") return "charts-vendor";
+          if (packageName === "date-fns" || packageName === "react-day-picker") return "date-vendor";
+          if (packageName === "react" || packageName === "react-dom" || packageName === "scheduler") {
+            return "react-vendor";
+          }
+          if (packageName === "react-hook-form" || packageName === "@hookform/resolvers" || packageName === "zod") {
+            return "form-vendor";
+          }
+
+          return `vendor-${sanitizeChunkName(packageName)}`;
+        },
+      },
+    },
   },
 }));

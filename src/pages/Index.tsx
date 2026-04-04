@@ -1,21 +1,8 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { Dashboard } from "@/components/Dashboard";
-import { Orcamentos } from "@/components/Orcamentos";
-import { OrcamentoWizard } from "@/components/OrcamentoWizard";
-import { OrcamentoDetails } from "@/components/OrcamentoDetails";
-import { Configuracoes } from "@/components/Configuracoes";
-import { Clientes } from "@/components/Clientes";
-import { Financeiro } from "@/components/Financeiro";
-import { Usuarios } from "@/components/Usuarios";
-import { EditarPerfil } from "@/components/EditarPerfil";
-import { LoginPage } from "@/components/LoginPage";
-import { PendingApproval } from "@/components/PendingApproval";
-import { AccessDenied } from "@/components/AccessDenied";
-import { EmpresaSuspensa } from "@/components/EmpresaSuspensa";
 import { Orcamento } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrcamentos, useClientes, useEmpresa } from "@/hooks/useSupabaseData";
@@ -24,6 +11,50 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { LogOut, Loader2, UserCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const Dashboard = lazy(() => import("@/components/Dashboard").then((module) => ({ default: module.Dashboard })));
+const Orcamentos = lazy(() => import("@/components/Orcamentos").then((module) => ({ default: module.Orcamentos })));
+const OrcamentoWizard = lazy(() =>
+  import("@/components/OrcamentoWizard").then((module) => ({ default: module.OrcamentoWizard })),
+);
+const OrcamentoDetails = lazy(() =>
+  import("@/components/OrcamentoDetails").then((module) => ({ default: module.OrcamentoDetails })),
+);
+const Configuracoes = lazy(() =>
+  import("@/components/Configuracoes").then((module) => ({ default: module.Configuracoes })),
+);
+const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ default: module.Clientes })));
+const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
+const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
+const EditarPerfil = lazy(() =>
+  import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
+);
+const LoginPage = lazy(() => import("@/components/LoginPage").then((module) => ({ default: module.LoginPage })));
+const PendingApproval = lazy(() =>
+  import("@/components/PendingApproval").then((module) => ({ default: module.PendingApproval })),
+);
+const AccessDenied = lazy(() =>
+  import("@/components/AccessDenied").then((module) => ({ default: module.AccessDenied })),
+);
+const EmpresaSuspensa = lazy(() =>
+  import("@/components/EmpresaSuspensa").then((module) => ({ default: module.EmpresaSuspensa })),
+);
+
+function FullScreenLoader() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
+function SectionLoader() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className="h-7 w-7 animate-spin text-primary" />
+    </div>
+  );
+}
 
 const Index = () => {
   const {
@@ -55,25 +86,21 @@ const Index = () => {
 
   // Auth loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   // Not authenticated → login page
   if (!user) {
-    return <LoginPage />;
+    return (
+      <Suspense fallback={<FullScreenLoader />}>
+        <LoginPage />
+      </Suspense>
+    );
   }
 
   // Still loading roles → show spinner (avoid flashing PendingApproval)
   if (!rolesLoaded) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   // Super admin without company role → redirect to super admin area
@@ -83,12 +110,20 @@ const Index = () => {
 
   // Empresa suspensa ou bloqueada → tela de bloqueio (exceto super admin)
   if (!isSuperAdmin && empresaStatus && empresaStatus !== "ativa") {
-    return <EmpresaSuspensa />;
+    return (
+      <Suspense fallback={<FullScreenLoader />}>
+        <EmpresaSuspensa />
+      </Suspense>
+    );
   }
 
   // Authenticated but no role → pending approval
   if (!hasAnyRole) {
-    return <PendingApproval />;
+    return (
+      <Suspense fallback={<FullScreenLoader />}>
+        <PendingApproval />
+      </Suspense>
+    );
   }
 
   // Guard navigation: redirect to dashboard if user navigates to restricted tab
@@ -275,7 +310,7 @@ const Index = () => {
   const headerMeta = getHeaderMeta();
 
   const content = (
-    <>
+    <Suspense fallback={<SectionLoader />}>
       {tab === "dashboard" && (
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
@@ -326,7 +361,7 @@ const Index = () => {
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Configurações." />
         ))}
-    </>
+    </Suspense>
   );
 
   if (isMobile) {
@@ -356,7 +391,9 @@ const Index = () => {
         </header>
         <main className="pb-20">{content}</main>
         <MobileBottomNav active={tab} onNavigate={guardedNavigate} onNewOrcamento={goToNew} />
-        <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
+        <Suspense fallback={null}>
+          <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
+        </Suspense>
       </div>
     );
   }
@@ -406,7 +443,9 @@ const Index = () => {
           <main className="flex-1 overflow-auto">{content}</main>
         </div>
       </div>
-      <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
+      <Suspense fallback={null}>
+        <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
+      </Suspense>
     </SidebarProvider>
   );
 };

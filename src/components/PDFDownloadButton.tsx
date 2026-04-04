@@ -1,24 +1,22 @@
-import { useState, useEffect } from 'react';
-import { pdf } from '@react-pdf/renderer';
-import { OrcamentoPDF } from '@/components/OrcamentoPDF';
-import { Orcamento, Cliente, MinhaEmpresa } from '@/lib/types';
-import { fetchLogoBase64 } from '@/lib/fetchLogoBase64';
-import { Share2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { fetchLogoBase64 } from "@/lib/fetchLogoBase64";
+import { Share2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 interface PDFButtonProps {
   orcamento: Orcamento;
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
-  size?: 'sm' | 'default' | 'icon';
+  size?: "sm" | "default" | "icon";
   className?: string;
 }
 
-export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default', className }: PDFButtonProps) {
+export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default", className }: PDFButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const corDestaque = empresa?.corDestaque || '#F57C00';
+  const corDestaque = empresa?.corDestaque || "#F57C00";
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +25,9 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
         if (!cancelled) setLogoBase64(b64);
       });
     }
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [empresa?.logoUrl]);
 
   const handleShare = async () => {
@@ -35,51 +35,58 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
     setGenerating(true);
     await new Promise((r) => setTimeout(r, 50));
 
-    const buildBlob = async (withLogo: boolean) => {
-      return pdf(
-        <OrcamentoPDF
-          orcamento={orcamento}
-          cliente={cliente}
-          empresa={empresa}
-          logoBase64={withLogo ? logoBase64 : null}
-        />
-      ).toBlob();
-    };
-
     try {
+      const [{ pdf }, { OrcamentoPDF }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@/components/OrcamentoPDF"),
+      ]);
+
+      const buildBlob = async (withLogo: boolean) => {
+        const OrcamentoPDFComponent = OrcamentoPDF;
+
+        return pdf(
+          <OrcamentoPDFComponent
+            orcamento={orcamento}
+            cliente={cliente}
+            empresa={empresa}
+            logoBase64={withLogo ? logoBase64 : null}
+          />,
+        ).toBlob();
+      };
+
       let blob: Blob;
       try {
         blob = await buildBlob(Boolean(logoBase64));
       } catch (firstError) {
         if (!logoBase64) throw firstError;
-        console.warn('Falha ao renderizar PDF com logo, tentando sem logo.', firstError);
+        console.warn("Falha ao renderizar PDF com logo, tentando sem logo.", firstError);
         blob = await buildBlob(false);
       }
 
-      const nomeCliente = (cliente?.nomeRazaoSocial || orcamento.nomeCliente || 'Cliente_Nao_Identificado')
+      const nomeCliente = (cliente?.nomeRazaoSocial || orcamento.nomeCliente || "Cliente_Nao_Identificado")
         .trim()
-        .replace(/\s+/g, '_');
-      const nomeArquivo = `Orcamento_${nomeCliente}_${orcamento.numeroOrcamento || 'novo'}.pdf`;
-      const file = new File([blob], nomeArquivo, { type: 'application/pdf' });
+        .replace(/\s+/g, "_");
+      const nomeArquivo = `Orcamento_${nomeCliente}_${orcamento.numeroOrcamento || "novo"}.pdf`;
+      const file = new File([blob], nomeArquivo, { type: "application/pdf" });
 
       // Try Web Share API (mobile)
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: 'Orçamento OrçaCalhas',
-          text: 'Segue o orçamento solicitado.',
+          title: "Orçamento OrçaCalhas",
+          text: "Segue o orçamento solicitado.",
         });
       } else {
         // Fallback: open in new tab (desktop)
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        window.open(url, "_blank");
         setTimeout(() => URL.revokeObjectURL(url), 30000);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // User cancelling share is not an error
-      if (err?.name === 'AbortError') return;
-      console.error('Erro ao gerar/enviar PDF:', err);
-      toast({ title: 'Erro ao gerar PDF', description: 'Tente novamente.', variant: 'destructive' });
+      if (err instanceof Error && err.name === "AbortError") return;
+      console.error("Erro ao gerar/enviar PDF:", err);
+      toast({ title: "Erro ao gerar PDF", description: "Tente novamente.", variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -89,19 +96,22 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = 'default
     <Button
       size={size}
       className={className}
-      style={{ backgroundColor: corDestaque, color: '#fff' }}
+      style={{ backgroundColor: corDestaque, color: "#fff" }}
       disabled={generating}
-      onClick={(e) => { e.stopPropagation(); handleShare(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleShare();
+      }}
     >
       {generating ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          {size !== 'icon' && <span className="ml-2">Gerando...</span>}
+          {size !== "icon" && <span className="ml-2">Gerando...</span>}
         </>
       ) : (
         <>
           <Share2 className="h-4 w-4" />
-          {size !== 'icon' && <span className="ml-2">Enviar Orçamento</span>}
+          {size !== "icon" && <span className="ml-2">Enviar Orçamento</span>}
         </>
       )}
     </Button>

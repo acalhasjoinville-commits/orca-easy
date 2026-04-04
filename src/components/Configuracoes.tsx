@@ -62,6 +62,7 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,9 +95,7 @@ function InsumoCombobox({
           aria-expanded={open}
           className="h-8 text-xs flex-1 justify-between font-normal"
         >
-          <span className="truncate">
-            {selected ? selected.nomeEmbalagemCompra : "Buscar insumo..."}
-          </span>
+          <span className="truncate">{selected ? selected.nomeEmbalagemCompra : "Buscar insumo..."}</span>
           <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -116,12 +115,7 @@ function InsumoCombobox({
                   }}
                   className="text-xs"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-3 w-3",
-                      value === ins.id ? "opacity-100" : "opacity-0",
-                    )}
-                  />
+                  <Check className={cn("mr-2 h-3 w-3", value === ins.id ? "opacity-100" : "opacity-0")} />
                   {ins.nomeEmbalagemCompra}
                 </CommandItem>
               ))}
@@ -132,7 +126,6 @@ function InsumoCombobox({
     </Popover>
   );
 }
-
 
 const tabMeta: Record<ConfigTab, { title: string; description: string; helper: string; icon: React.ElementType }> = {
   empresa: {
@@ -208,7 +201,6 @@ function MinhaEmpresaForm() {
     }
     setUploading(true);
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const {
         data: { user },
       } = await supabase.auth.getUser();
