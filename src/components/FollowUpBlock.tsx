@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useFollowUp } from '@/hooks/useFollowUp';
-import { useAuth } from '@/hooks/useAuth';
+import { useFollowUp, useTeamMembers } from '@/hooks/useFollowUp';
 import {
   StatusFollowUp,
   TipoInteracao,
