@@ -81,7 +81,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
         proximaAcao: editProximaAcao,
         dataRetorno: editDataRetorno || null,
         observacoes: editObservacoes,
-        responsavelId: editResponsavelId || user?.id || null,
+        responsavelId: editResponsavelId,
       });
       toast.success('Follow-up atualizado');
       setEditing(false);
