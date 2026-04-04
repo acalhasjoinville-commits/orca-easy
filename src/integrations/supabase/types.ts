@@ -929,6 +929,23 @@ export type Database = {
       sa_list_audit_log: { Args: { _limit?: number }; Returns: Json }
       sa_list_empresas: { Args: never; Returns: Json }
       sa_revoke_invite: { Args: { _invite_id: string }; Returns: undefined }
+      sa_update_empresa: {
+        Args: {
+          _bairro?: string
+          _cidade?: string
+          _cnpj_cpf?: string
+          _email_contato?: string
+          _empresa_id: string
+          _endereco?: string
+          _estado?: string
+          _nome_fantasia: string
+          _numero?: string
+          _razao_social?: string
+          _slogan?: string
+          _telefone_whatsapp?: string
+        }
+        Returns: undefined
+      }
       sa_update_empresa_status: {
         Args: { _empresa_id: string; _new_status: string }
         Returns: undefined
