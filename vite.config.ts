@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => ({
           const packageName = getPackageName(id);
           if (!packageName) return;
 
-          if (packageName.startsWith("@react-pdf/") || packageName === "react-pdf") return "pdf-vendor";
+          // @react-pdf is loaded via dynamic import() — let Vite handle its chunking naturally
           if (packageName.startsWith("@supabase/")) return "supabase-vendor";
           if (packageName.startsWith("@tanstack/")) return "query-vendor";
           if (packageName === "react-router-dom" || packageName === "@remix-run/router") {
