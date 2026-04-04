@@ -51,7 +51,7 @@ const allTipos = Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[];
 
 export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
-  const { user } = useAuth();
+  const { data: teamMembers = [] } = useTeamMembers();
 
   const [editing, setEditing] = useState(false);
   const [editStatus, setEditStatus] = useState<StatusFollowUp>('sem_retorno');
