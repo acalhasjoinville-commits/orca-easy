@@ -61,6 +61,21 @@ export interface SAEmpresa {
   admins: SAEmpresaAdmin[];
 }
 
+export interface SAEmpresaUpdateInput {
+  empresaId: string;
+  nomeFantasia: string;
+  razaoSocial?: string;
+  cnpjCpf?: string;
+  emailContato?: string;
+  telefoneWhatsApp?: string;
+  endereco?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  slogan?: string;
+}
+
 export interface SAUser {
   user_id: string;
   full_name: string;
@@ -214,6 +229,29 @@ export function useSAMutations() {
     onError: (error: unknown) => toast.error(getErrorMessage(error, "Erro ao criar empresa")),
   });
 
+  const updateEmpresa = useMutation({
+    mutationFn: (args: SAEmpresaUpdateInput) =>
+      rpc<void>("sa_update_empresa", {
+        _empresa_id: args.empresaId,
+        _nome_fantasia: args.nomeFantasia,
+        _razao_social: args.razaoSocial || "",
+        _cnpj_cpf: args.cnpjCpf || "",
+        _email_contato: args.emailContato || "",
+        _telefone_whatsapp: args.telefoneWhatsApp || "",
+        _endereco: args.endereco || "",
+        _numero: args.numero || "",
+        _bairro: args.bairro || "",
+        _cidade: args.cidade || "",
+        _estado: args.estado || "",
+        _slogan: args.slogan || "",
+      }),
+    onSuccess: () => {
+      toast.success("Dados da empresa atualizados");
+      invalidateAll();
+    },
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Erro ao atualizar empresa")),
+  });
+
   const upsertUserRole = useMutation({
     mutationFn: (args: { userId: string; empresaId: string; role: SAAppRole }) =>
       rpc<void>("sa_upsert_user_role", { _user_id: args.userId, _empresa_id: args.empresaId, _role: args.role }),
@@ -270,6 +308,7 @@ export function useSAMutations() {
   return {
     updateEmpresaStatus,
     createEmpresa,
+    updateEmpresa,
     upsertUserRole,
     deleteUserRole,
     createInvite,

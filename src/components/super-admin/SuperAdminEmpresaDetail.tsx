@@ -1,10 +1,18 @@
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Trash2, UserPlus, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Loader2, Pencil, Trash2, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,13 +35,42 @@ const roleLabels: Record<SAAppRole, string> = {
   financeiro: "Financeiro",
 };
 
+interface EmpresaEditForm {
+  nomeFantasia: string;
+  razaoSocial: string;
+  cnpjCpf: string;
+  emailContato: string;
+  telefoneWhatsApp: string;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  slogan: string;
+}
+
 export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
   const { data, isLoading } = useSAEmpresaDetail(empresaId);
-  const { updateEmpresaStatus, upsertUserRole, deleteUserRole, createInvite, revokeInvite } = useSAMutations();
+  const { updateEmpresaStatus, updateEmpresa, upsertUserRole, deleteUserRole, createInvite, revokeInvite } =
+    useSAMutations();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState<{ email: string; role: SAAppRole }>({
     email: "",
     role: "vendedor",
+  });
+  const [editForm, setEditForm] = useState<EmpresaEditForm>({
+    nomeFantasia: "",
+    razaoSocial: "",
+    cnpjCpf: "",
+    emailContato: "",
+    telefoneWhatsApp: "",
+    endereco: "",
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    slogan: "",
   });
 
   const summary = useMemo(() => {
@@ -44,6 +81,24 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
       pendingInvites: data.invites.filter((invite) => !invite.used_at).length,
       admins: data.users.filter((user) => user.roles.includes("admin")).length,
     };
+  }, [data]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    setEditForm({
+      nomeFantasia: data.empresa.nome_fantasia || "",
+      razaoSocial: data.empresa.razao_social || "",
+      cnpjCpf: data.empresa.cnpj_cpf || "",
+      emailContato: data.empresa.email_contato || "",
+      telefoneWhatsApp: data.empresa.telefone_whatsapp || "",
+      endereco: data.empresa.endereco || "",
+      numero: data.empresa.numero || "",
+      bairro: data.empresa.bairro || "",
+      cidade: data.empresa.cidade || "",
+      estado: data.empresa.estado || "",
+      slogan: data.empresa.slogan || "",
+    });
   }, [data]);
 
   if (isLoading || !data || !summary) {
@@ -65,6 +120,29 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
     await createInvite.mutateAsync({ empresaId, email: inviteForm.email, role: inviteForm.role });
     setInviteForm({ email: "", role: "vendedor" });
     setInviteOpen(false);
+  };
+
+  const handleSaveEmpresa = async () => {
+    if (!editForm.nomeFantasia.trim()) {
+      return;
+    }
+
+    await updateEmpresa.mutateAsync({
+      empresaId,
+      nomeFantasia: editForm.nomeFantasia,
+      razaoSocial: editForm.razaoSocial,
+      cnpjCpf: editForm.cnpjCpf,
+      emailContato: editForm.emailContato,
+      telefoneWhatsApp: editForm.telefoneWhatsApp,
+      endereco: editForm.endereco,
+      numero: editForm.numero,
+      bairro: editForm.bairro,
+      cidade: editForm.cidade,
+      estado: editForm.estado,
+      slogan: editForm.slogan,
+    });
+
+    setEditOpen(false);
   };
 
   return (
@@ -109,10 +187,120 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
 
       <Card>
         <CardHeader className="space-y-2">
-          <CardTitle className="text-base">Dados da empresa</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Esta área resume os dados institucionais principais usados no sistema e no relacionamento comercial.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2">
+              <CardTitle className="text-base">Dados da empresa</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Esta área resume os dados institucionais principais usados no sistema e no relacionamento comercial.
+              </p>
+            </div>
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1.5">
+                  <Pencil className="h-4 w-4" />
+                  Editar dados
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Editar empresa</DialogTitle>
+                  <DialogDescription>
+                    Atualize os dados institucionais principais sem sair da administração global.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Label>Nome fantasia *</Label>
+                    <Input
+                      value={editForm.nomeFantasia}
+                      onChange={(event) => setEditForm((current) => ({ ...current, nomeFantasia: event.target.value }))}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Razão social</Label>
+                    <Input
+                      value={editForm.razaoSocial}
+                      onChange={(event) => setEditForm((current) => ({ ...current, razaoSocial: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>CNPJ/CPF</Label>
+                    <Input
+                      value={editForm.cnpjCpf}
+                      onChange={(event) => setEditForm((current) => ({ ...current, cnpjCpf: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>WhatsApp</Label>
+                    <Input
+                      value={editForm.telefoneWhatsApp}
+                      onChange={(event) =>
+                        setEditForm((current) => ({ ...current, telefoneWhatsApp: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>E-mail de contato</Label>
+                    <Input
+                      value={editForm.emailContato}
+                      onChange={(event) => setEditForm((current) => ({ ...current, emailContato: event.target.value }))}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Slogan</Label>
+                    <Input
+                      value={editForm.slogan}
+                      onChange={(event) => setEditForm((current) => ({ ...current, slogan: event.target.value }))}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Endereço</Label>
+                    <Input
+                      value={editForm.endereco}
+                      onChange={(event) => setEditForm((current) => ({ ...current, endereco: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Número</Label>
+                    <Input
+                      value={editForm.numero}
+                      onChange={(event) => setEditForm((current) => ({ ...current, numero: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Bairro</Label>
+                    <Input
+                      value={editForm.bairro}
+                      onChange={(event) => setEditForm((current) => ({ ...current, bairro: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input
+                      value={editForm.cidade}
+                      onChange={(event) => setEditForm((current) => ({ ...current, cidade: event.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Estado</Label>
+                    <Input
+                      value={editForm.estado}
+                      onChange={(event) => setEditForm((current) => ({ ...current, estado: event.target.value }))}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSaveEmpresa} disabled={updateEmpresa.isPending}>
+                    {updateEmpresa.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar alterações
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 text-sm md:grid-cols-2">
