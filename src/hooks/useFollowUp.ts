@@ -7,10 +7,16 @@ import {
   StatusFollowUp,
   TipoInteracao,
 } from '@/lib/types';
+import type { Tables } from '@/integrations/supabase/types';
+
+// ─── TYPES ───
+
+type FollowUpRow = Tables<'orcamento_followups'>;
+type LogRow = Tables<'orcamento_followup_logs'>;
 
 // ─── MAPPERS ───
 
-function dbToFollowUp(row: any): OrcamentoFollowUp {
+function dbToFollowUp(row: FollowUpRow): OrcamentoFollowUp {
   return {
     id: row.id,
     orcamentoId: row.orcamento_id,
@@ -25,7 +31,7 @@ function dbToFollowUp(row: any): OrcamentoFollowUp {
   };
 }
 
-function dbToLog(row: any): FollowUpLog {
+function dbToLog(row: LogRow): FollowUpLog {
   return {
     id: row.id,
     orcamentoId: row.orcamento_id,
@@ -149,6 +155,27 @@ export function useFollowUp(orcamentoId: string) {
   };
 }
 
+/** Fetch team members for the responsável selector */
+export function useTeamMembers() {
+  const { empresaId } = useAuth();
+
+  return useQuery({
+    queryKey: ['team-members', empresaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('empresa_id', empresaId!);
+      if (error) throw error;
+      return (data || []).map((p) => ({
+        id: p.id,
+        name: p.full_name || p.email || 'Sem nome',
+      }));
+    },
+    enabled: !!empresaId,
+  });
+}
+
 /** Fila comercial: all orcamentos LEFT JOIN followups */
 export interface FilaComercialItem {
   orcamentoId: string;
@@ -165,13 +192,14 @@ export interface FilaComercialItem {
   ultimaInteracaoEm: string | null;
 }
 
+type OrcamentoRow = Pick<Tables<'orcamentos'>, 'id' | 'numero_orcamento' | 'nome_cliente' | 'valor_final' | 'desconto' | 'valor_venda' | 'status' | 'data_criacao'>;
+
 export function useFilaComercial() {
   const { empresaId } = useAuth();
 
   return useQuery({
     queryKey: ['fila-comercial'],
     queryFn: async () => {
-      // LEFT JOIN via two queries (supabase-js doesn't support left join on non-FK)
       const { data: orcs, error: orcErr } = await supabase
         .from('orcamentos')
         .select('id, numero_orcamento, nome_cliente, valor_final, desconto, valor_venda, status, data_criacao')
@@ -183,12 +211,12 @@ export function useFilaComercial() {
         .select('*');
       if (fErr) throw fErr;
 
-      const fMap = new Map<string, any>();
+      const fMap = new Map<string, FollowUpRow>();
       for (const f of (followups || [])) {
         fMap.set(f.orcamento_id, f);
       }
 
-      const items: FilaComercialItem[] = (orcs || []).map((o: any) => {
+      const items: FilaComercialItem[] = ((orcs || []) as OrcamentoRow[]).map((o) => {
         const f = fMap.get(o.id);
         const displayValue = (o.desconto ?? 0) > 0 ? (o.valor_final ?? o.valor_venda) : o.valor_venda;
         return {

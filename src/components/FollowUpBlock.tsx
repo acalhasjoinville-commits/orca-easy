@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useFollowUp } from '@/hooks/useFollowUp';
-import { useAuth } from '@/hooks/useAuth';
+import { useFollowUp, useTeamMembers } from '@/hooks/useFollowUp';
 import {
   StatusFollowUp,
   TipoInteracao,
@@ -52,7 +51,7 @@ const allTipos = Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[];
 
 export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
-  const { user } = useAuth();
+  const { data: teamMembers = [] } = useTeamMembers();
 
   const [editing, setEditing] = useState(false);
   const [editStatus, setEditStatus] = useState<StatusFollowUp>('sem_retorno');
@@ -82,7 +81,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
         proximaAcao: editProximaAcao,
         dataRetorno: editDataRetorno || null,
         observacoes: editObservacoes,
-        responsavelId: editResponsavelId || user?.id || null,
+        responsavelId: editResponsavelId,
       });
       toast.success('Follow-up atualizado');
       setEditing(false);
@@ -198,7 +197,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
           ) : (
             /* Editing form */
             <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Status do Follow-up</label>
                   <Select value={editStatus} onValueChange={(v) => setEditStatus(v as StatusFollowUp)}>
@@ -222,6 +221,22 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                     onChange={(e) => setEditDataRetorno(e.target.value)}
                     className="h-9 text-xs"
                   />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Responsável</label>
+                  <Select value={editResponsavelId || '_none'} onValueChange={(v) => setEditResponsavelId(v === '_none' ? null : v)}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="Nenhum" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none" className="text-xs">Nenhum</SelectItem>
+                      {teamMembers.map((m) => (
+                        <SelectItem key={m.id} value={m.id} className="text-xs">
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>
