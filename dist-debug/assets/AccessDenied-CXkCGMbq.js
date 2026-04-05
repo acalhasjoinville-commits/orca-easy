@@ -9,12 +9,24 @@ import "./query-vendor-BLvK6anV.js";
 import "./router-vendor-CCo6OTFM.js";
 import "./supabase-vendor-BsjcsmU5.js";
 function AccessDenied({ message = "Você não tem permissão para acessar esta área." }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-center p-8", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "max-w-sm w-full", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, { className: "pt-6 text-center space-y-3", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldAlert, { className: "h-12 w-12 text-muted-foreground/40 mx-auto" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-lg font-semibold text-foreground", children: "Acesso Restrito" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: message })
-  ] }) }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", {
+    className: "flex items-center justify-center p-8",
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Card, {
+      className: "max-w-sm w-full",
+      children: /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, {
+        className: "pt-6 text-center space-y-3",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldAlert, {
+            className: "h-12 w-12 text-muted-foreground/40 mx-auto",
+          }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", {
+            className: "text-lg font-semibold text-foreground",
+            children: "Acesso Restrito",
+          }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-muted-foreground", children: message }),
+        ],
+      }),
+    }),
+  });
 }
-export {
-  AccessDenied
-};
+export { AccessDenied };
