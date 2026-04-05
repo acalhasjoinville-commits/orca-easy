@@ -1,11 +1,13 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { resolveEffectiveColor, FALLBACK_PRIMARY } from "@/lib/colorUtils";
 
 interface OrcamentoPDFProps {
   orcamento: Orcamento;
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
+  platformColor?: string;
 }
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -28,8 +30,8 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: OrcamentoPDFProps) {
-  const corPrimaria = empresa?.corPrimaria || "#0B1B32";
+export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64, platformColor }: OrcamentoPDFProps) {
+  const corPrimaria = resolveEffectiveColor(empresa?.corPrimaria, platformColor);
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
   const razaoSocial = empresa?.razaoSocial || "";

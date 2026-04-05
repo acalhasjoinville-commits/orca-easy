@@ -12,13 +12,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria";
+export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "configuracoes";
 
 interface Props {
   active: SATab;
@@ -63,6 +64,12 @@ const navItems: NavItem[] = [
     label: "Auditoria",
     helper: "Ações sensíveis da plataforma",
     icon: ScrollText,
+  },
+  {
+    tab: "configuracoes",
+    label: "Configurações",
+    helper: "Cor padrão e ajustes globais",
+    icon: Settings,
   },
 ];
 
