@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
@@ -18,7 +19,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria";
+export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia";
 
 interface Props {
   active: SATab;
@@ -63,6 +64,12 @@ const navItems: NavItem[] = [
     label: "Auditoria",
     helper: "Ações sensíveis da plataforma",
     icon: ScrollText,
+  },
+  {
+    tab: "aparencia",
+    label: "Aparência",
+    helper: "Cor principal da interface",
+    icon: Palette,
   },
 ];
 

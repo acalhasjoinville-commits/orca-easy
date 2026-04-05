@@ -6,6 +6,7 @@ import { SuperAdminEmpresaDetail } from '@/components/super-admin/SuperAdminEmpr
 import { SuperAdminUsuarios } from '@/components/super-admin/SuperAdminUsuarios';
 import { SuperAdminConvites } from '@/components/super-admin/SuperAdminConvites';
 import { SuperAdminAuditoria } from '@/components/super-admin/SuperAdminAuditoria';
+import { SuperAdminAparencia } from '@/components/super-admin/SuperAdminAparencia';
 
 export default function SuperAdminPage() {
   const [tab, setTab] = useState<SATab>('dashboard');
@@ -26,6 +27,7 @@ export default function SuperAdminPage() {
       case 'usuarios': return <SuperAdminUsuarios />;
       case 'convites': return <SuperAdminConvites />;
       case 'auditoria': return <SuperAdminAuditoria />;
+      case 'aparencia': return <SuperAdminAparencia />;
     }
   })();
 

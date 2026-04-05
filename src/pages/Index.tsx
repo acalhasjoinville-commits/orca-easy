@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -367,6 +368,7 @@ const Index = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
+        <SystemThemeApplicator />
         <header className="h-14 flex items-center border-b bg-card px-4 sticky top-0 z-50 shadow-sm">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
             OC
@@ -400,6 +402,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
+      <SystemThemeApplicator />
       <div className="min-h-screen flex w-full">
         <AppSidebar active={tab} onNavigate={guardedNavigate} />
         <div className="flex-1 flex flex-col min-w-0">
