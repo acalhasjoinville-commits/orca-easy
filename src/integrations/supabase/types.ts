@@ -76,7 +76,7 @@ export type Database = {
           cidade: string | null
           cnpj_cpf: string | null
           cor_destaque: string
-          cor_primaria: string
+          cor_primaria: string | null
           created_at: string
           email_contato: string | null
           endereco: string | null
@@ -96,7 +96,7 @@ export type Database = {
           cidade?: string | null
           cnpj_cpf?: string | null
           cor_destaque?: string
-          cor_primaria?: string
+          cor_primaria?: string | null
           created_at?: string
           email_contato?: string | null
           endereco?: string | null
@@ -116,7 +116,7 @@ export type Database = {
           cidade?: string | null
           cnpj_cpf?: string | null
           cor_destaque?: string
-          cor_primaria?: string
+          cor_primaria?: string | null
           created_at?: string
           email_contato?: string | null
           endereco?: string | null
@@ -647,6 +647,24 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          id: string
+          primary_color: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          primary_color?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          primary_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       politicas_comerciais: {
         Row: {
           created_at: string
@@ -924,6 +942,7 @@ export type Database = {
         Returns: undefined
       }
       sa_get_empresa_detail: { Args: { _empresa_id: string }; Returns: Json }
+      sa_get_platform_settings: { Args: never; Returns: Json }
       sa_list_all_invites: { Args: never; Returns: Json }
       sa_list_all_users: { Args: never; Returns: Json }
       sa_list_audit_log: { Args: { _limit?: number }; Returns: Json }
@@ -948,6 +967,10 @@ export type Database = {
       }
       sa_update_empresa_status: {
         Args: { _empresa_id: string; _new_status: string }
+        Returns: undefined
+      }
+      sa_update_platform_settings: {
+        Args: { _primary_color: string }
         Returns: undefined
       }
       sa_upsert_user_role: {
