@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
   {
     tab: "dashboard",
     label: "Dashboard",
-    helper: "Visão geral da plataforma",
+    helper: "VisÃ£o geral da plataforma",
     icon: LayoutDashboard,
   },
   {
@@ -49,25 +49,25 @@ const navItems: NavItem[] = [
   },
   {
     tab: "usuarios",
-    label: "Usuários",
-    helper: "Acessos globais e aprovações",
+    label: "UsuÃ¡rios",
+    helper: "Acessos globais e aprovaÃ§Ãµes",
     icon: Users,
   },
   {
     tab: "convites",
     label: "Convites",
-    helper: "Pendências e convites ativos",
+    helper: "PendÃªncias e convites ativos",
     icon: Mail,
   },
   {
     tab: "auditoria",
     label: "Auditoria",
-    helper: "Ações sensíveis da plataforma",
+    helper: "AÃ§Ãµes sensÃ­veis da plataforma",
     icon: ScrollText,
   },
   {
     tab: "aparencia",
-    label: "Aparência",
+    label: "Aparencia",
     helper: "Cor principal da interface",
     icon: Palette,
   },
@@ -96,7 +96,7 @@ export function SuperAdminLayout({ active, onNavigate, children }: Props) {
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-sidebar-primary-foreground">Super Admin</p>
-                <p className="truncate text-[11px] text-sidebar-foreground/65">Administração da plataforma</p>
+                <p className="truncate text-[11px] text-sidebar-foreground/65">AdministraÃ§Ã£o da plataforma</p>
               </div>
             )}
           </div>
@@ -114,7 +114,7 @@ export function SuperAdminLayout({ active, onNavigate, children }: Props) {
                     Plataforma
                   </p>
                   <p className="mt-2 text-sm font-medium text-sidebar-foreground">
-                    Controle empresas, acessos, convites e ações sensíveis em um único lugar.
+                    Controle empresas, acessos, convites e aÃ§Ãµes sensÃ­veis em um Ãºnico lugar.
                   </p>
                 </>
               ) : (
@@ -190,7 +190,7 @@ export function SuperAdminLayout({ active, onNavigate, children }: Props) {
               size="icon"
               onClick={() => setCollapsed((current) => !current)}
               className="mr-3 text-muted-foreground"
-              aria-label={collapsed ? "Expandir navegação" : "Recolher navegação"}
+              aria-label={collapsed ? "Expandir navegaÃ§Ã£o" : "Recolher navegaÃ§Ã£o"}
             >
               {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
             </Button>
