@@ -65,6 +65,12 @@ const navItems: NavItem[] = [
     helper: "Ações sensíveis da plataforma",
     icon: ScrollText,
   },
+  {
+    tab: "aparencia",
+    label: "Aparência",
+    helper: "Cor principal da interface",
+    icon: Palette,
+  },
 ];
 
 export function SuperAdminLayout({ active, onNavigate, children }: Props) {
