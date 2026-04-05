@@ -294,7 +294,8 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
-          <CorPrimariaField form={form} set={set} />
+          <div className="grid grid-cols-2 gap-4">
+            <CorPrimariaField form={form} set={set} />
             <div>
               <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
               <div className="flex items-center gap-2">
