@@ -21,6 +21,7 @@ interface OSButtonProps {
 export function OSDownloadButton({ orcamento, cliente, empresa, size = "default", className }: OSButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const { platformPrimaryColor } = usePlatformColor();
 
   // Read from snapshot first; only use fixed fallback for legacy records where snapshot is null.
   // There is NO dependency on any current policy in the system.
