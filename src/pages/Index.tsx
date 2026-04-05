@@ -401,6 +401,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
+      <SystemThemeApplicator />
       <div className="min-h-screen flex w-full">
         <AppSidebar active={tab} onNavigate={guardedNavigate} />
         <div className="flex-1 flex flex-col min-w-0">
