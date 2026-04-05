@@ -18,7 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria";
+export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia";
 
 interface Props {
   active: SATab;
