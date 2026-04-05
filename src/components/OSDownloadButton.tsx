@@ -61,6 +61,7 @@ export function OSDownloadButton({ orcamento, cliente, empresa, size = "default"
             empresa={empresa}
             logoBase64={withLogo ? logoBase64 : null}
             termoRecebimento={termoRecebimento}
+            platformColor={platformPrimaryColor}
           />,
         ).toBlob();
       };

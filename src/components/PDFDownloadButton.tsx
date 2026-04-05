@@ -52,6 +52,7 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default
             cliente={cliente}
             empresa={empresa}
             logoBase64={withLogo ? logoBase64 : null}
+            platformColor={platformPrimaryColor}
           />,
         ).toBlob();
       };
