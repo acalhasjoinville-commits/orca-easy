@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { resolveEffectiveColor, FALLBACK_PRIMARY } from "@/lib/colorUtils";
 
 interface OrcamentoPDFProps {
   orcamento: Orcamento;
