@@ -162,6 +162,69 @@ const tabMeta: Record<ConfigTab, { title: string; description: string; helper: s
   },
 };
 
+/* ── Cor Primária field with inheritance indicator ── */
+function CorPrimariaField({
+  form,
+  set,
+}: {
+  form: MinhaEmpresa;
+  set: (k: keyof MinhaEmpresa, v: string) => void;
+}) {
+  const { platformPrimaryColor } = usePlatformColor();
+  const isInheriting = !form.corPrimaria;
+  const displayColor = form.corPrimaria || platformPrimaryColor;
+
+  return (
+    <div>
+      <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
+      {isInheriting ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="h-6 w-6 rounded border" style={{ backgroundColor: platformPrimaryColor }} />
+            <span>Usando cor padrão da plataforma</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-xs h-7"
+            onClick={() => set("corPrimaria", platformPrimaryColor)}
+          >
+            Personalizar cor
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={displayColor}
+              onChange={(e) => set("corPrimaria", e.target.value)}
+              className="h-9 w-12 rounded-md border cursor-pointer"
+            />
+            <Input
+              value={form.corPrimaria || ""}
+              onChange={(e) => set("corPrimaria", e.target.value)}
+              placeholder="#0044CC"
+              className="h-9 font-mono text-xs flex-1"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Cor personalizada da empresa.{" "}
+            <button
+              type="button"
+              className="underline text-primary hover:text-primary/80"
+              onClick={() => set("corPrimaria", "")}
+            >
+              Restaurar padrão da plataforma
+            </button>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MinhaEmpresaForm ───
 function MinhaEmpresaForm() {
   const { empresa: existing, isLoading, saveEmpresa } = useEmpresa();
