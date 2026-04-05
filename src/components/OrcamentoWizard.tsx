@@ -689,8 +689,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   // ─── Phase 3: Cart ─────────────────────────────────────────────
   const currentStatus = statusOptions.find((s) => s.value === status)!;
-  const corDestaque = empresa?.corDestaque || "#F57C00";
-
   return (
     <div className="px-4 pb-28 pt-4 max-w-2xl mx-auto">
       {!isEditing && <StepIndicator current="carrinho" />}
@@ -1250,9 +1248,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <p className="text-xs text-muted-foreground">
                   {itens.length} {itens.length === 1 ? "serviço" : "serviços"} · {clienteAtualNome}
                 </p>
-                <p className="text-lg font-bold tabular-nums" style={{ color: corDestaque }}>
-                  {fmt(valorFinal)}
-                </p>
+                <p className="text-lg font-bold tabular-nums text-primary">{fmt(valorFinal)}</p>
               </div>
               <div className="flex gap-2">
                 {isEditing && editingOrcamento && (
@@ -1277,12 +1273,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     className="h-11"
                   />
                 )}
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="h-11 px-6"
-                  style={{ backgroundColor: corDestaque, color: "#fff" }}
-                >
+                <Button onClick={handleSave} disabled={isSaving} className="h-11 px-6">
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

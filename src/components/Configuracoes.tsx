@@ -177,7 +177,7 @@ function MinhaEmpresaForm() {
     cidade: "",
     estado: "",
     corPrimaria: "#0B1B32",
-    corDestaque: "#F57C00",
+    corDestaque: "#5866D6",
     slogan: "",
   });
   const [uploading, setUploading] = useState(false);

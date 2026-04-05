@@ -16,7 +16,6 @@ interface PDFButtonProps {
 export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default", className }: PDFButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const corDestaque = empresa?.corDestaque || "#F57C00";
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +95,6 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default
     <Button
       size={size}
       className={className}
-      style={{ backgroundColor: corDestaque, color: "#fff" }}
       disabled={generating}
       onClick={(e) => {
         e.stopPropagation();
