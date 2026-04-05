@@ -7,6 +7,7 @@ interface OrcamentoPDFProps {
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
+  platformColor?: string;
 }
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
