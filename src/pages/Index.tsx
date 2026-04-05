@@ -6,6 +6,9 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Orcamento } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrcamentos, useClientes, useEmpresa } from "@/hooks/useSupabaseData";
+import { usePlatformColor } from "@/hooks/usePlatformColor";
+import { resolveEffectiveColor } from "@/lib/colorUtils";
+import { ThemeApplicator } from "@/components/ThemeApplicator";
 
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
