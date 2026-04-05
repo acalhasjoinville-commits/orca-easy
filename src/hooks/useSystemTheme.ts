@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { FALLBACK_PRIMARY } from "@/lib/colorUtils";
 
 interface PlatformSettings {
   primary_color: string;
@@ -11,13 +12,13 @@ export function useSystemTheme() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("sa_get_platform_settings" as never);
       if (error) throw error;
-      return data as PlatformSettings;
+      return data as PlatformSettings | null;
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
   });
 
   return {
-    systemColor: data?.primary_color ?? null,
+    systemColor: data?.primary_color || FALLBACK_PRIMARY,
     isLoading,
   };
 }

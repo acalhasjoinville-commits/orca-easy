@@ -6,8 +6,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Orcamento } from "@/lib/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrcamentos, useClientes, useEmpresa } from "@/hooks/useSupabaseData";
-import { usePlatformColor } from "@/hooks/usePlatformColor";
-import { ThemeApplicator } from "@/components/ThemeApplicator";
+import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
 
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -85,7 +84,6 @@ const Index = () => {
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
-  const { platformPrimaryColor } = usePlatformColor();
 
   // Auth loading state
   if (loading) {
@@ -370,7 +368,7 @@ const Index = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        <ThemeApplicator color={platformPrimaryColor} />
+        <SystemThemeApplicator />
         <header className="h-14 flex items-center border-b bg-card px-4 sticky top-0 z-50 shadow-sm">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
             OC
@@ -404,7 +402,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <ThemeApplicator color={platformPrimaryColor} />
+      <SystemThemeApplicator />
       <div className="min-h-screen flex w-full">
         <AppSidebar active={tab} onNavigate={guardedNavigate} />
         <div className="flex-1 flex flex-col min-w-0">
