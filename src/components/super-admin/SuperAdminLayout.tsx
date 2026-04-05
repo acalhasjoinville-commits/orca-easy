@@ -65,6 +65,12 @@ const navItems: NavItem[] = [
     helper: "Ações sensíveis da plataforma",
     icon: ScrollText,
   },
+  {
+    tab: "configuracoes",
+    label: "Configurações",
+    helper: "Cor padrão e ajustes globais",
+    icon: Settings,
+  },
 ];
 
 export function SuperAdminLayout({ active, onNavigate, children }: Props) {
