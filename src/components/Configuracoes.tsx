@@ -294,24 +294,7 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={form.corPrimaria}
-                  onChange={(e) => set("corPrimaria", e.target.value)}
-                  className="h-9 w-12 rounded-md border cursor-pointer"
-                />
-                <Input
-                  value={form.corPrimaria}
-                  onChange={(e) => set("corPrimaria", e.target.value)}
-                  placeholder="#0044CC"
-                  className="h-9 font-mono text-xs flex-1"
-                />
-              </div>
-            </div>
+          <CorPrimariaField form={form} set={set} />
             <div>
               <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
               <div className="flex items-center gap-2">
