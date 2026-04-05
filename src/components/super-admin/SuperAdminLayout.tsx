@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
