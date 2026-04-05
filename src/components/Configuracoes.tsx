@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { usePlatformColor } from "@/hooks/usePlatformColor";
+import { resolveEffectiveColor } from "@/lib/colorUtils";
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from "@/hooks/useSupabaseTechnicalData";
 import { Search } from "lucide-react";
 import { useEmpresa, usePoliticas } from "@/hooks/useSupabaseData";
