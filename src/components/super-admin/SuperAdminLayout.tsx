@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
