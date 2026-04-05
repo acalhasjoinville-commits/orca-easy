@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { resolveEffectiveColor } from "@/lib/colorUtils";
 
 interface OrdemServicoPDFProps {
   orcamento: Orcamento;
