@@ -68,7 +68,7 @@ function empresaToDb(e: MinhaEmpresa) {
     bairro: e.bairro,
     cidade: e.cidade,
     estado: e.estado,
-    cor_primaria: e.corPrimaria,
+    cor_primaria: e.corPrimaria || "#0B1B32",
     cor_destaque: e.corDestaque,
     logo_url: e.logoUrl,
     slogan: e.slogan,
