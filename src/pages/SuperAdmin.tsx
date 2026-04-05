@@ -27,6 +27,7 @@ export default function SuperAdminPage() {
       case 'usuarios': return <SuperAdminUsuarios />;
       case 'convites': return <SuperAdminConvites />;
       case 'auditoria': return <SuperAdminAuditoria />;
+      case 'configuracoes': return <SuperAdminConfiguracoes />;
     }
   })();
 
