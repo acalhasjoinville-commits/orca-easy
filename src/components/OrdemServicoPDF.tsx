@@ -1,6 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
-import { resolveEffectiveColor } from "@/lib/colorUtils";
 
 interface OrdemServicoPDFProps {
   orcamento: Orcamento;
@@ -8,7 +7,6 @@ interface OrdemServicoPDFProps {
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
   termoRecebimento?: string | null;
-  platformColor?: string;
 }
 
 const fmtDate = (d: string) => {
@@ -28,8 +26,8 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento, platformColor }: OrdemServicoPDFProps) {
-  const corPrimaria = resolveEffectiveColor(empresa?.corPrimaria, platformColor);
+export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
+  const corPrimaria = empresa?.corPrimaria || "#0B1B32";
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
   const cnpjCpf = empresa?.cnpjCpf || "";

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
 import { fetchLogoBase64 } from "@/lib/fetchLogoBase64";
-import { usePlatformColor } from "@/hooks/usePlatformColor";
 import { Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
@@ -17,7 +16,6 @@ interface PDFButtonProps {
 export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default", className }: PDFButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const { platformPrimaryColor } = usePlatformColor();
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +49,6 @@ export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default
             cliente={cliente}
             empresa={empresa}
             logoBase64={withLogo ? logoBase64 : null}
-            platformColor={platformPrimaryColor}
           />,
         ).toBlob();
       };

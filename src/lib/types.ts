@@ -125,7 +125,7 @@ export interface MinhaEmpresa {
   bairro: string;
   cidade: string;
   estado: string;
-  corPrimaria: string | null;
+  corPrimaria: string;
   corDestaque: string;
   slogan: string;
 }
