@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
