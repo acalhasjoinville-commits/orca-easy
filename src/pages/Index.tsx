@@ -86,6 +86,8 @@ const Index = () => {
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
+  const { platformPrimaryColor } = usePlatformColor();
+  const effectiveColor = resolveEffectiveColor(empresa?.corPrimaria, platformPrimaryColor);
 
   // Auth loading state
   if (loading) {
