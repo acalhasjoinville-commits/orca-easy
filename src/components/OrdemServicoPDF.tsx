@@ -28,8 +28,8 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
-  const corPrimaria = empresa?.corPrimaria || "#0B1B32";
+export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento, platformColor }: OrdemServicoPDFProps) {
+  const corPrimaria = resolveEffectiveColor(empresa?.corPrimaria, platformColor);
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
   const cnpjCpf = empresa?.cnpjCpf || "";

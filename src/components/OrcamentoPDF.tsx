@@ -30,8 +30,8 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: OrcamentoPDFProps) {
-  const corPrimaria = empresa?.corPrimaria || "#0B1B32";
+export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64, platformColor }: OrcamentoPDFProps) {
+  const corPrimaria = resolveEffectiveColor(empresa?.corPrimaria, platformColor);
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
   const razaoSocial = empresa?.razaoSocial || "";
