@@ -178,7 +178,7 @@ function MinhaEmpresaForm() {
     bairro: "",
     cidade: "",
     estado: "",
-    corPrimaria: "#0B1B32",
+    corPrimaria: null,
     corDestaque: "#5866D6",
     slogan: "",
   });
