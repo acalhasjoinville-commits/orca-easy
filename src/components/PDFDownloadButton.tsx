@@ -17,6 +17,8 @@ interface PDFButtonProps {
 export function PDFDownloadButton({ orcamento, cliente, empresa, size = "default", className }: PDFButtonProps) {
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const { platformPrimaryColor } = usePlatformColor();
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
