@@ -8,6 +8,7 @@ interface OrdemServicoPDFProps {
   empresa?: MinhaEmpresa | null;
   logoBase64?: string | null;
   termoRecebimento?: string | null;
+  platformColor?: string;
 }
 
 const fmtDate = (d: string) => {
