@@ -1,31 +1,121 @@
 
+# Cor Principal com Herança Plataforma → Empresa
 
-# Combobox com busca para seleção de insumos nas Regras
+## Regra de herança
 
-## Problema
-Na tela de Configurações, ao cadastrar uma Regra de Cálculo e adicionar insumos, o seletor é um `<Select>` nativo (dropdown). Com muitos insumos cadastrados, a lista fica enorme e difícil de navegar — não há como digitar para filtrar.
+```
+corEfetiva = empresa.cor_primaria (se NOT NULL) || platformSettings.primary_color || '#4F46E5'
+```
 
-## Solução
-Substituir o `<Select>` de insumos (linhas ~751-761 de `Configuracoes.tsx`) por um **Combobox com busca** usando os componentes `Popover` + `Command` já existentes no projeto (`src/components/ui/popover.tsx` e `src/components/ui/command.tsx`).
+- `cor_primaria = NULL` na empresa significa "herdar da plataforma"
+- Nunca usar valor antigo `#0B1B32` como sinal de herança
 
-O usuário poderá digitar parte do nome do insumo para filtrar a lista em tempo real.
+## 1. Banco de dados (migration)
 
-## Implementação
+### Tabela `platform_settings`
+- `id` text PK default `'global'` (linha única via CHECK `id = 'global'`)
+- `primary_color` text NOT NULL default `'#4F46E5'`
+- `updated_at` timestamptz NOT NULL default now()
+- RLS: SELECT para authenticated; escrita apenas via RPC
+- Trigger `updated_at`
 
-### Arquivo: `src/components/Configuracoes.tsx`
+### Alterar `empresa.cor_primaria`
+- `ALTER TABLE empresa ALTER COLUMN cor_primaria SET DEFAULT NULL;`
+- `ALTER TABLE empresa ALTER COLUMN cor_primaria DROP NOT NULL;`
+- `UPDATE empresa SET cor_primaria = NULL WHERE cor_primaria = '#0B1B32';`
+- Empresas que tinham o valor padrão antigo passam a herdar automaticamente
 
-1. **Adicionar imports** de `Popover`, `PopoverTrigger`, `PopoverContent`, `Command`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem` e o ícone `ChevronsUpDown` / `Check`.
+### RPC `sa_get_platform_settings` (STABLE, SECURITY DEFINER)
+- Acessível a qualquer authenticated (é só a cor)
+- Retorna `primary_color` da linha global
 
-2. **Substituir o bloco `<Select>` de insumo** (linhas 751-761) por um Combobox:
-   - `PopoverTrigger` exibe o nome do insumo selecionado ou placeholder "Buscar insumo..."
-   - `CommandInput` permite digitar para filtrar
-   - `CommandList` renderiza os insumos filtrados
-   - Ao selecionar, chama `updateRegraItem(idx, "insumoId", insId)` e fecha o popover
+### RPC `sa_update_platform_settings` (SECURITY DEFINER)
+- Valida `is_platform_admin`
+- UPSERT na linha única
+- Registra no `platform_audit_log`
 
-3. **Corrigir o bug TS2345 na linha 1102**: cast `regraMap.get(e.regraId)` para `string` — `normalize((regraMap.get(e.regraId) ?? "") as string)`.
+## 2. Hook central: `usePlatformColor`
 
-### Nenhuma mudança em lógica de negócio
-- Mesmo `updateRegraItem` e `addRegraItem`
-- Mesma estrutura de dados `ItemRegra`
-- Apenas troca de componente visual
+Arquivo: `src/hooks/usePlatformColor.ts`
 
+- Query `sa_get_platform_settings` com staleTime 5min
+- Exporta `platformPrimaryColor: string` (com fallback `#4F46E5`)
+
+## 3. Função pura de resolução: `resolveEffectiveColor`
+
+Arquivo: `src/lib/colorUtils.ts`
+
+```ts
+const FALLBACK = '#4F46E5';
+
+export function resolveEffectiveColor(
+  empresaCorPrimaria: string | null | undefined,
+  platformColor: string | null | undefined
+): string {
+  return empresaCorPrimaria || platformColor || FALLBACK;
+}
+
+export function hexToHSL(hex: string): string { /* ... */ }
+```
+
+- Usada na UI (tema CSS) e nos PDFs (cor de cabeçalho)
+- Ponto único de resolução — sem duplicação
+
+## 4. Aplicação do tema CSS
+
+Arquivo: `src/components/ThemeApplicator.tsx` (novo componente)
+
+- Renderizado dentro da área autenticada da empresa (NÃO no super admin)
+- Recebe `effectiveColor` via props ou contexto
+- `useEffect` aplica `--primary`, `--ring`, `--sidebar-primary` via `document.documentElement.style.setProperty`
+- **Cleanup obrigatório**: no `return` do useEffect, reseta as variáveis para o valor original do CSS (ou remove os overrides)
+- Super admin NÃO renderiza este componente → tema fixo garantido
+
+## 5. PDFs
+
+Os componentes `OrcamentoPDF` e `OrdemServicoPDF` já recebem dados da empresa. Ajustar para que recebam `corEfetiva` (resolvida com `resolveEffectiveColor`) em vez de usar `empresa.corPrimaria` diretamente.
+
+- Quem monta os dados para o PDF chama `resolveEffectiveColor(empresa.corPrimaria, platformColor)`
+- O PDF usa essa cor resolvida
+
+## 6. Super Admin — UI de cor padrão
+
+Novo componente: `src/components/super-admin/SuperAdminConfiguracoes.tsx`
+
+- Nova tab `configuracoes` no `SATab`
+- Card simples: input color + input hex + preview + botão salvar
+- Microcopy: "Esta é a cor principal padrão da plataforma. Empresas que não definirem cor própria usarão esta cor."
+- Mutation para `sa_update_platform_settings`
+
+## 7. Configurações da empresa
+
+Em `Configuracoes.tsx`, seção de cor primária:
+
+- Se `cor_primaria` da empresa for NULL → mostrar "Usando cor padrão da plataforma" com preview
+- Se tiver valor próprio → mostrar "Cor personalizada" com opção de "Restaurar padrão da plataforma" (seta cor_primaria para NULL)
+- Input color + hex para definir cor própria
+
+## 8. Mapper `dbToEmpresa`
+
+Em `useSupabaseData.ts`, ao converter empresa do banco:
+
+- Se `cor_primaria` for `'#0B1B32'` ou vazio → mapear para `null` (compatibilidade)
+- Ou confiar no UPDATE da migration que já limpou os valores antigos
+
+## Arquivos criados/modificados
+
+| Arquivo | Ação |
+|---|---|
+| migration SQL | Nova tabela, RPCs, alter empresa |
+| `src/lib/colorUtils.ts` | Novo — resolveEffectiveColor + hexToHSL |
+| `src/hooks/usePlatformColor.ts` | Novo — query platform_settings |
+| `src/components/ThemeApplicator.tsx` | Novo — aplica CSS vars com cleanup |
+| `src/components/super-admin/SuperAdminConfiguracoes.tsx` | Novo — UI cor padrão |
+| `src/components/super-admin/SuperAdminLayout.tsx` | Adicionar tab configuracoes |
+| `src/pages/SuperAdmin.tsx` | Case para nova tab |
+| `src/hooks/useSuperAdmin.ts` | Mutation platform settings |
+| `src/hooks/useSupabaseData.ts` | Mapper corPrimaria null-aware |
+| `src/components/Configuracoes.tsx` | UX herança/override |
+| `src/pages/Index.tsx` | Renderizar ThemeApplicator |
+| `src/components/OrcamentoPDF.tsx` | Receber cor efetiva |
+| `src/components/OrdemServicoPDF.tsx` | Receber cor efetiva |
