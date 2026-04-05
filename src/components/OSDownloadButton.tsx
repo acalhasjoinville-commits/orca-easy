@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
 import { fetchLogoBase64 } from "@/lib/fetchLogoBase64";
+import { usePlatformColor } from "@/hooks/usePlatformColor";
 import { ClipboardList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
