@@ -1,29 +1,27 @@
-import { useMemo } from 'react';
-import { Orcamento } from '@/lib/types';
-import { FilaComercialItem, useFilaComercial } from '@/hooks/useFollowUp';
+import { useMemo } from "react";
+import { useFilaComercial, FilaComercialItem } from "@/hooks/useFollowUp";
+import { Orcamento } from "@/lib/types";
 
-// ─── Safe local-date comparison ───
-
-/** Extract YYYY-MM-DD from an ISO/timestamp string using local timezone */
 function toLocalDateStr(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function getTodayLocal(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return toLocalDateStr(new Date().toISOString()) as string;
 }
-
-// ─── Types ───
 
 export interface PendenciaItem {
   orcamentoId: string;
@@ -55,18 +53,14 @@ export interface Pendencias {
   totalComercial: number;
   totalOperacao: number;
   totalFinanceiro: number;
-  isLoading: boolean;
+  isComercialLoading: boolean;
 }
 
-// ─── Hook ───
-
 export function usePendencias(orcamentos: Orcamento[]): Pendencias {
-  const { data: filaComercial, isLoading: filaLoading } = useFilaComercial();
+  const { data: filaComercial, isLoading: isComercialLoading } = useFilaComercial();
 
   return useMemo(() => {
     const hoje = getTodayLocal();
-
-    // ── Comercial (from useFilaComercial — single source of truth) ──
     const fila = filaComercial ?? [];
 
     const followUpsHoje: PendenciaItem[] = [];
@@ -74,9 +68,8 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
     const semRetorno: PendenciaItem[] = [];
 
     for (const item of fila) {
-      // Skip concluded or non-pending statuses
-      if (item.statusFollowUp === 'concluido') continue;
-      if (item.statusOrcamento === 'cancelado' || item.statusOrcamento === 'rejeitado') continue;
+      if (item.statusFollowUp === "concluido") continue;
+      if (item.statusOrcamento === "cancelado" || item.statusOrcamento === "rejeitado") continue;
 
       const retornoLocal = toLocalDateStr(item.dataRetorno);
 
@@ -86,69 +79,79 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
         followUpsAtrasados.push(toItem(item));
       }
 
-      if (item.statusFollowUp === 'sem_retorno' && item.statusOrcamento === 'pendente') {
+      if (item.statusFollowUp === "sem_retorno" && item.statusOrcamento === "pendente") {
         semRetorno.push(toItem(item));
       }
     }
 
-    // ── Operação (from orcamentos) ──
     const aprovadosSemDataPrevista: PendenciaItem[] = [];
     const execucaoHoje: PendenciaItem[] = [];
     const execucaoAtrasada: PendenciaItem[] = [];
 
-    for (const o of orcamentos) {
-      if (o.status === 'aprovado') {
-        if (!o.dataPrevista) {
-          aprovadosSemDataPrevista.push(toItemOrc(o));
-        } else {
-          const prevLocal = toLocalDateStr(o.dataPrevista);
-          if (prevLocal === hoje) {
-            execucaoHoje.push(toItemOrc(o));
-          } else if (prevLocal && prevLocal < hoje) {
-            execucaoAtrasada.push(toItemOrc(o));
-          }
-        }
-      }
-    }
-
-    // ── Financeiro (from orcamentos) ──
     const executadosSemFaturamento: PendenciaItem[] = [];
     const faturadosSemPagamento: PendenciaItem[] = [];
 
-    for (const o of orcamentos) {
-      if (o.status === 'cancelado') continue;
+    for (const orcamento of orcamentos) {
+      if (orcamento.status === "aprovado") {
+        if (!orcamento.dataPrevista) {
+          aprovadosSemDataPrevista.push(toItemOrc(orcamento));
+        } else {
+          const previstaLocal = toLocalDateStr(orcamento.dataPrevista);
 
-      if (o.status === 'executado' && !o.dataFaturamento) {
-        executadosSemFaturamento.push(toItemOrc(o));
+          if (previstaLocal === hoje) {
+            execucaoHoje.push(toItemOrc(orcamento));
+          } else if (previstaLocal && previstaLocal < hoje) {
+            execucaoAtrasada.push(toItemOrc(orcamento));
+          }
+        }
       }
 
-      if (o.dataFaturamento && !o.dataPagamento) {
-        faturadosSemPagamento.push(toItemOrc(o));
+      if (orcamento.status === "cancelado") continue;
+
+      if (orcamento.status === "executado" && !orcamento.dataFaturamento) {
+        executadosSemFaturamento.push(toItemOrc(orcamento));
+      }
+
+      if (orcamento.dataFaturamento && !orcamento.dataPagamento) {
+        faturadosSemPagamento.push(toItemOrc(orcamento));
       }
     }
 
-    const comercial = { followUpsHoje, followUpsAtrasados, semRetorno };
-    const operacao = { aprovadosSemDataPrevista, execucaoHoje, execucaoAtrasada };
-    const financeiro = { executadosSemFaturamento, faturadosSemPagamento };
-
     return {
-      comercial,
-      operacao,
-      financeiro,
+      comercial: {
+        followUpsHoje,
+        followUpsAtrasados,
+        semRetorno,
+      },
+      operacao: {
+        aprovadosSemDataPrevista,
+        execucaoHoje,
+        execucaoAtrasada,
+      },
+      financeiro: {
+        executadosSemFaturamento,
+        faturadosSemPagamento,
+      },
       totalComercial: followUpsHoje.length + followUpsAtrasados.length + semRetorno.length,
       totalOperacao: aprovadosSemDataPrevista.length + execucaoHoje.length + execucaoAtrasada.length,
       totalFinanceiro: executadosSemFaturamento.length + faturadosSemPagamento.length,
-      isLoading: filaLoading,
+      isComercialLoading,
     };
-  }, [orcamentos, filaComercial, filaLoading]);
+  }, [filaComercial, isComercialLoading, orcamentos]);
 }
 
-// ─── Helpers ───
-
-function toItem(f: FilaComercialItem): PendenciaItem {
-  return { orcamentoId: f.orcamentoId, numero: f.numeroOrcamento, nomeCliente: f.nomeCliente };
+function toItem(item: FilaComercialItem): PendenciaItem {
+  return {
+    orcamentoId: item.orcamentoId,
+    numero: item.numeroOrcamento,
+    nomeCliente: item.nomeCliente,
+  };
 }
 
-function toItemOrc(o: Orcamento): PendenciaItem {
-  return { orcamentoId: o.id, numero: o.numeroOrcamento, nomeCliente: o.nomeCliente };
+function toItemOrc(orcamento: Orcamento): PendenciaItem {
+  return {
+    orcamentoId: orcamento.id,
+    numero: orcamento.numeroOrcamento,
+    nomeCliente: orcamento.nomeCliente,
+  };
 }
