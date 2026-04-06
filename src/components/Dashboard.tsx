@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { usePendencias } from "@/hooks/usePendencias";
 import { PendenciasOperacionais } from "@/components/PendenciasOperacionais";
+import { usePendencias } from "@/hooks/usePendencias";
 import {
   ArrowRight,
   Banknote,
@@ -84,7 +84,9 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
 
   const orcamentosMap = useMemo(() => {
     const map = new Map<string, Orcamento>();
-    for (const o of orcamentos) map.set(o.id, o);
+    for (const orcamento of orcamentos) {
+      map.set(orcamento.id, orcamento);
+    }
     return map;
   }, [orcamentos]);
 
