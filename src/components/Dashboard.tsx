@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { usePendencias } from "@/hooks/usePendencias";
+import { PendenciasOperacionais } from "@/components/PendenciasOperacionais";
 import {
   ArrowRight,
   Banknote,
