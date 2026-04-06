@@ -80,6 +80,13 @@ const statusBadgeColors: Record<StatusOrcamento, string> = {
 export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: DashboardProps) {
   const { orcamentos, isLoading } = useOrcamentos();
   const { canCreateEditBudget, canViewFinanceiro, canManageClientes } = useAuth();
+  const pendencias = usePendencias(orcamentos);
+
+  const orcamentosMap = useMemo(() => {
+    const map = new Map<string, Orcamento>();
+    for (const o of orcamentos) map.set(o.id, o);
+    return map;
+  }, [orcamentos]);
 
   const formatCurrency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
