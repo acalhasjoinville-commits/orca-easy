@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { usePendencias } from "@/hooks/usePendencias";
+import { PendenciasOperacionais } from "@/components/PendenciasOperacionais";
 import {
   ArrowRight,
   Banknote,
@@ -78,6 +80,13 @@ const statusBadgeColors: Record<StatusOrcamento, string> = {
 export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: DashboardProps) {
   const { orcamentos, isLoading } = useOrcamentos();
   const { canCreateEditBudget, canViewFinanceiro, canManageClientes } = useAuth();
+  const pendencias = usePendencias(orcamentos);
+
+  const orcamentosMap = useMemo(() => {
+    const map = new Map<string, Orcamento>();
+    for (const o of orcamentos) map.set(o.id, o);
+    return map;
+  }, [orcamentos]);
 
   const formatCurrency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -407,6 +416,13 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
           </CardContent>
         </Card>
       </div>
+
+      <PendenciasOperacionais
+        pendencias={pendencias}
+        canViewFinanceiro={canViewFinanceiro}
+        onViewOrcamento={onViewOrcamento}
+        orcamentosMap={orcamentosMap}
+      />
 
       <Card className="border shadow-sm">
         <CardContent className="p-4">
