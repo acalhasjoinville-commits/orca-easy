@@ -417,6 +417,13 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
         </Card>
       </div>
 
+      <PendenciasOperacionais
+        pendencias={pendencias}
+        canViewFinanceiro={canViewFinanceiro}
+        onViewOrcamento={onViewOrcamento}
+        orcamentosMap={orcamentosMap}
+      />
+
       <Card className="border shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
