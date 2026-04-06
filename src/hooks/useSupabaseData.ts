@@ -1,6 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Cliente, MinhaEmpresa, Orcamento, PoliticaComercial, ItemServico } from "@/lib/types";
+import {
+  Cliente,
+  MinhaEmpresa,
+  Orcamento,
+  PoliticaComercial,
+  ItemServico,
+  MotorType,
+  StatusOrcamento,
+  TipoPessoa,
+} from "@/lib/types";
 import { Json, Tables, TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -13,12 +22,32 @@ type OrcamentoInsert = TablesInsert<"orcamentos">;
 type PoliticaRow = Tables<"politicas_comerciais">;
 type PoliticaInsert = TablesInsert<"politicas_comerciais">;
 
+function toTipoPessoa(value: string): TipoPessoa {
+  return value === "PJ" ? "PJ" : "PF";
+}
+
+function toMotorType(value: string | null): MotorType | undefined {
+  return value === "motor1" || value === "motor2" ? value : undefined;
+}
+
+function toStatusOrcamento(value: string): StatusOrcamento {
+  if (value === "aprovado" || value === "rejeitado" || value === "executado" || value === "cancelado") {
+    return value;
+  }
+
+  return "pendente";
+}
+
+function toItensServico(value: Json): ItemServico[] {
+  return Array.isArray(value) ? (value as unknown as ItemServico[]) : [];
+}
+
 // ─── MAPPERS ───
 
 function dbToCliente(row: ClienteRow): Cliente {
   return {
     id: row.id,
-    tipo: row.tipo,
+    tipo: toTipoPessoa(row.tipo),
     nomeRazaoSocial: row.nome_razao_social,
     documento: row.documento || "",
     whatsapp: row.whatsapp || "",
@@ -90,14 +119,14 @@ function dbToOrcamento(row: OrcamentoRow): Orcamento {
     numeroOrcamento: row.numero_orcamento,
     clienteId: row.cliente_id || "",
     nomeCliente: row.nome_cliente,
-    motorType: row.motor_type || undefined,
-    itensServico: (row.itens_servico || []) as ItemServico[],
+    motorType: toMotorType(row.motor_type),
+    itensServico: toItensServico(row.itens_servico),
     custoTotalObra: Number(row.custo_total_obra),
     valorVenda: Number(row.valor_venda),
     desconto: Number(row.desconto),
     valorFinal: Number(row.valor_final),
     dataCriacao: row.data_criacao || row.created_at,
-    status: row.status,
+    status: toStatusOrcamento(row.status),
     validade: row.validade || "",
     descricaoGeral: row.descricao_geral || "",
     formasPagamento: row.formas_pagamento || "",

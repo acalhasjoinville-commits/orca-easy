@@ -1,17 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
-import { LancamentoFinanceiro } from "@/lib/types";
+import { LancamentoFinanceiro, TipoLancamento } from "@/lib/types";
 import { useAuth } from "@/hooks/useAuth";
 
 type LancamentoRow = Tables<"lancamentos_financeiros">;
 type LancamentoInsert = TablesInsert<"lancamentos_financeiros">;
 
+function toTipoLancamento(value: string): TipoLancamento {
+  return value === "despesa" ? "despesa" : "receita";
+}
+
 function dbToLancamento(row: LancamentoRow): LancamentoFinanceiro {
   return {
     id: row.id,
     empresaId: row.empresa_id,
-    tipo: row.tipo,
+    tipo: toTipoLancamento(row.tipo),
     descricao: row.descricao,
     valor: Number(row.valor),
     data: row.data,

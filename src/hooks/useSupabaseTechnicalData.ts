@@ -24,6 +24,11 @@ type RegraInsert = TablesInsert<"regras_calculo">;
 type ServicoRow = Tables<"servicos_catalogo">;
 type ServicoInsert = TablesInsert<"servicos_catalogo">;
 type SeedTable = "motor1" | "motor2" | "insumos" | "regras_calculo" | "servicos_catalogo";
+type SeedInsertRow = Motor1Insert | Motor2Insert | InsumoInsert | RegraInsert | ServicoInsert;
+
+function toItensRegra(value: Json): ItemRegra[] {
+  return Array.isArray(value) ? (value as unknown as ItemRegra[]) : [];
+}
 
 // ─── MAPPERS ───
 
@@ -75,7 +80,7 @@ function insumoToDb(e: InsumoEntry, empresaId: string): InsumoInsert {
 }
 
 function dbToRegra(row: RegraRow): RegraCalculo {
-  return { id: row.id, nomeRegra: row.nome_regra, itensRegra: (row.itens_regra || []) as ItemRegra[] };
+  return { id: row.id, nomeRegra: row.nome_regra, itensRegra: toItensRegra(row.itens_regra) };
 }
 function regraToDb(e: RegraCalculo, empresaId: string): RegraInsert {
   return { id: e.id, nome_regra: e.nomeRegra, itens_regra: e.itensRegra as unknown as Json, empresa_id: empresaId };
@@ -128,7 +133,7 @@ function markSeedCached(table: string, empresaId: string) {
 async function seedIfEmpty<TSeed, TTable extends SeedTable>(
   table: TTable,
   seedData: readonly TSeed[],
-  mapper: (row: TSeed, empresaId: string) => TablesInsert<TTable>,
+  mapper: (row: TSeed, empresaId: string) => SeedInsertRow,
   empresaId: string,
 ) {
   // 1. Fast path: localStorage cache says seed already happened
@@ -156,7 +161,16 @@ async function seedIfEmpty<TSeed, TTable extends SeedTable>(
   // 3. We claimed the seed — insert data in a single batch
   if (seedData.length > 0) {
     const rows = seedData.map((row) => mapper(row, empresaId));
-    const { error: insertErr } = await supabase.from(table).insert(rows);
+    const { error: insertErr } =
+      table === "motor1"
+        ? await supabase.from("motor1").insert(rows as Motor1Insert[])
+        : table === "motor2"
+          ? await supabase.from("motor2").insert(rows as Motor2Insert[])
+          : table === "insumos"
+            ? await supabase.from("insumos").insert(rows as InsumoInsert[])
+            : table === "regras_calculo"
+              ? await supabase.from("regras_calculo").insert(rows as RegraInsert[])
+              : await supabase.from("servicos_catalogo").insert(rows as ServicoInsert[]);
     if (insertErr) {
       console.error(`Seed insert error for ${table}:`, insertErr);
       // Don't cache on failure — allow retry on next load
