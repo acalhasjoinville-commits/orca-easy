@@ -255,28 +255,40 @@ export function useClientes() {
 
 export function useEmpresa() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
+
   const query = useQuery({
-    queryKey: ["empresa"],
+    queryKey: ["empresa", empresaId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("empresa").select("*").limit(1).maybeSingle();
+      if (!empresaId) return null;
+      const { data, error } = await supabase
+        .from("empresa")
+        .select("*")
+        .eq("id", empresaId)
+        .maybeSingle();
       if (error) throw error;
       return data ? dbToEmpresa(data) : null;
     },
+    enabled: !!empresaId,
   });
 
   const saveEmpresa = useMutation({
     mutationFn: async (e: MinhaEmpresa) => {
-      const { data: rows } = await supabase.from("empresa").select("id").limit(1);
-      const existingId = rows && rows.length > 0 ? rows[0].id : null;
-      if (existingId) {
-        const { error } = await supabase.from("empresa").update(empresaToDb(e)).eq("id", existingId);
+      if (!empresaId) throw new Error("Empresa não vinculada");
+      const { data: existing } = await supabase
+        .from("empresa")
+        .select("id")
+        .eq("id", empresaId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase.from("empresa").update(empresaToDb(e)).eq("id", empresaId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("empresa").insert(empresaToDb(e));
+        const { error } = await supabase.from("empresa").insert({ ...empresaToDb(e), id: empresaId });
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["empresa"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["empresa", empresaId] }),
   });
 
   return { empresa: query.data || null, isLoading: query.isLoading, saveEmpresa };
