@@ -1,12 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Cliente, MinhaEmpresa, Orcamento, PoliticaComercial, ItemServico } from "@/lib/types";
-import { Json } from "@/integrations/supabase/types";
+import { Json, Tables, TablesInsert } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
+
+type ClienteRow = Tables<"clientes">;
+type ClienteInsert = TablesInsert<"clientes">;
+type EmpresaRow = Tables<"empresa">;
+type EmpresaInsert = TablesInsert<"empresa">;
+type OrcamentoRow = Tables<"orcamentos">;
+type OrcamentoInsert = TablesInsert<"orcamentos">;
+type PoliticaRow = Tables<"politicas_comerciais">;
+type PoliticaInsert = TablesInsert<"politicas_comerciais">;
 
 // ─── MAPPERS ───
 
-function dbToCliente(row: any): Cliente {
+function dbToCliente(row: ClienteRow): Cliente {
   return {
     id: row.id,
     tipo: row.tipo,
@@ -21,7 +30,7 @@ function dbToCliente(row: any): Cliente {
   };
 }
 
-function clienteToDb(c: Cliente, empresaId: string) {
+function clienteToDb(c: Cliente, empresaId: string): ClienteInsert {
   return {
     id: c.id,
     tipo: c.tipo,
@@ -37,7 +46,7 @@ function clienteToDb(c: Cliente, empresaId: string) {
   };
 }
 
-function dbToEmpresa(row: any): MinhaEmpresa {
+function dbToEmpresa(row: EmpresaRow): MinhaEmpresa {
   return {
     logoUrl: row.logo_url || "",
     nomeFantasia: row.nome_fantasia,
@@ -56,7 +65,7 @@ function dbToEmpresa(row: any): MinhaEmpresa {
   };
 }
 
-function empresaToDb(e: MinhaEmpresa) {
+function empresaToDb(e: MinhaEmpresa): EmpresaInsert {
   return {
     nome_fantasia: e.nomeFantasia,
     razao_social: e.razaoSocial,
@@ -75,7 +84,7 @@ function empresaToDb(e: MinhaEmpresa) {
   };
 }
 
-function dbToOrcamento(row: any): Orcamento {
+function dbToOrcamento(row: OrcamentoRow): Orcamento {
   return {
     id: row.id,
     numeroOrcamento: row.numero_orcamento,
@@ -110,7 +119,7 @@ function dbToOrcamento(row: any): Orcamento {
   };
 }
 
-function orcamentoToDb(o: Orcamento, empresaId: string) {
+function orcamentoToDb(o: Orcamento, empresaId: string): OrcamentoInsert {
   return {
     id: o.id,
     numero_orcamento: o.numeroOrcamento,
@@ -146,7 +155,7 @@ function orcamentoToDb(o: Orcamento, empresaId: string) {
   };
 }
 
-function dbToPolitica(row: any): PoliticaComercial {
+function dbToPolitica(row: PoliticaRow): PoliticaComercial {
   return {
     id: row.id,
     nomePolitica: row.nome_politica,
@@ -158,7 +167,7 @@ function dbToPolitica(row: any): PoliticaComercial {
   };
 }
 
-function politicaToDb(p: PoliticaComercial, empresaId: string) {
+function politicaToDb(p: PoliticaComercial, empresaId: string): PoliticaInsert {
   return {
     id: p.id,
     nome_politica: p.nomePolitica,

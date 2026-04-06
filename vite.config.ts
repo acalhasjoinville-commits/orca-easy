@@ -36,6 +36,8 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom"],
   },
   build: {
+    // The PDF renderer is lazy-loaded and naturally produces a large isolated chunk.
+    chunkSizeWarningLimit: 1700,
     rollupOptions: {
       output: {
         manualChunks(id) {

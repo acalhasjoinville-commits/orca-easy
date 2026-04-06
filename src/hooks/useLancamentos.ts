@@ -1,9 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { LancamentoFinanceiro } from '@/lib/types';
-import { useAuth } from '@/hooks/useAuth';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables, TablesInsert } from "@/integrations/supabase/types";
+import { LancamentoFinanceiro } from "@/lib/types";
+import { useAuth } from "@/hooks/useAuth";
 
-function dbToLancamento(row: any): LancamentoFinanceiro {
+type LancamentoRow = Tables<"lancamentos_financeiros">;
+type LancamentoInsert = TablesInsert<"lancamentos_financeiros">;
+
+function dbToLancamento(row: LancamentoRow): LancamentoFinanceiro {
   return {
     id: row.id,
     empresaId: row.empresa_id,
@@ -12,12 +16,12 @@ function dbToLancamento(row: any): LancamentoFinanceiro {
     valor: Number(row.valor),
     data: row.data,
     categoria: row.categoria,
-    observacao: row.observacao || '',
-    origem: row.origem || 'manual',
+    observacao: row.observacao || "",
+    origem: row.origem || "manual",
   };
 }
 
-function lancamentoToDb(l: LancamentoFinanceiro, empresaId: string) {
+function lancamentoToDb(l: LancamentoFinanceiro, empresaId: string): LancamentoInsert {
   return {
     id: l.id,
     empresa_id: empresaId,
@@ -27,24 +31,24 @@ function lancamentoToDb(l: LancamentoFinanceiro, empresaId: string) {
     data: l.data,
     categoria: l.categoria,
     observacao: l.observacao,
-    origem: l.origem || 'manual',
+    origem: l.origem || "manual",
   };
 }
 
 export function useLancamentos() {
   const { empresaId } = useAuth();
   const qc = useQueryClient();
-  const key = ['lancamentos', empresaId];
+  const key = ["lancamentos", empresaId];
 
   const { data: lancamentos = [], isLoading } = useQuery({
     queryKey: key,
     enabled: !!empresaId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('lancamentos_financeiros')
-        .select('*')
-        .eq('empresa_id', empresaId!)
-        .order('data', { ascending: false });
+        .from("lancamentos_financeiros")
+        .select("*")
+        .eq("empresa_id", empresaId!)
+        .order("data", { ascending: false });
       if (error) throw error;
       return (data || []).map(dbToLancamento);
     },
@@ -53,9 +57,7 @@ export function useLancamentos() {
   const saveMutation = useMutation({
     mutationFn: async (l: LancamentoFinanceiro) => {
       const row = lancamentoToDb(l, empresaId!);
-      const { error } = await supabase
-        .from('lancamentos_financeiros')
-        .upsert(row as any);
+      const { error } = await supabase.from("lancamentos_financeiros").upsert(row);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
@@ -63,10 +65,7 @@ export function useLancamentos() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('lancamentos_financeiros')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("lancamentos_financeiros").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
