@@ -261,11 +261,9 @@ export function useEmpresa() {
     queryKey: ["empresa", empresaId],
     queryFn: async () => {
       if (!empresaId) return null;
-      const { data, error } = await supabase
-        .from("empresa")
-        .select("*")
-        .eq("id", empresaId)
-        .maybeSingle();
+
+      const { data, error } = await supabase.from("empresa").select("*").eq("id", empresaId).maybeSingle();
+
       if (error) throw error;
       return data ? dbToEmpresa(data) : null;
     },
@@ -275,11 +273,15 @@ export function useEmpresa() {
   const saveEmpresa = useMutation({
     mutationFn: async (e: MinhaEmpresa) => {
       if (!empresaId) throw new Error("Empresa não vinculada");
-      const { data: existing } = await supabase
+
+      const { data: existing, error: existingError } = await supabase
         .from("empresa")
         .select("id")
         .eq("id", empresaId)
         .maybeSingle();
+
+      if (existingError) throw existingError;
+
       if (existing) {
         const { error } = await supabase.from("empresa").update(empresaToDb(e)).eq("id", empresaId);
         if (error) throw error;
