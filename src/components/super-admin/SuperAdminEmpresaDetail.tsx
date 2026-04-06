@@ -158,7 +158,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
               <StatusBadge status={empresa.status} />
             </div>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Gerencie status, usuários e convites desta empresa sem sair da camada de administração global.
+              Gerencie status, usuarios e convites desta empresa sem sair da camada de administracao global.
             </p>
           </div>
         </div>
@@ -180,7 +180,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard label="Usuários" value={summary.users} helper="Pessoas vinculadas à empresa" />
+        <SummaryCard label="Usuarios" value={summary.users} helper="Pessoas vinculadas a empresa" />
         <SummaryCard label="Convites pendentes" value={summary.pendingInvites} helper="Ainda sem uso" />
         <SummaryCard label="Admins" value={summary.admins} helper="Com acesso administrativo" />
       </div>
@@ -191,7 +191,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
             <div className="space-y-2">
               <CardTitle className="text-base">Dados da empresa</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Esta área resume os dados institucionais principais usados no sistema e no relacionamento comercial.
+                Esta area resume os dados institucionais principais usados no sistema e no relacionamento comercial.
               </p>
             </div>
             <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -205,7 +205,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
                 <DialogHeader>
                   <DialogTitle>Editar empresa</DialogTitle>
                   <DialogDescription>
-                    Atualize os dados institucionais principais sem sair da administração global.
+                    Atualize os dados institucionais principais sem sair da administracao global.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -217,7 +217,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <Label>Razão social</Label>
+                    <Label>Razao social</Label>
                     <Input
                       value={editForm.razaoSocial}
                       onChange={(event) => setEditForm((current) => ({ ...current, razaoSocial: event.target.value }))}
@@ -254,14 +254,14 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <Label>Endereço</Label>
+                    <Label>Endereco</Label>
                     <Input
                       value={editForm.endereco}
                       onChange={(event) => setEditForm((current) => ({ ...current, endereco: event.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label>Número</Label>
+                    <Label>Numero</Label>
                     <Input
                       value={editForm.numero}
                       onChange={(event) => setEditForm((current) => ({ ...current, numero: event.target.value }))}
@@ -295,7 +295,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
                   </Button>
                   <Button onClick={handleSaveEmpresa} disabled={updateEmpresa.isPending}>
                     {updateEmpresa.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar alterações
+                    Salvar alteracoes
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -304,16 +304,16 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 text-sm md:grid-cols-2">
-            <DetailItem label="Razão social" value={empresa.razao_social || "—"} />
-            <DetailItem label="CNPJ/CPF" value={empresa.cnpj_cpf || "—"} />
-            <DetailItem label="E-mail" value={empresa.email_contato || "—"} />
-            <DetailItem label="WhatsApp" value={empresa.telefone_whatsapp || "—"} />
+            <DetailItem label="Razao social" value={empresa.razao_social || "-"} />
+            <DetailItem label="CNPJ/CPF" value={empresa.cnpj_cpf || "-"} />
+            <DetailItem label="E-mail" value={empresa.email_contato || "-"} />
+            <DetailItem label="WhatsApp" value={empresa.telefone_whatsapp || "-"} />
             <DetailItem
-              label="Endereço"
+              label="Endereco"
               value={
                 [empresa.endereco, empresa.numero, empresa.bairro, empresa.cidade, empresa.estado]
                   .filter(Boolean)
-                  .join(", ") || "—"
+                  .join(", ") || "-"
               }
             />
             <DetailItem label="Criada em" value={format(new Date(empresa.created_at), "dd/MM/yyyy HH:mm")} />
@@ -324,9 +324,9 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
       <Card>
         <CardHeader className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">Usuários da empresa</CardTitle>
+            <CardTitle className="text-base">Usuarios da empresa</CardTitle>
             <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-              {users.length} usuários
+              {users.length} usuarios
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -339,8 +339,8 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
-                <TableHead>Papéis</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>Papeis</TableHead>
+                <TableHead>Acoes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -397,7 +397,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
               {users.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                    Nenhum usuário vinculado a esta empresa.
+                    Nenhum usuario vinculado a esta empresa.
                   </TableCell>
                 </TableRow>
               )}
@@ -419,7 +419,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
               </DialogTrigger>
               <DialogContent className="max-w-sm">
                 <DialogHeader>
-                  <DialogTitle>Convidar usuário</DialogTitle>
+                  <DialogTitle>Convidar usuario</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
@@ -456,7 +456,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
             </Dialog>
           </div>
           <p className="text-sm text-muted-foreground">
-            Convites abertos aparecem aqui até serem usados ou revogados pela administração.
+            Convites abertos aparecem aqui ate serem usados ou revogados pela administracao.
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -466,7 +466,7 @@ export function SuperAdminEmpresaDetail({ empresaId, onBack }: Props) {
                 <TableHead>E-mail</TableHead>
                 <TableHead>Papel</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>Acoes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

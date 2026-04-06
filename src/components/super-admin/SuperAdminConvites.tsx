@@ -87,7 +87,7 @@ export function SuperAdminConvites() {
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Convites</h2>
           <p className="max-w-3xl text-sm text-muted-foreground">
-            Acompanhe convites pendentes, revogue acessos antigos e crie novos convites já vinculando empresa e papel.
+            Acompanhe convites pendentes, revogue acessos antigos e crie novos convites ja vinculando empresa e papel.
           </p>
         </div>
 
@@ -163,10 +163,10 @@ export function SuperAdminConvites() {
               <Mail className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Pendências de acesso</p>
+              <p className="text-sm font-semibold text-foreground">Pendencias de acesso</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Esta área ajuda a localizar convites não utilizados, entender há quanto tempo estão abertos e agir antes
-                que virem pendências esquecidas.
+                Esta area ajuda a localizar convites nao utilizados, entender ha quanto tempo estao abertos e agir antes
+                que virem pendencias esquecidas.
               </p>
             </div>
           </div>
@@ -176,8 +176,8 @@ export function SuperAdminConvites() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <InviteMetric label="Convites" value={stats.total} helper="Base global registrada" />
         <InviteMetric label="Pendentes" value={stats.pendentes} helper="Aguardando uso" />
-        <InviteMetric label="Usados" value={stats.usados} helper="Já convertidos em acesso" />
-        <InviteMetric label="Antigos" value={stats.antigos} helper="Pendentes há mais de 7 dias" />
+        <InviteMetric label="Usados" value={stats.usados} helper="Ja convertidos em acesso" />
+        <InviteMetric label="Antigos" value={stats.antigos} helper="Pendentes ha mais de 7 dias" />
       </div>
 
       <Card>
@@ -215,7 +215,7 @@ export function SuperAdminConvites() {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Convites muito antigos merecem revisão, principalmente quando a empresa já está ativa e sem pendências.
+            Convites muito antigos merecem revisao, principalmente quando a empresa ja esta ativa e sem pendencias.
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -228,7 +228,7 @@ export function SuperAdminConvites() {
                 <TableHead>Status</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead>Idade</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>Acoes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -238,7 +238,7 @@ export function SuperAdminConvites() {
                 return (
                   <TableRow key={invite.id}>
                     <TableCell className="text-sm font-medium">{invite.email}</TableCell>
-                    <TableCell className="text-sm">{invite.empresa_nome || "—"}</TableCell>
+                    <TableCell className="text-sm">{invite.empresa_nome || "-"}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-xs capitalize">
                         {roleLabels[invite.role]}

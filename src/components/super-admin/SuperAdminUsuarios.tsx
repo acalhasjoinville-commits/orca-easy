@@ -100,9 +100,9 @@ export function SuperAdminUsuarios() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">Usuários</h2>
+        <h2 className="text-2xl font-bold text-foreground">Usuarios</h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Revise quem já recebeu papel, quem ainda depende de aprovação e em qual empresa cada pessoa está vinculada.
+          Revise quem ja recebeu papel, quem ainda depende de aprovacao e em qual empresa cada pessoa esta vinculada.
         </p>
       </div>
 
@@ -113,9 +113,9 @@ export function SuperAdminUsuarios() {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Gestão global de acessos</p>
+              <p className="text-sm font-semibold text-foreground">Gestao global de acessos</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Acompanhe pessoas sem papel definido, altere permissões por empresa e aprove usuários pendentes com mais
+                Acompanhe pessoas sem papel definido, altere permissoes por empresa e aprove usuarios pendentes com mais
                 contexto antes de liberar o acesso.
               </p>
             </div>
@@ -124,10 +124,10 @@ export function SuperAdminUsuarios() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <UserMetric label="Usuários" value={stats.total} helper="Base total da plataforma" />
-        <UserMetric label="Ativos" value={stats.ativos} helper="Já operando normalmente" />
+        <UserMetric label="Usuarios" value={stats.total} helper="Base total da plataforma" />
+        <UserMetric label="Ativos" value={stats.ativos} helper="Ja operando normalmente" />
         <UserMetric label="Pendentes" value={stats.pendentes} helper="Ainda sem papel definido" />
-        <UserMetric label="Sem empresa" value={stats.semEmpresa} helper="Precisam de vinculação" />
+        <UserMetric label="Sem empresa" value={stats.semEmpresa} helper="Precisam de vinculacao" />
       </div>
 
       <Card>
@@ -175,25 +175,25 @@ export function SuperAdminUsuarios() {
       <Card>
         <CardHeader className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">Base global de usuários</CardTitle>
+            <CardTitle className="text-base">Base global de usuarios</CardTitle>
             <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
               {filtered.length} exibidos
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Use Aprovar para usuários sem papel e Alterar para ajustar papéis dentro da empresa vinculada.
+            Use Aprovar para usuarios sem papel e Alterar para ajustar papeis dentro da empresa vinculada.
           </p>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Usuário</TableHead>
+                <TableHead>Usuario</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Papéis</TableHead>
+                <TableHead>Papeis</TableHead>
                 <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>Acoes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,7 +216,7 @@ export function SuperAdminUsuarios() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -226,7 +226,7 @@ export function SuperAdminUsuarios() {
                       </Badge>
                     ) : (
                       <Badge variant="secondary" className="text-xs">
-                        Aguardando aprovação
+                        Aguardando aprovacao
                       </Badge>
                     )}
                   </TableCell>
@@ -309,7 +309,7 @@ export function SuperAdminUsuarios() {
               {filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                    Nenhum usuário encontrado com os filtros atuais.
+                    Nenhum usuario encontrado com os filtros atuais.
                   </TableCell>
                 </TableRow>
               )}
@@ -321,14 +321,14 @@ export function SuperAdminUsuarios() {
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Aprovar usuário</DialogTitle>
+            <DialogTitle>Aprovar usuario</DialogTitle>
           </DialogHeader>
           {approveTarget && (
             <div className="space-y-4">
               <div className="rounded-xl border bg-muted/20 p-3">
                 <p className="text-sm font-medium text-foreground">{approveTarget.full_name || approveTarget.email}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Defina a empresa e o papel inicial para liberar o acesso com segurança.
+                  Defina a empresa e o papel inicial para liberar o acesso com seguranca.
                 </p>
               </div>
 
@@ -376,7 +376,7 @@ export function SuperAdminUsuarios() {
                 className="w-full"
               >
                 {approveUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Aprovar usuário
+                Aprovar usuario
               </Button>
             </div>
           )}

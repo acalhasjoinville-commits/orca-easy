@@ -15,7 +15,7 @@ const actionLabels: Record<string, string> = {
   delete_user_role: "Remover papel",
   create_invite: "Criar convite",
   revoke_invite: "Revogar convite",
-  approve_user: "Aprovar usuário",
+  approve_user: "Aprovar usuario",
 };
 
 export function SuperAdminAuditoria() {
@@ -57,8 +57,8 @@ export function SuperAdminAuditoria() {
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-foreground">Auditoria</h2>
         <p className="max-w-3xl text-sm text-muted-foreground">
-          Consulte o histórico das ações sensíveis do super admin para entender mudanças de status, papéis, convites e
-          criação de empresas.
+          Consulte o historico das acoes sensiveis do super admin para entender mudancas de status, papeis, convites e
+          criacao de empresas.
         </p>
       </div>
 
@@ -69,10 +69,10 @@ export function SuperAdminAuditoria() {
               <ScrollText className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Rastreabilidade mínima da plataforma</p>
+              <p className="text-sm font-semibold text-foreground">Rastreabilidade minima da plataforma</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Use esta visão para revisar o que foi alterado, por quem e em qual alvo. Isso ajuda a investigar
-                mudanças administrativas e validar decisões recentes.
+                Use esta visao para revisar o que foi alterado, por quem e em qual alvo. Isso ajuda a investigar
+                mudancas administrativas e validar decisoes recentes.
               </p>
             </div>
           </div>
@@ -87,13 +87,13 @@ export function SuperAdminAuditoria() {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por admin, ação ou detalhe..."
+                placeholder="Buscar por admin, acao ou detalhe..."
                 className="pl-9"
               />
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="Ação" />
+                <SelectValue placeholder="Acao" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
@@ -111,13 +111,13 @@ export function SuperAdminAuditoria() {
       <Card>
         <CardHeader className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-base">Log de ações</CardTitle>
+            <CardTitle className="text-base">Log de acoes</CardTitle>
             <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
               {filtered.length} registros
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Os detalhes ajudam a confirmar o alvo da ação e o contexto em que a alteração aconteceu.
+            Os detalhes ajudam a confirmar o alvo da acao e o contexto em que a alteracao aconteceu.
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -126,7 +126,7 @@ export function SuperAdminAuditoria() {
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Admin</TableHead>
-                <TableHead>Ação</TableHead>
+                <TableHead>Acao</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Detalhes</TableHead>
               </TableRow>
@@ -138,8 +138,8 @@ export function SuperAdminAuditoria() {
                     {format(new Date(log.created_at), "dd/MM/yy HH:mm")}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <div className="font-medium">{log.admin_name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{log.admin_email || "—"}</div>
+                    <div className="font-medium">{log.admin_name || "-"}</div>
+                    <div className="text-xs text-muted-foreground">{log.admin_email || "-"}</div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="text-xs">
@@ -149,7 +149,7 @@ export function SuperAdminAuditoria() {
                   <TableCell className="text-xs capitalize text-muted-foreground">{log.target_type}</TableCell>
                   <TableCell className="max-w-[320px] text-xs text-muted-foreground">
                     <div className="line-clamp-2">
-                      {log.details && Object.keys(log.details).length > 0 ? JSON.stringify(log.details) : "—"}
+                      {log.details && Object.keys(log.details).length > 0 ? JSON.stringify(log.details) : "-"}
                     </div>
                   </TableCell>
                 </TableRow>

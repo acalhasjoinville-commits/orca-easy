@@ -116,7 +116,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
           <h2 className="text-2xl font-bold text-foreground">Empresas</h2>
           <p className="max-w-3xl text-sm text-muted-foreground">
             Consulte o status das contas, identifique administradores ativos e abra os detalhes operacionais de cada
-            empresa sem sair da visão global.
+            empresa sem sair da visao global.
           </p>
         </div>
 
@@ -131,7 +131,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
             <DialogHeader>
               <DialogTitle>Criar empresa</DialogTitle>
               <DialogDescription>
-                Cadastre a conta da empresa e, se quiser, já gere o convite inicial do primeiro administrador.
+                Cadastre a conta da empresa e, se quiser, ja gere o convite inicial do primeiro administrador.
               </DialogDescription>
             </DialogHeader>
 
@@ -145,7 +145,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <Label>Razão social</Label>
+                  <Label>Razao social</Label>
                   <Input
                     value={form.razao_social}
                     onChange={(event) => setForm((current) => ({ ...current, razao_social: event.target.value }))}
@@ -179,7 +179,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
                   <div>
                     <p className="text-sm font-medium text-foreground">Convite inicial</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Opcional. Se preencher o e-mail abaixo, o sistema já cria o primeiro convite junto com a empresa.
+                      Opcional. Se preencher o e-mail abaixo, o sistema ja cria o primeiro convite junto com a empresa.
                     </p>
                   </div>
 
@@ -228,9 +228,9 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
               <Building2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Gestão global de empresas</p>
+              <p className="text-sm font-semibold text-foreground">Gestao global de empresas</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Use esta área para acompanhar status, abrir detalhes, criar novas contas e enxergar rapidamente empresas
+                Use esta area para acompanhar status, abrir detalhes, criar novas contas e enxergar rapidamente empresas
                 com convites pendentes ou administradores ativos.
               </p>
             </div>
@@ -249,21 +249,21 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
         <MetricCard
           label="Ativas"
           value={stats.ativas}
-          helper="Operação liberada"
+          helper="Operacao liberada"
           icon={Shield}
           iconClassName="bg-emerald-500/10 text-emerald-600"
         />
         <MetricCard
           label="Suspensas"
           value={stats.suspensas}
-          helper="Exigem atenção"
+          helper="Exigem atencao"
           icon={Shield}
           iconClassName="bg-amber-500/10 text-amber-600"
         />
         <MetricCard
           label="Convites"
           value={stats.convites}
-          helper="Pendências ligadas às empresas"
+          helper="Pendencias ligadas as empresas"
           icon={Mail}
           iconClassName="bg-sky-500/10 text-sky-600"
         />
@@ -305,7 +305,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Clique em uma empresa para abrir os detalhes, revisar usuários e administrar convites.
+            Clique em uma empresa para abrir os detalhes, revisar usuarios e administrar convites.
           </p>
         </CardHeader>
         <CardContent className="p-0">
@@ -315,7 +315,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
                 <TableHead>Empresa</TableHead>
                 <TableHead>CNPJ/CPF</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-center">Usuários</TableHead>
+                <TableHead className="text-center">Usuarios</TableHead>
                 <TableHead className="text-center">Convites</TableHead>
                 <TableHead>Administradores</TableHead>
                 <TableHead>Criada em</TableHead>
@@ -336,14 +336,14 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{empresa.cnpj_cpf || "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{empresa.cnpj_cpf || "-"}</TableCell>
                   <TableCell>
                     <StatusBadge status={empresa.status} />
                   </TableCell>
                   <TableCell className="text-center">{empresa.total_usuarios}</TableCell>
                   <TableCell className="text-center">{empresa.convites_pendentes}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {empresa.admins?.map((admin) => admin.full_name || admin.email || "Sem nome").join(", ") || "—"}
+                    {empresa.admins?.map((admin) => admin.full_name || admin.email || "Sem nome").join(", ") || "-"}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {format(new Date(empresa.created_at), "dd/MM/yy")}
