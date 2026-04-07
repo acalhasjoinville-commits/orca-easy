@@ -89,6 +89,9 @@ export function MobileBottomNav({
   if (canManageClientes) {
     secondaryItems.push({ title: "Clientes", tab: "clientes", icon: Users });
   }
+  if (canViewFinanceiro) {
+    secondaryItems.push({ title: "Financeiro", tab: "financeiro", icon: DollarSign });
+  }
   if (canManageSettings) {
     secondaryItems.push({ title: "Configurações", tab: "config", icon: Settings });
   }
