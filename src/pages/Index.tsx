@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Orcamento } from "@/lib/types";
@@ -10,7 +9,7 @@ import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
 
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { LogOut, Loader2, UserCircle, Shield } from "lucide-react";
+import { LogOut, Loader2, PanelLeftClose, PanelLeftOpen, Shield, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Dashboard = lazy(() => import("@/components/Dashboard").then((module) => ({ default: module.Dashboard })));
@@ -79,6 +78,7 @@ const Index = () => {
   const [lancamentoCreateRequest, setLancamentoCreateRequest] = useState(0);
   const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -454,57 +454,78 @@ const Index = () => {
   }
 
   return (
-    <SidebarProvider>
+    <>
       <SystemThemeApplicator />
-      <div className="min-h-screen flex w-full">
-        <AppSidebar active={tab} onNavigate={guardedNavigate} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b bg-card/85 px-5 backdrop-blur-sm">
-            <SidebarTrigger className="mr-4 text-muted-foreground hover:text-foreground" />
-            <div className="min-w-0 flex-1">
-              <h1 className="text-sm font-semibold text-foreground">{headerMeta.title}</h1>
-              <p className="hidden text-xs text-muted-foreground sm:block">{headerMeta.helper}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground mr-3 hidden sm:inline">{user?.email}</span>
-              {isSuperAdmin && (
+      <div className="min-h-screen w-full bg-background">
+        <div className="flex min-h-screen w-full">
+          <AppSidebar active={tab} collapsed={desktopSidebarCollapsed} onNavigate={guardedNavigate} />
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b bg-card/85 px-4 backdrop-blur-sm lg:px-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDesktopSidebarCollapsed((current) => !current)}
+                className="mr-3 text-muted-foreground"
+                aria-label={desktopSidebarCollapsed ? "Expandir navegação" : "Recolher navegação"}
+              >
+                {desktopSidebarCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">{headerMeta.title}</p>
+                <p className="hidden text-xs text-muted-foreground sm:block">{headerMeta.helper}</p>
+              </div>
+
+              <div className="hidden items-center gap-3 sm:flex">
+                <span className="max-w-[260px] truncate text-xs text-muted-foreground">{user?.email}</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {isSuperAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/super-admin")}
+                    className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
+                    title="Super Admin"
+                  >
+                    <Shield className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/super-admin")}
+                  onClick={() => setProfileOpen(true)}
                   className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
-                  title="Super Admin"
                 >
-                  <Shield className="h-5 w-5" />
+                  <UserCircle className="h-5 w-5" />
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setProfileOpen(true)}
-                className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
-              >
-                <UserCircle className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </header>
-          <main ref={mainContentRef} className="flex-1 overflow-auto">
-            {content}
-          </main>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={signOut}
+                  className="text-muted-foreground hover:text-foreground h-9 w-9 p-0 rounded-lg"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
+            </header>
+
+            <main ref={mainContentRef} className="flex-1 overflow-auto">
+              {content}
+            </main>
+          </div>
         </div>
       </div>
       <Suspense fallback={null}>
         <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
       </Suspense>
-    </SidebarProvider>
+    </>
   );
 };
 

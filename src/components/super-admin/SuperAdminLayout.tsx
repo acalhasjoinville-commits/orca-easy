@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  MoreHorizontal,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
@@ -18,6 +19,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia";
 
@@ -76,9 +79,128 @@ const navItems: NavItem[] = [
 export function SuperAdminLayout({ active, onNavigate, children }: Props) {
   const { signOut, hasAnyRole, user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const activeItem = useMemo(() => navItems.find((item) => item.tab === active) ?? navItems[0], [active]);
+
+  const mobilePrimaryItems = navItems.filter((item) =>
+    ["dashboard", "empresas", "usuarios", "convites"].includes(item.tab),
+  );
+  const mobileMoreItems = navItems.filter(
+    (item) => !["dashboard", "empresas", "usuarios", "convites"].includes(item.tab),
+  );
+  const isMoreActive = mobileMoreItems.some((item) => item.tab === active);
+
+  if (isMobile) {
+    return (
+      <div className="min-h-screen w-full bg-background">
+        <header className="sticky top-0 z-40 flex h-14 items-center border-b bg-card px-4 shadow-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+            <Shield className="h-4 w-4" />
+          </div>
+          <div className="ml-3 min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">{activeItem.label}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </header>
+
+        <main className="pb-24">
+          <div className="mx-auto w-full max-w-7xl p-4">{children}</div>
+        </main>
+
+        <nav className="fixed inset-x-0 bottom-0 z-50 border-t bg-card/95 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+          <div className="mx-auto grid h-[76px] max-w-lg grid-cols-5 items-end px-2 pb-2">
+            {mobilePrimaryItems.map(({ tab, label, icon: Icon }) => (
+              <button
+                key={tab}
+                onClick={() => onNavigate(tab)}
+                className={cn(
+                  "mx-auto flex w-full max-w-[72px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] transition-colors",
+                  active === tab ? "text-primary font-semibold" : "text-muted-foreground",
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="leading-none">{label}</span>
+              </button>
+            ))}
+
+            <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+              <SheetTrigger asChild>
+                <button
+                  className={cn(
+                    "mx-auto flex w-full max-w-[72px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] transition-colors",
+                    isMoreActive ? "text-primary font-semibold" : "text-muted-foreground",
+                  )}
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                  <span className="leading-none">Mais</span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-3xl pb-8">
+                <SheetHeader>
+                  <SheetTitle>Super Admin</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 space-y-1">
+                  {mobileMoreItems.map(({ tab, label, icon: Icon }) => (
+                    <Button
+                      key={tab}
+                      variant="ghost"
+                      onClick={() => {
+                        setMoreOpen(false);
+                        onNavigate(tab);
+                      }}
+                      className={cn(
+                        "flex h-auto w-full items-center justify-start gap-3 rounded-2xl px-4 py-3.5 text-left",
+                        active === tab ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted",
+                      )}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      <span>{label}</span>
+                    </Button>
+                  ))}
+
+                  {hasAnyRole && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setMoreOpen(false);
+                        navigate("/");
+                      }}
+                      className="flex h-auto w-full items-center justify-start gap-3 rounded-2xl px-4 py-3.5 text-left"
+                    >
+                      <ChevronLeft className="h-5 w-5 shrink-0" />
+                      <span>Voltar ao sistema</span>
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      signOut();
+                    }}
+                    className="flex h-auto w-full items-center justify-start gap-3 rounded-2xl px-4 py-3.5 text-left"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" />
+                    <span>Sair</span>
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-background">
