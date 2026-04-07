@@ -1,5 +1,6 @@
-import { DollarSign, FileText, LayoutDashboard, MoreHorizontal, Plus, Settings, Users } from "lucide-react";
+import { DollarSign, FileText, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Tab } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,9 @@ export function MobileBottomNav({
   onNewCliente,
   onNewLancamento,
 }: MobileBottomNavProps) {
-  const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers, canManageClientes } = useAuth();
+  const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers, canManageClientes, isSuperAdmin } =
+    useAuth();
+  const navigate = useNavigate();
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -209,6 +212,20 @@ export function MobileBottomNav({
                     <span>{item.title}</span>
                   </Button>
                 ))}
+
+                {isSuperAdmin && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      navigate("/super-admin");
+                    }}
+                    className="flex h-auto w-full items-center justify-start gap-3 rounded-2xl px-4 py-3.5 text-left"
+                  >
+                    <Shield className="h-5 w-5 shrink-0" />
+                    <span>Super Admin</span>
+                  </Button>
+                )}
               </div>
             </SheetContent>
           </Sheet>
