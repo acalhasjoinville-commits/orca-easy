@@ -40,6 +40,13 @@ const operationItems: NavItem[] = [
     permission: "all",
   },
   {
+    title: "Agenda",
+    helper: "Compromissos e prazos da semana",
+    tab: "agenda",
+    icon: CalendarDays,
+    permission: "all",
+  },
+  {
     title: "Orçamentos",
     helper: "Propostas, follow-up e execução",
     tab: "orcamentos",
