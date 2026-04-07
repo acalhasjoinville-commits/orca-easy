@@ -135,7 +135,7 @@ const getOrcamentoAction = (orcamento: Orcamento, todayKey: string): OrcamentoAc
     };
   }
 
-  if (orcamento.dataFaturamento && !orcamento.dataPagamento && orcamento.status !== "cancelado") {
+  if (orcamento.dataFaturamento && !orcamento.dataPagamento) {
     return {
       label: "Cobrar pagamento",
       detail: `Faturado em ${fmtDate(orcamento.dataFaturamento)} e aguardando baixa.`,
