@@ -9,6 +9,7 @@ export type Tab =
   | "orcamentos"
   | "orcamento-detalhes"
   | "orcamento-novo"
+  | "agenda"
   | "clientes"
   | "financeiro"
   | "usuarios"
