@@ -1,4 +1,4 @@
-import { DollarSign, FileText, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -89,6 +89,9 @@ export function MobileBottomNav({
   if (canManageClientes) {
     secondaryItems.push({ title: "Clientes", tab: "clientes", icon: Users });
   }
+  if (canViewFinanceiro) {
+    secondaryItems.push({ title: "Financeiro", tab: "financeiro", icon: DollarSign });
+  }
   if (canManageSettings) {
     secondaryItems.push({ title: "Configurações", tab: "config", icon: Settings });
   }
@@ -119,10 +122,10 @@ export function MobileBottomNav({
         />
 
         <MobileNavButton
-          active={isOrcamentoTab(active) && active !== "orcamento-novo"}
-          label="Orçamentos"
-          icon={FileText}
-          onClick={() => onNavigate("orcamentos")}
+          active={active === "agenda"}
+          label="Agenda"
+          icon={CalendarDays}
+          onClick={() => onNavigate("agenda")}
         />
 
         <div className="flex justify-center">
@@ -169,16 +172,12 @@ export function MobileBottomNav({
           )}
         </div>
 
-        {canViewFinanceiro ? (
-          <MobileNavButton
-            active={active === "financeiro"}
-            label="Financeiro"
-            icon={DollarSign}
-            onClick={() => onNavigate("financeiro")}
-          />
-        ) : (
-          <div />
-        )}
+        <MobileNavButton
+          active={isOrcamentoTab(active) && active !== "orcamento-novo"}
+          label="Orçamentos"
+          icon={FileText}
+          onClick={() => onNavigate("orcamentos")}
+        />
 
         {secondaryItems.length > 0 ? (
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>

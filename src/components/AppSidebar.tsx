@@ -1,4 +1,4 @@
-import { DollarSign, FileText, LayoutDashboard, Settings, Users } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, LayoutDashboard, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ export type Tab =
   | "orcamentos"
   | "orcamento-detalhes"
   | "orcamento-novo"
+  | "agenda"
   | "clientes"
   | "financeiro"
   | "usuarios"
@@ -36,6 +37,13 @@ const operationItems: NavItem[] = [
     helper: "Visão geral da operação",
     tab: "dashboard",
     icon: LayoutDashboard,
+    permission: "all",
+  },
+  {
+    title: "Agenda",
+    helper: "Compromissos e prazos da semana",
+    tab: "agenda",
+    icon: CalendarDays,
     permission: "all",
   },
   {

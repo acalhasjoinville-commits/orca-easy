@@ -26,6 +26,7 @@ const Configuracoes = lazy(() =>
 const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ default: module.Clientes })));
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
+const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
 const EditarPerfil = lazy(() =>
   import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
 );
@@ -327,6 +328,8 @@ const Index = () => {
     switch (tab) {
       case "dashboard":
         return { title: "Dashboard", helper: "Resumo rápido da operação e dos números principais." };
+      case "agenda":
+        return { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." };
       case "orcamentos":
         return { title: "Orçamentos", helper: "Acompanhe status, datas operacionais e próximos passos." };
       case "orcamento-detalhes":
@@ -355,6 +358,9 @@ const Index = () => {
     <Suspense fallback={<SectionLoader />}>
       {tab === "dashboard" && (
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
+      )}
+      {tab === "agenda" && (
+        <Agenda orcamentos={_orc} onViewOrcamento={goToDetails} />
       )}
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
