@@ -359,6 +359,9 @@ const Index = () => {
       {tab === "dashboard" && (
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
+      {tab === "agenda" && (
+        <Agenda orcamentos={_orc} onViewOrcamento={goToDetails} />
+      )}
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
       )}
