@@ -172,16 +172,12 @@ export function MobileBottomNav({
           )}
         </div>
 
-        {canViewFinanceiro ? (
-          <MobileNavButton
-            active={active === "financeiro"}
-            label="Financeiro"
-            icon={DollarSign}
-            onClick={() => onNavigate("financeiro")}
-          />
-        ) : (
-          <div />
-        )}
+        <MobileNavButton
+          active={isOrcamentoTab(active) && active !== "orcamento-novo"}
+          label="Orçamentos"
+          icon={FileText}
+          onClick={() => onNavigate("orcamentos")}
+        />
 
         {secondaryItems.length > 0 ? (
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
