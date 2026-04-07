@@ -136,7 +136,7 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar lançamento" : "Novo lançamento"}</DialogTitle>
         </DialogHeader>
@@ -151,7 +151,7 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
 
           <div>
             <Label className="mb-1.5 block text-xs text-muted-foreground">Tipo</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 size="sm"
@@ -187,7 +187,7 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label htmlFor="lanc-valor" className="text-xs text-muted-foreground">
                 Valor (R$) *
@@ -244,11 +244,11 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={handleClose}>
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
               {isSaving ? "Salvando..." : isEdit ? "Salvar" : "Criar"}
             </Button>
           </div>

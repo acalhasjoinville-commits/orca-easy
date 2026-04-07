@@ -238,7 +238,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{editing ? "Editar Cliente" : "Cadastrar Novo Cliente"}</DialogTitle>
           <DialogDescription className="text-xs">
@@ -300,7 +300,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
                 ? "Opcional. Recomendado para organizar melhor o cadastro — você pode preencher depois."
                 : "Opcional. Ao preencher, você pode buscar os dados da empresa automaticamente."}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={documento}
                 onChange={(e) =>
@@ -315,7 +315,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
                   variant="outline"
                   onClick={buscarCNPJ}
                   disabled={loadingCNPJ || rawDoc.length !== 14}
-                  className="gap-1"
+                  className="w-full gap-1 sm:w-auto"
                 >
                   {loadingCNPJ ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   <span className="hidden sm:inline text-xs">Buscar</span>
@@ -368,7 +368,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
               <p className="text-[10px] text-muted-foreground mb-1">
                 Digite o CEP para preencher o endereço automaticamente.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
                   value={cep}
                   onChange={(e) => updateField("cep", formatCEP(e.target.value))}
@@ -380,7 +380,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
                   variant="outline"
                   onClick={buscarCEP}
                   disabled={loadingCEP || rawCep.length !== 8}
-                  className="gap-1"
+                  className="w-full gap-1 sm:w-auto"
                 >
                   {loadingCEP ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   <span className="hidden sm:inline text-xs">Buscar</span>
@@ -388,8 +388,8 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              <div className="col-span-2">
+            <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="sm:col-span-2">
                 <Label className="text-xs">Endereço</Label>
                 <Input
                   value={endereco}
@@ -403,7 +403,7 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
                 <Label className="text-xs">Bairro</Label>
                 <Input value={bairro} onChange={(e) => updateField("bairro", e.target.value)} />

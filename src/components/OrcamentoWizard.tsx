@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from "@/hooks/useSupabaseTechnicalData";
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from "@/hooks/useSupabaseData";
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, MotorType, Cliente } from "@/lib/types";
@@ -222,6 +222,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [editingModalItem, setEditingModalItem] = useState<ItemServico | null>(null);
   const [clienteSearch, setClienteSearch] = useState("");
+  const phaseTopRef = useRef<HTMLDivElement | null>(null);
 
   const { clientes, isLoading: loadingClientes, addCliente } = useClientes();
   const { politicas } = usePoliticas();
@@ -232,6 +233,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const { motor1: motor1List } = useMotor1();
   const { motor2: motor2List } = useMotor2();
   const { insumos: insumosList } = useInsumos();
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0 });
+      const mainContainer = phaseTopRef.current?.closest("main");
+      if (mainContainer instanceof HTMLElement) {
+        mainContainer.scrollTo({ top: 0, left: 0 });
+      }
+      phaseTopRef.current?.scrollIntoView({ block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [phase]);
 
   const selectedCliente = clientes.find((c) => c.id === selectedClienteId);
 
@@ -410,13 +424,14 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   // ─── Phase 1: Client selection ─────────────────────────────────
   if (phase === "cliente") {
     return (
-      <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
+      <div className="mx-auto w-full max-w-2xl px-4 pb-24 pt-4 sm:px-5">
+        <div ref={phaseTopRef} />
         <StepIndicator current="cliente" />
 
         {/* Welcome card */}
         <Card className="mb-6 border-primary/20 bg-primary/5">
           <CardContent className="p-5">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex-1">
                 <h1 className="text-lg font-bold text-foreground">Escolha o cliente para começar</h1>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -464,7 +479,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
         <div className="space-y-4">
           {/* Search + New Client */}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -477,11 +492,11 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
             </div>
             <Button
               variant="outline"
-              className="shrink-0 h-10 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+              className="h-10 w-full gap-1.5 border-primary/30 text-primary hover:bg-primary/10 sm:w-auto sm:shrink-0"
               onClick={() => setClienteModalOpen(true)}
             >
               <UserPlus className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Novo Cliente</span>
+              <span className="text-sm">Novo Cliente</span>
             </Button>
           </div>
 
@@ -577,7 +592,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   // ─── Phase 2: Motor selection ──────────────────────────────────
   if (phase === "motor") {
     return (
-      <div className="px-4 pb-24 pt-4 max-w-2xl mx-auto">
+      <div className="mx-auto w-full max-w-2xl px-4 pb-24 pt-4 sm:px-5">
+        <div ref={phaseTopRef} />
         <StepIndicator current="motor" />
 
         <div className="mb-6">
@@ -690,19 +706,20 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   // ─── Phase 3: Cart ─────────────────────────────────────────────
   const currentStatus = statusOptions.find((s) => s.value === status)!;
   return (
-    <div className="px-4 pb-28 pt-4 max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-5">
+      <div ref={phaseTopRef} />
       {!isEditing && <StepIndicator current="carrinho" />}
 
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={handleBackFromCart}
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" /> {isEditing ? "Voltar para lista" : "Voltar"}
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
             {hasDraft && !isEditing && (
               <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
                 <AlertDialogTrigger asChild>
@@ -734,7 +751,9 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               </AlertDialog>
             )}
             <Select value={status} onValueChange={(v) => updateDraft({ status: v as StatusOrcamento })}>
-              <SelectTrigger className={cn("h-8 w-auto text-xs font-semibold border rounded-md", currentStatus.color)}>
+              <SelectTrigger
+                className={cn("h-8 w-full text-xs font-semibold border rounded-md sm:w-auto", currentStatus.color)}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -823,7 +842,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
       {/* ── Services section ─────────────────────── */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-3 gap-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-muted-foreground" />
@@ -838,7 +857,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               Adicione os serviços que serão executados e revise os valores antes de salvar.
             </p>
           </div>
-          <Button onClick={() => setModalOpen(true)} size="sm" className="gap-1.5">
+          <Button onClick={() => setModalOpen(true)} size="sm" className="w-full gap-1.5 sm:w-auto">
             <Plus className="h-4 w-4" /> Adicionar serviço
           </Button>
         </div>
@@ -870,7 +889,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
               <Card key={item.id} className="overflow-hidden border-border/80 hover:shadow-sm transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-4">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-3 min-w-0">
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-[11px] font-bold text-primary mt-0.5 shrink-0">
                           {idx + 1}
@@ -913,7 +932,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex w-full flex-wrap items-center gap-1.5 shrink-0 sm:w-auto">
                         <Button
                           type="button"
                           variant="ghost"
@@ -1241,16 +1260,16 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
       {/* ── Sticky footer ─────────────────────────── */}
       {hasItems && (
-        <div className="fixed bottom-16 lg:bottom-0 left-0 lg:left-64 right-0 z-40 border-t bg-card/95 backdrop-blur-sm shadow-lg">
-          <div className="mx-auto max-w-2xl px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
+        <div className="sticky bottom-20 z-30 mt-6 rounded-2xl border bg-card/95 shadow-lg backdrop-blur-sm sm:bottom-4">
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">
                   {itens.length} {itens.length === 1 ? "serviço" : "serviços"} · {clienteAtualNome}
                 </p>
                 <p className="text-lg font-bold tabular-nums text-primary">{fmt(valorFinal)}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 {isEditing && editingOrcamento && (
                   <PDFDownloadButton
                     orcamento={{
@@ -1270,10 +1289,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     cliente={selectedCliente}
                     empresa={empresa}
                     size="default"
-                    className="h-11"
+                    className="h-11 w-full sm:w-auto"
                   />
                 )}
-                <Button onClick={handleSave} disabled={isSaving} className="h-11 px-6">
+                <Button onClick={handleSave} disabled={isSaving} className="h-11 w-full px-6 sm:w-auto">
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...

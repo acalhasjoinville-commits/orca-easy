@@ -436,7 +436,7 @@ const Index = () => {
             <LogOut className="h-5 w-5" />
           </Button>
         </header>
-        <main ref={mainContentRef} className="pb-24">
+        <main ref={mainContentRef} className="overflow-x-hidden pb-24">
           {content}
         </main>
         <MobileBottomNav
@@ -516,7 +516,7 @@ const Index = () => {
               </div>
             </header>
 
-            <main ref={mainContentRef} className="flex-1 overflow-auto">
+            <main ref={mainContentRef} className="flex-1 overflow-auto overflow-x-hidden">
               {content}
             </main>
           </div>

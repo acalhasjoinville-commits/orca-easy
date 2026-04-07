@@ -292,23 +292,26 @@ function MinhaEmpresaForm() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={form.corPrimaria}
+                  value={form.corPrimaria || "#0B1B32"}
                   onChange={(e) => set("corPrimaria", e.target.value)}
                   className="h-9 w-12 rounded-md border cursor-pointer"
                 />
                 <Input
-                  value={form.corPrimaria}
+                  value={form.corPrimaria || ""}
                   onChange={(e) => set("corPrimaria", e.target.value)}
-                  placeholder="#0044CC"
+                  placeholder="#0B1B32"
                   className="h-9 font-mono text-xs flex-1"
                 />
               </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Usada na identidade visual da empresa e nos PDFs.
+              </p>
             </div>
             <div>
               <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
@@ -336,7 +339,7 @@ function MinhaEmpresaForm() {
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Dados da Empresa</h3>
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="text-[11px] font-medium text-muted-foreground">Nome Fantasia</Label>
                 <Input
@@ -365,7 +368,7 @@ function MinhaEmpresaForm() {
                 className="h-9 mt-1"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="text-[11px] font-medium text-muted-foreground">CNPJ / CPF</Label>
                 <Input
@@ -404,8 +407,8 @@ function MinhaEmpresaForm() {
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Endereço</h3>
           <div className="space-y-3">
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div className="sm:col-span-3">
                 <Label className="text-[11px] font-medium text-muted-foreground">Endereço</Label>
                 <Input
                   value={form.endereco}
@@ -424,7 +427,7 @@ function MinhaEmpresaForm() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <Label className="text-[11px] font-medium text-muted-foreground">Bairro</Label>
                 <Input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} className="h-9 mt-1" />
@@ -901,7 +904,7 @@ export function Configuracoes() {
           </SelectContent>
         </Select>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label className="text-[11px] font-medium text-muted-foreground">Espessura (mm)</Label>
           <Input
@@ -923,7 +926,7 @@ export function Configuracoes() {
           />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div>
           <Label className="text-[11px] font-medium text-muted-foreground">Fator Fácil</Label>
           <Input
@@ -1439,7 +1442,7 @@ export function Configuracoes() {
       </div>
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as ConfigTab)}>
-        <TabsList className="w-full grid grid-cols-5 gap-1 mb-6 h-auto">
+        <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
           <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <Building2 className="h-4 w-4" />
             <span className="truncate">Empresa</span>
