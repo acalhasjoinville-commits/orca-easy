@@ -328,6 +328,8 @@ const Index = () => {
     switch (tab) {
       case "dashboard":
         return { title: "Dashboard", helper: "Resumo rápido da operação e dos números principais." };
+      case "agenda":
+        return { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." };
       case "orcamentos":
         return { title: "Orçamentos", helper: "Acompanhe status, datas operacionais e próximos passos." };
       case "orcamento-detalhes":
