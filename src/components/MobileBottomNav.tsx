@@ -122,10 +122,10 @@ export function MobileBottomNav({
         />
 
         <MobileNavButton
-          active={isOrcamentoTab(active) && active !== "orcamento-novo"}
-          label="Orçamentos"
-          icon={FileText}
-          onClick={() => onNavigate("orcamentos")}
+          active={active === "agenda"}
+          label="Agenda"
+          icon={CalendarDays}
+          onClick={() => onNavigate("agenda")}
         />
 
         <div className="flex justify-center">
