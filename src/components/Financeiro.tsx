@@ -1,53 +1,82 @@
-import { useMemo, useState } from 'react';
-import { useOrcamentos } from '@/hooks/useSupabaseData';
-import { useLancamentos } from '@/hooks/useLancamentos';
-import { useAuth } from '@/hooks/useAuth';
-import { LancamentoFinanceiro } from '@/lib/types';
-import { LancamentoFormModal } from '@/components/LancamentoFormModal';
-import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+import { useEffect, useMemo, useState } from "react";
+import { useOrcamentos } from "@/hooks/useSupabaseData";
+import { useLancamentos } from "@/hooks/useLancamentos";
+import { useAuth } from "@/hooks/useAuth";
+import { LancamentoFinanceiro } from "@/lib/types";
+import { LancamentoFormModal } from "@/components/LancamentoFormModal";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
-  DollarSign, TrendingUp, TrendingDown, BarChart3, Percent, Plus, Pencil, Trash2, Wallet, MoreVertical,
-} from 'lucide-react';
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  Percent,
+  Plus,
+  Pencil,
+  Trash2,
+  Wallet,
+  MoreVertical,
+} from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useIsMobile } from '@/hooks/use-mobile';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const fmt = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
-type PeriodFilter = 'month' | '3months' | 'year';
-type StatusFilter = 'todos' | 'aprovado' | 'executado';
-const VALID_STATUSES = ['aprovado', 'executado'];
-type TipoFilter = 'all' | 'receita' | 'despesa';
+type PeriodFilter = "month" | "3months" | "year";
+type StatusFilter = "todos" | "aprovado" | "executado";
+const VALID_STATUSES = ["aprovado", "executado"];
+type TipoFilter = "all" | "receita" | "despesa";
 
 function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: PeriodFilter, now: Date): T[] {
   return items.filter((item) => {
     const d = getDate(item);
-    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    if (period === '3months') return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    if (period === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === "3months") return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
     return d.getFullYear() === now.getFullYear();
   });
 }
 
 // ─── KPI Card Component ───
-function KpiCard({ title, value, icon: Icon, color = 'text-foreground', iconBg = 'bg-muted', highlight = false }: {
-  title: string; value: string; icon: React.ElementType; color?: string; iconBg?: string; highlight?: boolean;
+function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  color = "text-foreground",
+  iconBg = "bg-muted",
+  highlight = false,
+}: {
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  color?: string;
+  iconBg?: string;
+  highlight?: boolean;
 }) {
   return (
-    <Card className={highlight ? 'border-primary/20 bg-primary/[0.03] dark:bg-primary/[0.06]' : ''}>
+    <Card className={highlight ? "border-primary/20 bg-primary/[0.03] dark:bg-primary/[0.06]" : ""}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{title}</p>
@@ -66,18 +95,18 @@ function KpiCard({ title, value, icon: Icon, color = 'text-foreground', iconBg =
 // ═══════════════════════════════════════════════════
 function OrcamentosTab() {
   const { orcamentos } = useOrcamentos();
-  const [period, setPeriod] = useState<PeriodFilter>('year');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
+  const [period, setPeriod] = useState<PeriodFilter>("year");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const isMobile = useIsMobile();
-  const now = new Date();
 
   const filtered = useMemo(() => {
+    const now = new Date();
     return orcamentos.filter((orc) => {
       if (!VALID_STATUSES.includes(orc.status)) return false;
-      if (statusFilter !== 'todos' && orc.status !== statusFilter) return false;
+      if (statusFilter !== "todos" && orc.status !== statusFilter) return false;
       const d = new Date(orc.dataCriacao);
-      if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      if (period === '3months') return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      if (period === "month") return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (period === "3months") return d >= new Date(now.getFullYear(), now.getMonth() - 2, 1);
       return d.getFullYear() === now.getFullYear();
     });
   }, [orcamentos, period, statusFilter]);
@@ -91,20 +120,24 @@ function OrcamentosTab() {
   }, [filtered]);
 
   const chartData = useMemo(() => {
+    const now = new Date();
     const months: { key: string; label: string; receita: number; custo: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
       months.push({ key, label, receita: 0, custo: 0 });
     }
     orcamentos.forEach((orc) => {
       if (!VALID_STATUSES.includes(orc.status)) return;
-      if (statusFilter !== 'todos' && orc.status !== statusFilter) return;
+      if (statusFilter !== "todos" && orc.status !== statusFilter) return;
       const d = new Date(orc.dataCriacao);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const m = months.find((x) => x.key === key);
-      if (m) { m.receita += orc.valorFinal; m.custo += orc.custoTotalObra; }
+      if (m) {
+        m.receita += orc.valorFinal;
+        m.custo += orc.custoTotalObra;
+      }
     });
     return months;
   }, [orcamentos, statusFilter]);
@@ -126,9 +159,13 @@ function OrcamentosTab() {
       <Card>
         <CardContent className="p-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Período</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+              Período
+            </span>
             <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-              <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px] h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="month">Mês Atual</SelectItem>
                 <SelectItem value="3months">Últimos 3 Meses</SelectItem>
@@ -136,9 +173,13 @@ function OrcamentosTab() {
               </SelectContent>
             </Select>
             <Separator orientation="vertical" className="h-5 hidden sm:block" />
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Status</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+              Status
+            </span>
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-              <SelectTrigger className="w-full sm:w-[200px] h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[200px] h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Executados + Aprovados</SelectItem>
                 <SelectItem value="executado">Executados</SelectItem>
@@ -151,10 +192,35 @@ function OrcamentosTab() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <KpiCard title="Faturamento" value={fmt(kpis.faturamento)} icon={DollarSign} iconBg="bg-primary/10" color="text-primary" />
-        <KpiCard title="Custo Total" value={fmt(kpis.custo)} icon={BarChart3} iconBg="bg-muted" color="text-muted-foreground" />
-        <KpiCard title="Lucro Bruto" value={fmt(kpis.lucro)} icon={TrendingUp} iconBg="bg-emerald-500/10" color="text-emerald-600 dark:text-emerald-400" highlight />
-        <KpiCard title="Margem Média" value={fmtPct(kpis.margem)} icon={Percent} iconBg="bg-amber-500/10" color="text-amber-600 dark:text-amber-400" />
+        <KpiCard
+          title="Faturamento"
+          value={fmt(kpis.faturamento)}
+          icon={DollarSign}
+          iconBg="bg-primary/10"
+          color="text-primary"
+        />
+        <KpiCard
+          title="Custo Total"
+          value={fmt(kpis.custo)}
+          icon={BarChart3}
+          iconBg="bg-muted"
+          color="text-muted-foreground"
+        />
+        <KpiCard
+          title="Lucro Bruto"
+          value={fmt(kpis.lucro)}
+          icon={TrendingUp}
+          iconBg="bg-emerald-500/10"
+          color="text-emerald-600 dark:text-emerald-400"
+          highlight
+        />
+        <KpiCard
+          title="Margem Média"
+          value={fmtPct(kpis.margem)}
+          icon={Percent}
+          iconBg="bg-amber-500/10"
+          color="text-amber-600 dark:text-amber-400"
+        />
       </div>
 
       {/* Chart + Summary */}
@@ -169,9 +235,21 @@ function OrcamentosTab() {
               <BarChart data={chartData} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(value: number) => fmt(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <YAxis
+                  tick={{ fontSize: 10 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={(v: number) => `R$${(v / 1000).toFixed(0)}k`}
+                />
+                <Tooltip
+                  formatter={(value: number) => fmt(value)}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: "11px" }} />
                 <Bar dataKey="receita" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="custo" name="Custo" fill="hsl(var(--muted-foreground) / 0.3)" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -183,17 +261,27 @@ function OrcamentosTab() {
             <h2 className="text-sm font-semibold text-foreground mb-5">Resumo do Período</h2>
             <div className="space-y-6">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Orçamentos</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Orçamentos
+                </p>
                 <p className="text-3xl font-bold text-foreground">{filtered.length}</p>
               </div>
               <Separator />
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Ticket Médio</p>
-                <p className="text-xl font-semibold text-foreground">{filtered.length > 0 ? fmt(kpis.faturamento / filtered.length) : 'R$ 0,00'}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Ticket Médio
+                </p>
+                <p className="text-xl font-semibold text-foreground">
+                  {filtered.length > 0 ? fmt(kpis.faturamento / filtered.length) : "R$ 0,00"}
+                </p>
               </div>
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Lucro por Orçamento</p>
-                <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : 'R$ 0,00'}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                  Lucro por Orçamento
+                </p>
+                <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                  {filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : "R$ 0,00"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -219,14 +307,27 @@ function OrcamentosTab() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium">{o.nomeCliente}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(o.dataCriacao).toLocaleDateString("pt-BR")}
+                      </p>
                     </div>
-                    <Badge variant={o.margem >= 40 ? 'default' : 'secondary'} className="text-[10px]">{fmtPct(o.margem)}</Badge>
+                    <Badge variant={o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                      {fmtPct(o.margem)}
+                    </Badge>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div><p className="text-muted-foreground">Valor</p><p className="font-medium">{fmt(o.valorFinal)}</p></div>
-                    <div><p className="text-muted-foreground">Custo</p><p className="font-medium">{fmt(o.custoTotalObra)}</p></div>
-                    <div><p className="text-muted-foreground">Lucro</p><p className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(o.lucro)}</p></div>
+                    <div>
+                      <p className="text-muted-foreground">Valor</p>
+                      <p className="font-medium">{fmt(o.valorFinal)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Custo</p>
+                      <p className="font-medium">{fmt(o.custoTotalObra)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Lucro</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(o.lucro)}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -248,12 +349,18 @@ function OrcamentosTab() {
                   {top5.map((o) => (
                     <tr key={o.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
                       <td className="py-2.5 px-3 font-medium">{o.nomeCliente}</td>
-                      <td className="py-2.5 px-3 text-muted-foreground">{new Date(o.dataCriacao).toLocaleDateString('pt-BR')}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">
+                        {new Date(o.dataCriacao).toLocaleDateString("pt-BR")}
+                      </td>
                       <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.valorFinal)}</td>
                       <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.custoTotalObra)}</td>
-                      <td className="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmt(o.lucro)}</td>
+                      <td className="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        {fmt(o.lucro)}
+                      </td>
                       <td className="py-2.5 px-3 text-right">
-                        <Badge variant={o.margem >= 40 ? 'default' : 'secondary'} className="text-[10px]">{fmtPct(o.margem)}</Badge>
+                        <Badge variant={o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                          {fmtPct(o.margem)}
+                        </Badge>
                       </td>
                     </tr>
                   ))}
@@ -270,21 +377,25 @@ function OrcamentosTab() {
 // ═══════════════════════════════════════════════════
 // Aba: Lançamentos
 // ═══════════════════════════════════════════════════
-function LancamentosTab() {
+interface LancamentosTabProps {
+  openNewRequest?: number;
+}
+
+function LancamentosTab({ openNewRequest = 0 }: LancamentosTabProps) {
   const { empresaId } = useAuth();
   const { lancamentos, saveLancamento, isSaving, deleteLancamento, isDeleting } = useLancamentos();
   const isMobile = useIsMobile();
-  const now = new Date();
 
-  const [period, setPeriod] = useState<PeriodFilter>('month');
-  const [tipoFilter, setTipoFilter] = useState<TipoFilter>('all');
+  const [period, setPeriod] = useState<PeriodFilter>("month");
+  const [tipoFilter, setTipoFilter] = useState<TipoFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<LancamentoFinanceiro | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
+    const now = new Date();
     return filterByPeriod(
-      lancamentos.filter((l) => tipoFilter === 'all' || l.tipo === tipoFilter),
+      lancamentos.filter((l) => tipoFilter === "all" || l.tipo === tipoFilter),
       (l) => new Date(l.data),
       period,
       now,
@@ -292,19 +403,31 @@ function LancamentosTab() {
   }, [lancamentos, period, tipoFilter]);
 
   const kpis = useMemo(() => {
-    const receitas = filtered.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0);
-    const despesas = filtered.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0);
+    const receitas = filtered.filter((l) => l.tipo === "receita").reduce((s, l) => s + l.valor, 0);
+    const despesas = filtered.filter((l) => l.tipo === "despesa").reduce((s, l) => s + l.valor, 0);
     const saldo = receitas - despesas;
     return { receitas, despesas, saldo };
   }, [filtered]);
 
-  const handleEdit = (l: LancamentoFinanceiro) => { setEditing(l); setModalOpen(true); };
-  const handleNew = () => { setEditing(null); setModalOpen(true); };
+  const handleEdit = (l: LancamentoFinanceiro) => {
+    setEditing(l);
+    setModalOpen(true);
+  };
+  const handleNew = () => {
+    setEditing(null);
+    setModalOpen(true);
+  };
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     await deleteLancamento(deleteTarget);
     setDeleteTarget(null);
   };
+
+  useEffect(() => {
+    if (openNewRequest <= 0) return;
+    setEditing(null);
+    setModalOpen(true);
+  }, [openNewRequest]);
 
   return (
     <div className="space-y-6 mt-4">
@@ -312,9 +435,13 @@ function LancamentosTab() {
       <Card>
         <CardContent className="p-3">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Período</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+              Período
+            </span>
             <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-              <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px] h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="month">Mês Atual</SelectItem>
                 <SelectItem value="3months">Últimos 3 Meses</SelectItem>
@@ -322,9 +449,13 @@ function LancamentosTab() {
               </SelectContent>
             </Select>
             <Separator orientation="vertical" className="h-5 hidden sm:block" />
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">Tipo</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+              Tipo
+            </span>
             <Select value={tipoFilter} onValueChange={(v) => setTipoFilter(v as TipoFilter)}>
-              <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[160px] h-9">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="receita">Receitas</SelectItem>
@@ -342,11 +473,26 @@ function LancamentosTab() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <KpiCard title="Total Receitas" value={fmt(kpis.receitas)} icon={TrendingUp} iconBg="bg-emerald-500/10" color="text-emerald-600 dark:text-emerald-400" />
-        <KpiCard title="Total Despesas" value={fmt(kpis.despesas)} icon={TrendingDown} iconBg="bg-red-500/10" color="text-red-600 dark:text-red-400" />
-        <KpiCard title="Saldo do Período" value={fmt(kpis.saldo)} icon={Wallet}
-          iconBg={kpis.saldo >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}
-          color={kpis.saldo >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
+        <KpiCard
+          title="Total Receitas"
+          value={fmt(kpis.receitas)}
+          icon={TrendingUp}
+          iconBg="bg-emerald-500/10"
+          color="text-emerald-600 dark:text-emerald-400"
+        />
+        <KpiCard
+          title="Total Despesas"
+          value={fmt(kpis.despesas)}
+          icon={TrendingDown}
+          iconBg="bg-red-500/10"
+          color="text-red-600 dark:text-red-400"
+        />
+        <KpiCard
+          title="Saldo do Período"
+          value={fmt(kpis.saldo)}
+          icon={Wallet}
+          iconBg={kpis.saldo >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+          color={kpis.saldo >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
           highlight
         />
       </div>
@@ -368,25 +514,32 @@ function LancamentosTab() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{l.descricao}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge variant={l.tipo === 'receita' ? 'default' : 'destructive'} className="text-[10px]">
-                        {l.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                      <Badge variant={l.tipo === "receita" ? "default" : "destructive"} className="text-[10px]">
+                        {l.tipo === "receita" ? "Receita" : "Despesa"}
                       </Badge>
                       <span className="text-[11px] text-muted-foreground">{l.categoria}</span>
                     </div>
                   </div>
-                  <p className={`text-sm font-bold ml-2 whitespace-nowrap ${l.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    {l.tipo === 'receita' ? '+' : '−'} {fmt(l.valor)}
+                  <p
+                    className={`text-sm font-bold ml-2 whitespace-nowrap ${l.tipo === "receita" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                  >
+                    {l.tipo === "receita" ? "+" : "−"} {fmt(l.valor)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[11px] text-muted-foreground">
-                    {new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    {new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR")}
                   </span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(l)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(l.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => setDeleteTarget(l.id)}
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -413,17 +566,19 @@ function LancamentosTab() {
                 {filtered.map((l) => (
                   <tr key={l.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
                     <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap tabular-nums">
-                      {new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR')}
+                      {new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR")}
                     </td>
                     <td className="py-2.5 px-3">
-                      <Badge variant={l.tipo === 'receita' ? 'default' : 'destructive'} className="text-[10px]">
-                        {l.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                      <Badge variant={l.tipo === "receita" ? "default" : "destructive"} className="text-[10px]">
+                        {l.tipo === "receita" ? "Receita" : "Despesa"}
                       </Badge>
                     </td>
                     <td className="py-2.5 px-3 font-medium max-w-[200px] truncate">{l.descricao}</td>
                     <td className="py-2.5 px-3 text-muted-foreground text-xs">{l.categoria}</td>
-                    <td className={`py-2.5 px-3 text-right font-semibold whitespace-nowrap tabular-nums ${l.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                      {l.tipo === 'receita' ? '+' : '−'} {fmt(l.valor)}
+                    <td
+                      className={`py-2.5 px-3 text-right font-semibold whitespace-nowrap tabular-nums ${l.tipo === "receita" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                    >
+                      {l.tipo === "receita" ? "+" : "−"} {fmt(l.valor)}
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <DropdownMenu>
@@ -436,7 +591,10 @@ function LancamentosTab() {
                           <DropdownMenuItem onClick={() => handleEdit(l)} className="text-xs gap-2">
                             <Pencil className="h-3.5 w-3.5" /> Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setDeleteTarget(l.id)} className="text-xs gap-2 text-destructive focus:text-destructive">
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(l.id)}
+                            className="text-xs gap-2 text-destructive focus:text-destructive"
+                          >
                             <Trash2 className="h-3.5 w-3.5" /> Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -472,7 +630,7 @@ function LancamentosTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
-              {isDeleting ? 'Excluindo...' : 'Excluir'}
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -484,7 +642,18 @@ function LancamentosTab() {
 // ═══════════════════════════════════════════════════
 // Componente principal com Tabs
 // ═══════════════════════════════════════════════════
-export function Financeiro() {
+interface FinanceiroProps {
+  openNewLancamentoRequest?: number;
+}
+
+export function Financeiro({ openNewLancamentoRequest = 0 }: FinanceiroProps) {
+  const [activeTab, setActiveTab] = useState("orcamentos");
+
+  useEffect(() => {
+    if (openNewLancamentoRequest <= 0) return;
+    setActiveTab("lancamentos");
+  }, [openNewLancamentoRequest]);
+
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-4">
       <div>
@@ -492,7 +661,7 @@ export function Financeiro() {
         <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e gestão de lançamentos</p>
       </div>
 
-      <Tabs defaultValue="orcamentos" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full sm:w-auto h-10">
           <TabsTrigger value="orcamentos" className="flex-1 sm:flex-none text-xs sm:text-sm px-4">
             <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
@@ -507,7 +676,7 @@ export function Financeiro() {
           <OrcamentosTab />
         </TabsContent>
         <TabsContent value="lancamentos">
-          <LancamentosTab />
+          <LancamentosTab openNewRequest={openNewLancamentoRequest} />
         </TabsContent>
       </Tabs>
     </div>

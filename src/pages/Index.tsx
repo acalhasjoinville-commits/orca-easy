@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
@@ -75,15 +75,38 @@ const Index = () => {
 
   const [tab, setTab] = useState<Tab>("dashboard");
   const [wizardKey, setWizardKey] = useState(0);
+  const [clienteCreateRequest, setClienteCreateRequest] = useState(0);
+  const [lancamentoCreateRequest, setLancamentoCreateRequest] = useState(0);
   const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
   const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const mainContentRef = useRef<HTMLElement | null>(null);
 
   const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
+
+  useEffect(() => {
+    if (!("scrollRestoration" in window.history)) return;
+
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0 });
+      mainContentRef.current?.scrollTo({ top: 0, left: 0 });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [tab]);
 
   // Auth loading state
   if (loading) {
@@ -162,6 +185,24 @@ const Index = () => {
     setEditingOrcamento(null);
     setWizardKey((k) => k + 1);
     setTab("orcamento-novo");
+  };
+
+  const goToNewCliente = () => {
+    if (!canManageClientes) {
+      toast.error("Sem permissão para cadastrar clientes.");
+      return;
+    }
+    setTab("clientes");
+    setClienteCreateRequest((value) => value + 1);
+  };
+
+  const goToNewLancamento = () => {
+    if (!canViewFinanceiro) {
+      toast.error("Sem permissão para criar lançamentos financeiros.");
+      return;
+    }
+    setTab("financeiro");
+    setLancamentoCreateRequest((value) => value + 1);
   };
 
   const goToDetails = (orc: Orcamento) => {
@@ -347,10 +388,14 @@ const Index = () => {
           <AccessDenied message="Você não tem permissão para criar ou editar orçamentos." />
         ))}
       {tab === "clientes" &&
-        (canManageClientes ? <Clientes /> : <AccessDenied message="Você não tem permissão para acessar Clientes." />)}
+        (canManageClientes ? (
+          <Clientes openNewRequest={clienteCreateRequest} />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar Clientes." />
+        ))}
       {tab === "financeiro" &&
         (canViewFinanceiro ? (
-          <Financeiro />
+          <Financeiro openNewLancamentoRequest={lancamentoCreateRequest} />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
         ))}
@@ -391,8 +436,16 @@ const Index = () => {
             <LogOut className="h-5 w-5" />
           </Button>
         </header>
-        <main className="pb-20">{content}</main>
-        <MobileBottomNav active={tab} onNavigate={guardedNavigate} onNewOrcamento={goToNew} />
+        <main ref={mainContentRef} className="pb-24">
+          {content}
+        </main>
+        <MobileBottomNav
+          active={tab}
+          onNavigate={guardedNavigate}
+          onNewOrcamento={goToNew}
+          onNewCliente={goToNewCliente}
+          onNewLancamento={goToNewLancamento}
+        />
         <Suspense fallback={null}>
           <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />
         </Suspense>
@@ -443,7 +496,9 @@ const Index = () => {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto">{content}</main>
+          <main ref={mainContentRef} className="flex-1 overflow-auto">
+            {content}
+          </main>
         </div>
       </div>
       <Suspense fallback={null}>

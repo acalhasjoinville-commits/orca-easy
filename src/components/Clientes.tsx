@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useClientes } from "@/hooks/useSupabaseData";
 import { Cliente } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +32,11 @@ const getDocumentoLabel = (cliente: Cliente) => {
   return documento ? documento : "Não informado";
 };
 
-export function Clientes() {
+interface ClientesProps {
+  openNewRequest?: number;
+}
+
+export function Clientes({ openNewRequest = 0 }: ClientesProps) {
   const { clientes, isLoading, addCliente, updateCliente, deleteCliente } = useClientes();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,6 +94,12 @@ export function Clientes() {
     setEditing(c);
     setModalOpen(true);
   };
+
+  useEffect(() => {
+    if (openNewRequest <= 0) return;
+    setEditing(null);
+    setModalOpen(true);
+  }, [openNewRequest]);
 
   if (isLoading) {
     return (
