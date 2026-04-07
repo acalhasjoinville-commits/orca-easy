@@ -1,4 +1,4 @@
-import { DollarSign, FileText, LayoutDashboard, Settings, Users } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, LayoutDashboard, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
