@@ -7,6 +7,7 @@ import { SuperAdminUsuarios } from "@/components/super-admin/SuperAdminUsuarios"
 import { SuperAdminConvites } from "@/components/super-admin/SuperAdminConvites";
 import { SuperAdminAuditoria } from "@/components/super-admin/SuperAdminAuditoria";
 import { SuperAdminAparencia } from "@/components/super-admin/SuperAdminAparencia";
+import { SuperAdminFaq } from "@/components/super-admin/SuperAdminFaq";
 
 export default function SuperAdminPage() {
   const [tab, setTab] = useState<SATab>("dashboard");
