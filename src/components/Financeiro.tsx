@@ -80,6 +80,10 @@ function hasLancamentoDraft() {
   return hasDraftKey("draft:lancamento-new") || !!getDraftSuffix("draft:lancamento-edit:");
 }
 
+function isFinanceiroTab(value: string): value is FinanceiroTab {
+  return value === "orcamentos" || value === "lancamentos";
+}
+
 function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: PeriodFilter, now: Date): T[] {
   return items.filter((item) => {
     const d = getDate(item);
@@ -739,7 +743,15 @@ export function Financeiro({ openNewLancamentoRequest = 0 }: FinanceiroProps) {
         <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e gestão de lançamentos</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          if (isFinanceiroTab(value)) {
+            setActiveTab(value);
+          }
+        }}
+        className="w-full"
+      >
         <TabsList className="w-full sm:w-auto h-10">
           <TabsTrigger value="orcamentos" className="flex-1 sm:flex-none text-xs sm:text-sm px-4">
             <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
