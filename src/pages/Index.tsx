@@ -27,6 +27,7 @@ const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ 
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
+const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
 const EditarPerfil = lazy(() =>
   import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
 );
