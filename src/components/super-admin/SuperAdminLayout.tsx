@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   ChevronLeft,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
   Mail,
