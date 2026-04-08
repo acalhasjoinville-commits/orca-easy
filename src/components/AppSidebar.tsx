@@ -113,6 +113,7 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
   };
 
   const visibleOps = operationItems.filter((item) => permissionMap[item.permission]);
+  const visibleSupport = supportItems.filter((item) => permissionMap[item.permission]);
   const visibleAdmin = adminItems.filter((item) => permissionMap[item.permission]);
 
   const renderItem = ({ title, helper, tab, icon: Icon }: NavItem) => {
