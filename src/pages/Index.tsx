@@ -348,6 +348,8 @@ const Index = () => {
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "config":
         return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
+      case "ajuda":
+        return { title: "Ajuda", helper: "Perguntas frequentes e orientações sobre o sistema." };
       default:
         return { title: "", helper: "" };
     }
