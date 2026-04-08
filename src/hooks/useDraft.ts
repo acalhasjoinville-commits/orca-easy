@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
  * Generic draft persistence hook using sessionStorage.
@@ -11,7 +11,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 export function useDraft<T>(
   key: string,
   initialValue: T,
-  debounceMs = 400
+  debounceMs = 400,
 ): [T, React.Dispatch<React.SetStateAction<T>>, () => void, boolean] {
   const [wasRestored, setWasRestored] = useState(false);
 
@@ -30,23 +30,50 @@ export function useDraft<T>(
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyRef = useRef(key);
+  const stateRef = useRef(state);
   keyRef.current = key;
+  stateRef.current = state;
+
+  const persistDraft = useCallback(() => {
+    try {
+      sessionStorage.setItem(keyRef.current, JSON.stringify(stateRef.current));
+    } catch {
+      // storage full or unavailable
+    }
+  }, []);
 
   // Debounced write to sessionStorage
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      try {
-        sessionStorage.setItem(keyRef.current, JSON.stringify(state));
-      } catch {
-        // storage full or unavailable
-      }
+      persistDraft();
     }, debounceMs);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state, debounceMs]);
+  }, [state, debounceMs, persistDraft]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        persistDraft();
+      }
+    };
+
+    const handlePageHide = () => {
+      persistDraft();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      persistDraft();
+    };
+  }, [persistDraft]);
 
   const clearDraft = useCallback(() => {
     try {

@@ -49,6 +49,36 @@ type PeriodFilter = "month" | "3months" | "year";
 type StatusFilter = "todos" | "aprovado" | "executado";
 const VALID_STATUSES = ["aprovado", "executado"];
 type TipoFilter = "all" | "receita" | "despesa";
+type FinanceiroTab = "orcamentos" | "lancamentos";
+
+const FINANCEIRO_TAB_STORAGE_KEY = "orcacalhas:financeiro-tab:v1";
+
+function hasDraftKey(key: string) {
+  try {
+    return !!sessionStorage.getItem(key);
+  } catch {
+    return false;
+  }
+}
+
+function getDraftSuffix(prefix: string) {
+  try {
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index);
+      if (key?.startsWith(prefix)) {
+        return key.slice(prefix.length);
+      }
+    }
+  } catch {
+    // ignore sessionStorage failures
+  }
+
+  return null;
+}
+
+function hasLancamentoDraft() {
+  return hasDraftKey("draft:lancamento-new") || !!getDraftSuffix("draft:lancamento-edit:");
+}
 
 function filterByPeriod<T>(items: T[], getDate: (item: T) => Date, period: PeriodFilter, now: Date): T[] {
   return items.filter((item) => {
@@ -429,6 +459,25 @@ function LancamentosTab({ openNewRequest = 0 }: LancamentosTabProps) {
     setModalOpen(true);
   }, [openNewRequest]);
 
+  useEffect(() => {
+    if (modalOpen || openNewRequest > 0) return;
+
+    if (hasDraftKey("draft:lancamento-new")) {
+      setEditing(null);
+      setModalOpen(true);
+      return;
+    }
+
+    const draftId = getDraftSuffix("draft:lancamento-edit:");
+    if (!draftId) return;
+
+    const target = lancamentos.find((lancamento) => lancamento.id === draftId);
+    if (!target) return;
+
+    setEditing(target);
+    setModalOpen(true);
+  }, [lancamentos, modalOpen, openNewRequest]);
+
   return (
     <div className="space-y-6 mt-4">
       {/* Filters + New button */}
@@ -647,12 +696,41 @@ interface FinanceiroProps {
 }
 
 export function Financeiro({ openNewLancamentoRequest = 0 }: FinanceiroProps) {
-  const [activeTab, setActiveTab] = useState("orcamentos");
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<FinanceiroTab>("orcamentos");
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (hasLancamentoDraft()) {
+      setActiveTab("lancamentos");
+      return;
+    }
+
+    try {
+      const stored = sessionStorage.getItem(`${FINANCEIRO_TAB_STORAGE_KEY}:${user.id}`);
+      if (stored === "orcamentos" || stored === "lancamentos") {
+        setActiveTab(stored);
+      }
+    } catch {
+      // ignore sessionStorage failures
+    }
+  }, [user]);
 
   useEffect(() => {
     if (openNewLancamentoRequest <= 0) return;
     setActiveTab("lancamentos");
   }, [openNewLancamentoRequest]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    try {
+      sessionStorage.setItem(`${FINANCEIRO_TAB_STORAGE_KEY}:${user.id}`, activeTab);
+    } catch {
+      // ignore sessionStorage failures
+    }
+  }, [user, activeTab]);
 
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-4">
