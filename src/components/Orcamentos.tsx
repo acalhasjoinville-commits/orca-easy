@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, FileText, Search, Loader2, MoreVertical, Check, Eye, Pencil, MessageCircle } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,6 +32,8 @@ interface OrcamentosProps {
   onViewOrcamento: (orc: Orcamento) => void;
   onEditOrcamento?: (orc: Orcamento) => void;
 }
+
+const ORCAMENTOS_VIEW_STORAGE_KEY = "orcacalhas:orcamentos-view:v1";
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" },
@@ -231,13 +233,30 @@ const getPriorityTimestamp = (orcamento: Orcamento) =>
 
 export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }: OrcamentosProps) {
   const { orcamentos, isLoading, updateOrcamento } = useOrcamentos();
-  const { canCreateEditBudget } = useAuth();
+  const { canCreateEditBudget, user } = useAuth();
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Set<StatusOrcamento>>(new Set(defaultActiveFilters));
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [pendingReject, setPendingReject] = useState<Orcamento | null>(null);
   const [activeTab, setActiveTab] = useState<"lista" | "followup">("lista");
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const stored = sessionStorage.getItem(`${ORCAMENTOS_VIEW_STORAGE_KEY}:${user.id}`);
+      if (stored === "lista" || stored === "followup") {
+        setActiveTab(stored);
+      }
+    } catch {
+      // ignore sessionStorage restore failures
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    sessionStorage.setItem(`${ORCAMENTOS_VIEW_STORAGE_KEY}:${user.id}`, activeTab);
+  }, [user, activeTab]);
   const todayKey = useMemo(() => {
     const today = new Date();
     const year = today.getFullYear();

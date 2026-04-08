@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -27,7 +27,6 @@ const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ 
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
-const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
 const EditarPerfil = lazy(() =>
   import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
 );
@@ -58,6 +57,30 @@ function SectionLoader() {
   );
 }
 
+const APP_SHELL_STORAGE_KEY = "orcacalhas:app-shell:v1";
+const RESTORABLE_TABS: Tab[] = [
+  "dashboard",
+  "agenda",
+  "orcamentos",
+  "orcamento-detalhes",
+  "orcamento-novo",
+  "clientes",
+  "financeiro",
+  "usuarios",
+  "config",
+];
+
+interface StoredAppShellState {
+  tab?: Tab;
+  selectedOrcamentoId?: string | null;
+  editingOrcamentoId?: string | null;
+  desktopSidebarCollapsed?: boolean;
+}
+
+function isRestorableTab(value: string): value is Tab {
+  return RESTORABLE_TABS.includes(value as Tab);
+}
+
 const Index = () => {
   const {
     user,
@@ -86,9 +109,29 @@ const Index = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const mainContentRef = useRef<HTMLElement | null>(null);
 
-  const { orcamentos: _orc, getNextNumero, addOrcamento, updateOrcamento } = useOrcamentos();
+  const {
+    orcamentos: _orc,
+    isLoading: orcamentosLoading,
+    getNextNumero,
+    addOrcamento,
+    updateOrcamento,
+  } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
+  const restoredShellStateRef = useRef<StoredAppShellState | null>(null);
+  const restoredShellUserIdRef = useRef<string | null>(null);
+
+  const isTabAllowed = useCallback(
+    (candidate: Tab) => {
+      if (candidate === "config") return canManageSettings;
+      if (candidate === "financeiro") return canViewFinanceiro;
+      if (candidate === "clientes") return canManageClientes;
+      if (candidate === "orcamento-novo") return canCreateEditBudget;
+      if (candidate === "usuarios") return canManageUsers;
+      return true;
+    },
+    [canManageClientes, canManageSettings, canCreateEditBudget, canManageUsers, canViewFinanceiro],
+  );
 
   useEffect(() => {
     if (!("scrollRestoration" in window.history)) return;
@@ -109,6 +152,102 @@ const Index = () => {
 
     return () => window.cancelAnimationFrame(frame);
   }, [tab]);
+
+  useEffect(() => {
+    if (!user || !rolesLoaded || !hasAnyRole || restoredShellUserIdRef.current === user.id) return;
+
+    restoredShellUserIdRef.current = user.id;
+
+    try {
+      const raw = sessionStorage.getItem(`${APP_SHELL_STORAGE_KEY}:${user.id}`);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StoredAppShellState;
+
+      if (typeof parsed.desktopSidebarCollapsed === "boolean") {
+        setDesktopSidebarCollapsed(parsed.desktopSidebarCollapsed);
+      }
+
+      const nextTab = parsed.tab && isRestorableTab(parsed.tab) && isTabAllowed(parsed.tab) ? parsed.tab : "dashboard";
+
+      if (nextTab === "orcamento-detalhes") {
+        if (parsed.selectedOrcamentoId) {
+          restoredShellStateRef.current = parsed;
+          setTab(nextTab);
+        } else {
+          setTab("orcamentos");
+        }
+        return;
+      }
+
+      if (nextTab === "orcamento-novo" && parsed.editingOrcamentoId) {
+        restoredShellStateRef.current = parsed;
+      } else {
+        restoredShellStateRef.current = null;
+        setSelectedOrcamento(null);
+        setEditingOrcamento(null);
+      }
+
+      setTab(nextTab);
+    } catch {
+      restoredShellStateRef.current = null;
+    }
+  }, [
+    user,
+    rolesLoaded,
+    hasAnyRole,
+    canManageSettings,
+    canViewFinanceiro,
+    canManageClientes,
+    canCreateEditBudget,
+    canManageUsers,
+    isTabAllowed,
+  ]);
+
+  useEffect(() => {
+    const pending = restoredShellStateRef.current;
+    if (!pending || orcamentosLoading) return;
+
+    if (tab === "orcamento-detalhes") {
+      const restored = pending.selectedOrcamentoId ? _orc.find((orc) => orc.id === pending.selectedOrcamentoId) : null;
+
+      if (restored) {
+        setSelectedOrcamento(restored);
+      } else {
+        setSelectedOrcamento(null);
+        setTab("orcamentos");
+      }
+
+      restoredShellStateRef.current = null;
+      return;
+    }
+
+    if (tab === "orcamento-novo" && pending.editingOrcamentoId) {
+      const restored = _orc.find((orc) => orc.id === pending.editingOrcamentoId);
+
+      if (restored) {
+        setEditingOrcamento(restored);
+      } else {
+        setEditingOrcamento(null);
+        setTab("orcamentos");
+      }
+
+      restoredShellStateRef.current = null;
+    }
+  }, [tab, _orc, orcamentosLoading]);
+
+  useEffect(() => {
+    if (!user || !rolesLoaded || !hasAnyRole) return;
+
+    const state: StoredAppShellState = {
+      tab,
+      desktopSidebarCollapsed,
+      selectedOrcamentoId: tab === "orcamento-detalhes" ? (selectedOrcamento?.id ?? null) : null,
+      editingOrcamentoId: tab === "orcamento-novo" ? (editingOrcamento?.id ?? null) : null,
+    };
+
+    sessionStorage.setItem(`${APP_SHELL_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
+  }, [user, rolesLoaded, hasAnyRole, tab, desktopSidebarCollapsed, selectedOrcamento?.id, editingOrcamento?.id]);
 
   // Auth loading state
   if (loading) {
@@ -174,16 +313,27 @@ const Index = () => {
       toast.error("Sem permissão para gerenciar usuários.");
       return;
     }
+    if (newTab !== "orcamento-detalhes") {
+      setSelectedOrcamento(null);
+    }
+    if (newTab !== "orcamento-novo") {
+      setEditingOrcamento(null);
+    }
     setTab(newTab);
   };
 
-  const goToList = () => setTab("orcamentos");
+  const goToList = () => {
+    setSelectedOrcamento(null);
+    setEditingOrcamento(null);
+    setTab("orcamentos");
+  };
 
   const goToNew = () => {
     if (!canCreateEditBudget) {
       toast.error("Sem permissão para criar orçamentos.");
       return;
     }
+    setSelectedOrcamento(null);
     setEditingOrcamento(null);
     setWizardKey((k) => k + 1);
     setTab("orcamento-novo");
@@ -208,6 +358,7 @@ const Index = () => {
   };
 
   const goToDetails = (orc: Orcamento) => {
+    setEditingOrcamento(null);
     setSelectedOrcamento(orc);
     setTab("orcamento-detalhes");
   };
@@ -217,6 +368,7 @@ const Index = () => {
       toast.error("Sem permissão para editar orçamentos.");
       return;
     }
+    setSelectedOrcamento(null);
     setEditingOrcamento(orc);
     setWizardKey((k) => k + 1);
     setTab("orcamento-novo");
@@ -329,8 +481,6 @@ const Index = () => {
     switch (tab) {
       case "dashboard":
         return { title: "Dashboard", helper: "Resumo rápido da operação e dos números principais." };
-      case "agenda":
-        return { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." };
       case "orcamentos":
         return { title: "Orçamentos", helper: "Acompanhe status, datas operacionais e próximos passos." };
       case "orcamento-detalhes":
@@ -348,23 +498,22 @@ const Index = () => {
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "config":
         return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
-      case "ajuda":
-        return { title: "Ajuda", helper: "Perguntas frequentes e orientações sobre o sistema." };
       default:
         return { title: "", helper: "" };
     }
   };
 
-  const headerMeta = getHeaderMeta();
+  const headerMeta =
+    tab === "agenda"
+      ? { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." }
+      : getHeaderMeta();
 
   const content = (
     <Suspense fallback={<SectionLoader />}>
       {tab === "dashboard" && (
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
-      {tab === "agenda" && (
-        <Agenda orcamentos={_orc} onViewOrcamento={goToDetails} />
-      )}
+      {tab === "agenda" && <Agenda orcamentos={_orc} onViewOrcamento={goToDetails} />}
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
       )}
@@ -416,7 +565,6 @@ const Index = () => {
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Configurações." />
         ))}
-      {tab === "ajuda" && <Ajuda />}
     </Suspense>
   );
 

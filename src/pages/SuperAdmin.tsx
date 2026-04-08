@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SuperAdminLayout, SATab } from "@/components/super-admin/SuperAdminLayout";
 import { SuperAdminDashboard } from "@/components/super-admin/SuperAdminDashboard";
 import { SuperAdminEmpresas } from "@/components/super-admin/SuperAdminEmpresas";
@@ -7,11 +7,56 @@ import { SuperAdminUsuarios } from "@/components/super-admin/SuperAdminUsuarios"
 import { SuperAdminConvites } from "@/components/super-admin/SuperAdminConvites";
 import { SuperAdminAuditoria } from "@/components/super-admin/SuperAdminAuditoria";
 import { SuperAdminAparencia } from "@/components/super-admin/SuperAdminAparencia";
-import { SuperAdminFaq } from "@/components/super-admin/SuperAdminFaq";
+import { useAuth } from "@/hooks/useAuth";
+
+const SUPER_ADMIN_SHELL_STORAGE_KEY = "orcacalhas:super-admin-shell:v1";
+const RESTORABLE_SA_TABS: SATab[] = ["dashboard", "empresas", "usuarios", "convites", "auditoria", "aparencia"];
+
+interface StoredSuperAdminState {
+  tab?: SATab;
+  selectedEmpresaId?: string | null;
+}
+
+function isRestorableSATab(value: string): value is SATab {
+  return RESTORABLE_SA_TABS.includes(value as SATab);
+}
 
 export default function SuperAdminPage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<SATab>("dashboard");
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string | null>(null);
+  const restoredUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user || restoredUserIdRef.current === user.id) return;
+
+    restoredUserIdRef.current = user.id;
+
+    try {
+      const raw = sessionStorage.getItem(`${SUPER_ADMIN_SHELL_STORAGE_KEY}:${user.id}`);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StoredSuperAdminState;
+      const restoredTab = parsed.tab && isRestorableSATab(parsed.tab) ? parsed.tab : "dashboard";
+
+      setTab(restoredTab);
+      setSelectedEmpresaId(restoredTab === "empresas" ? (parsed.selectedEmpresaId ?? null) : null);
+    } catch {
+      setTab("dashboard");
+      setSelectedEmpresaId(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const state: StoredSuperAdminState = {
+      tab,
+      selectedEmpresaId: tab === "empresas" ? selectedEmpresaId : null,
+    };
+
+    sessionStorage.setItem(`${SUPER_ADMIN_SHELL_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
+  }, [user, tab, selectedEmpresaId]);
 
   const handleSelectEmpresa = (id: string) => {
     setSelectedEmpresaId(id);
@@ -36,8 +81,6 @@ export default function SuperAdminPage() {
         return <SuperAdminAuditoria />;
       case "aparencia":
         return <SuperAdminAparencia />;
-      case "faq":
-        return <SuperAdminFaq />;
     }
   })();
 
