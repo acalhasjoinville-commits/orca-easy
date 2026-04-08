@@ -41,7 +41,7 @@ export default function SuperAdminPage() {
       const restoredTab = parsed.tab && isRestorableSATab(parsed.tab) ? parsed.tab : "dashboard";
 
       setTab(restoredTab);
-      setSelectedEmpresaId(restoredTab === "empresas" ? (parsed.selectedEmpresaId ?? null) : null);
+      setSelectedEmpresaId(restoredTab === "empresas" ? parsed.selectedEmpresaId ?? null : null);
     } catch {
       setTab("dashboard");
       setSelectedEmpresaId(null);
@@ -92,9 +92,5 @@ export default function SuperAdminPage() {
     if (newTab !== "empresas") setSelectedEmpresaId(null);
   };
 
-  return (
-    <SuperAdminLayout active={tab} onNavigate={handleNavigate}>
-      {content}
-    </SuperAdminLayout>
-  );
+  return <SuperAdminLayout active={tab} onNavigate={handleNavigate}>{content}</SuperAdminLayout>;
 }

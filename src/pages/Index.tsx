@@ -123,17 +123,14 @@ const Index = () => {
   const restoredShellStateRef = useRef<StoredAppShellState | null>(null);
   const restoredShellUserIdRef = useRef<string | null>(null);
 
-  const isTabAllowed = useCallback(
-    (candidate: Tab) => {
-      if (candidate === "config") return canManageSettings;
-      if (candidate === "financeiro") return canViewFinanceiro;
-      if (candidate === "clientes") return canManageClientes;
-      if (candidate === "orcamento-novo") return canCreateEditBudget;
-      if (candidate === "usuarios") return canManageUsers;
-      return true;
-    },
-    [canManageClientes, canManageSettings, canCreateEditBudget, canManageUsers, canViewFinanceiro],
-  );
+  const isTabAllowed = useCallback((candidate: Tab) => {
+    if (candidate === "config") return canManageSettings;
+    if (candidate === "financeiro") return canViewFinanceiro;
+    if (candidate === "clientes") return canManageClientes;
+    if (candidate === "orcamento-novo") return canCreateEditBudget;
+    if (candidate === "usuarios") return canManageUsers;
+    return true;
+  }, [canManageClientes, canManageSettings, canCreateEditBudget, canManageUsers, canViewFinanceiro]);
 
   useEffect(() => {
     if (!("scrollRestoration" in window.history)) return;
@@ -170,7 +167,8 @@ const Index = () => {
         setDesktopSidebarCollapsed(parsed.desktopSidebarCollapsed);
       }
 
-      const nextTab = parsed.tab && isRestorableTab(parsed.tab) && isTabAllowed(parsed.tab) ? parsed.tab : "dashboard";
+      const nextTab =
+        parsed.tab && isRestorableTab(parsed.tab) && isTabAllowed(parsed.tab) ? parsed.tab : "dashboard";
 
       if (nextTab === "orcamento-detalhes") {
         if (parsed.selectedOrcamentoId) {
@@ -244,12 +242,20 @@ const Index = () => {
     const state: StoredAppShellState = {
       tab,
       desktopSidebarCollapsed,
-      selectedOrcamentoId: tab === "orcamento-detalhes" ? (selectedOrcamento?.id ?? null) : null,
-      editingOrcamentoId: tab === "orcamento-novo" ? (editingOrcamento?.id ?? null) : null,
+      selectedOrcamentoId: tab === "orcamento-detalhes" ? selectedOrcamento?.id ?? null : null,
+      editingOrcamentoId: tab === "orcamento-novo" ? editingOrcamento?.id ?? null : null,
     };
 
     sessionStorage.setItem(`${APP_SHELL_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
-  }, [user, rolesLoaded, hasAnyRole, tab, desktopSidebarCollapsed, selectedOrcamento?.id, editingOrcamento?.id]);
+  }, [
+    user,
+    rolesLoaded,
+    hasAnyRole,
+    tab,
+    desktopSidebarCollapsed,
+    selectedOrcamento?.id,
+    editingOrcamento?.id,
+  ]);
 
   // Auth loading state
   if (loading) {
