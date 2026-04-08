@@ -1,6 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+
+type FaqRow = Tables<"faq_items">;
+type FaqInsert = TablesInsert<"faq_items">;
+type FaqUpdate = TablesUpdate<"faq_items">;
 
 export interface FaqItem {
   id: string;
@@ -9,11 +14,49 @@ export interface FaqItem {
   categoria: string;
   ordem: number;
   ativo: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/** Public hook — explicitly filters ativo = true so platform admins don't see inactive items in the app */
+export interface FaqInput {
+  pergunta: string;
+  resposta: string;
+  categoria: string;
+  ordem: number;
+  ativo: boolean;
+}
+
+function dbToFaq(row: FaqRow): FaqItem {
+  return {
+    id: row.id,
+    pergunta: row.pergunta,
+    resposta: row.resposta,
+    categoria: row.categoria,
+    ordem: row.ordem,
+    ativo: row.ativo,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function faqToInsert(input: FaqInput): FaqInsert {
+  return {
+    pergunta: input.pergunta.trim(),
+    resposta: input.resposta.trim(),
+    categoria: input.categoria.trim() || "Geral",
+    ordem: input.ordem,
+    ativo: input.ativo,
+  };
+}
+
+function faqToUpdate(input: FaqInput): FaqUpdate {
+  return faqToInsert(input);
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function useFaqPublic() {
   return useQuery({
     queryKey: ["faq", "public"],
@@ -22,15 +65,16 @@ export function useFaqPublic() {
         .from("faq_items")
         .select("*")
         .eq("ativo", true)
-        .order("ordem")
-        .order("categoria");
+        .order("ordem", { ascending: true })
+        .order("categoria", { ascending: true })
+        .order("created_at", { ascending: true });
+
       if (error) throw error;
-      return (data ?? []) as FaqItem[];
+      return (data || []).map(dbToFaq);
     },
   });
 }
 
-/** Admin hook — returns all items (active + inactive) */
 export function useFaqAdmin() {
   return useQuery({
     queryKey: ["faq", "admin"],
@@ -38,10 +82,12 @@ export function useFaqAdmin() {
       const { data, error } = await supabase
         .from("faq_items")
         .select("*")
-        .order("ordem")
-        .order("categoria");
+        .order("ordem", { ascending: true })
+        .order("categoria", { ascending: true })
+        .order("created_at", { ascending: true });
+
       if (error) throw error;
-      return (data ?? []) as FaqItem[];
+      return (data || []).map(dbToFaq);
     },
   });
 }
@@ -49,33 +95,33 @@ export function useFaqAdmin() {
 export function useFaqMutations() {
   const qc = useQueryClient();
 
-  const invalidateBoth = () => {
+  const invalidateFaq = () => {
     qc.invalidateQueries({ queryKey: ["faq", "public"] });
     qc.invalidateQueries({ queryKey: ["faq", "admin"] });
   };
 
   const createFaq = useMutation({
-    mutationFn: async (item: Omit<FaqItem, "id" | "created_at" | "updated_at">) => {
-      const { error } = await supabase.from("faq_items").insert(item);
+    mutationFn: async (input: FaqInput) => {
+      const { error } = await supabase.from("faq_items").insert(faqToInsert(input));
       if (error) throw error;
     },
     onSuccess: () => {
-      invalidateBoth();
-      toast.success("FAQ criada com sucesso!");
+      toast.success("FAQ criada com sucesso.");
+      invalidateFaq();
     },
-    onError: () => toast.error("Erro ao criar FAQ."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Erro ao criar FAQ.")),
   });
 
   const updateFaq = useMutation({
-    mutationFn: async ({ id, ...fields }: Partial<FaqItem> & { id: string }) => {
-      const { error } = await supabase.from("faq_items").update(fields).eq("id", id);
+    mutationFn: async (args: { id: string; input: FaqInput }) => {
+      const { error } = await supabase.from("faq_items").update(faqToUpdate(args.input)).eq("id", args.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      invalidateBoth();
-      toast.success("FAQ atualizada!");
+      toast.success("FAQ atualizada.");
+      invalidateFaq();
     },
-    onError: () => toast.error("Erro ao atualizar FAQ."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Erro ao atualizar FAQ.")),
   });
 
   const deleteFaq = useMutation({
@@ -84,11 +130,15 @@ export function useFaqMutations() {
       if (error) throw error;
     },
     onSuccess: () => {
-      invalidateBoth();
-      toast.success("FAQ excluída.");
+      toast.success("FAQ removida.");
+      invalidateFaq();
     },
-    onError: () => toast.error("Erro ao excluir FAQ."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Erro ao remover FAQ.")),
   });
 
-  return { createFaq, updateFaq, deleteFaq };
+  return {
+    createFaq,
+    updateFaq,
+    deleteFaq,
+  };
 }
