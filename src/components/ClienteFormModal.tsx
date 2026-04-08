@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Search, Loader2, User, Building2, MapPin, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useDraft } from "@/hooks/useDraft";
 import { Separator } from "@/components/ui/separator";
 
 interface Props {
@@ -86,37 +85,17 @@ function formatCEP(v: string) {
 }
 
 export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
-  const draftKey = editing ? `draft:cliente-edit:${editing.id}` : "draft:cliente-new";
   const initialForm = editing ? formFromCliente(editing) : EMPTY_FORM;
-
-  const [draft, setDraft, clearDraft, wasRestored] = useDraft<FormState>(draftKey, initialForm);
+  const [draft, setDraft] = useState<FormState>(initialForm);
 
   const [loadingCNPJ, setLoadingCNPJ] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (open && wasRestored) {
-      toast.info("Rascunho restaurado.", { duration: 2000 });
-    }
-  }, [open, wasRestored]);
-
-  useEffect(() => {
     if (!open) return;
-
-    if (editing) {
-      const stored = sessionStorage.getItem(draftKey);
-      if (!stored) {
-        setDraft(formFromCliente(editing));
-      }
-      return;
-    }
-
-    const stored = sessionStorage.getItem("draft:cliente-new");
-    if (!stored) {
-      setDraft(EMPTY_FORM);
-    }
-  }, [open, editing, draftKey, setDraft]);
+    setDraft(editing ? formFromCliente(editing) : EMPTY_FORM);
+  }, [open, editing]);
 
   const { tipo, nome, documento, whatsapp, cep, endereco, numero, bairro, cidade } = draft;
 
@@ -225,14 +204,13 @@ export function ClienteFormModal({ open, onClose, onSave, editing }: Props) {
           cidade,
         }),
       );
-      clearDraft();
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleClose = () => {
-    clearDraft();
+    setDraft(editing ? formFromCliente(editing) : EMPTY_FORM);
     onClose();
   };
 

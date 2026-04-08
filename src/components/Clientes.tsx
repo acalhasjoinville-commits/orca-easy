@@ -32,21 +32,6 @@ const getDocumentoLabel = (cliente: Cliente) => {
   return documento ? documento : "Não informado";
 };
 
-function getDraftSuffix(prefix: string) {
-  try {
-    for (let index = 0; index < sessionStorage.length; index += 1) {
-      const key = sessionStorage.key(index);
-      if (key?.startsWith(prefix)) {
-        return key.slice(prefix.length);
-      }
-    }
-  } catch {
-    // ignore sessionStorage failures
-  }
-
-  return null;
-}
-
 interface ClientesProps {
   openNewRequest?: number;
 }
@@ -115,29 +100,6 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
     setEditing(null);
     setModalOpen(true);
   }, [openNewRequest]);
-
-  useEffect(() => {
-    if (modalOpen || openNewRequest > 0) return;
-
-    try {
-      if (sessionStorage.getItem("draft:cliente-new")) {
-        setEditing(null);
-        setModalOpen(true);
-        return;
-      }
-    } catch {
-      return;
-    }
-
-    const draftId = getDraftSuffix("draft:cliente-edit:");
-    if (!draftId) return;
-
-    const target = clientes.find((cliente) => cliente.id === draftId);
-    if (!target) return;
-
-    setEditing(target);
-    setModalOpen(true);
-  }, [clientes, modalOpen, openNewRequest]);
 
   if (isLoading) {
     return (

@@ -53,33 +53,6 @@ type FinanceiroTab = "orcamentos" | "lancamentos";
 
 const FINANCEIRO_TAB_STORAGE_KEY = "orcacalhas:financeiro-tab:v1";
 
-function hasDraftKey(key: string) {
-  try {
-    return !!sessionStorage.getItem(key);
-  } catch {
-    return false;
-  }
-}
-
-function getDraftSuffix(prefix: string) {
-  try {
-    for (let index = 0; index < sessionStorage.length; index += 1) {
-      const key = sessionStorage.key(index);
-      if (key?.startsWith(prefix)) {
-        return key.slice(prefix.length);
-      }
-    }
-  } catch {
-    // ignore sessionStorage failures
-  }
-
-  return null;
-}
-
-function hasLancamentoDraft() {
-  return hasDraftKey("draft:lancamento-new") || !!getDraftSuffix("draft:lancamento-edit:");
-}
-
 function isFinanceiroTab(value: string): value is FinanceiroTab {
   return value === "orcamentos" || value === "lancamentos";
 }
@@ -463,25 +436,6 @@ function LancamentosTab({ openNewRequest = 0 }: LancamentosTabProps) {
     setModalOpen(true);
   }, [openNewRequest]);
 
-  useEffect(() => {
-    if (modalOpen || openNewRequest > 0) return;
-
-    if (hasDraftKey("draft:lancamento-new")) {
-      setEditing(null);
-      setModalOpen(true);
-      return;
-    }
-
-    const draftId = getDraftSuffix("draft:lancamento-edit:");
-    if (!draftId) return;
-
-    const target = lancamentos.find((lancamento) => lancamento.id === draftId);
-    if (!target) return;
-
-    setEditing(target);
-    setModalOpen(true);
-  }, [lancamentos, modalOpen, openNewRequest]);
-
   return (
     <div className="space-y-6 mt-4">
       {/* Filters + New button */}
@@ -705,11 +659,6 @@ export function Financeiro({ openNewLancamentoRequest = 0 }: FinanceiroProps) {
 
   useEffect(() => {
     if (!user) return;
-
-    if (hasLancamentoDraft()) {
-      setActiveTab("lancamentos");
-      return;
-    }
 
     try {
       const stored = sessionStorage.getItem(`${FINANCEIRO_TAB_STORAGE_KEY}:${user.id}`);

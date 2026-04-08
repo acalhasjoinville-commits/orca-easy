@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useDraft } from "@/hooks/useDraft";
+
 import { CATEGORIAS_DESPESA, CATEGORIAS_RECEITA, LancamentoFinanceiro, TipoLancamento } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,32 +49,17 @@ function draftFromLancamento(lancamento: LancamentoFinanceiro): LancamentoDraft 
 
 export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, isSaving, empresaId }: Props) {
   const isEdit = !!lancamento;
-  const draftKey = lancamento ? `draft:lancamento-edit:${lancamento.id}` : "draft:lancamento-new";
-  const initialDraft = lancamento ? draftFromLancamento(lancamento) : EMPTY_DRAFT;
-
-  const [draft, setDraft, clearDraft, wasRestored] = useDraft<LancamentoDraft>(draftKey, initialDraft);
-
-  useEffect(() => {
-    if (open && wasRestored) {
-      toast.info("Rascunho restaurado.", { duration: 2000 });
-    }
-  }, [open, wasRestored]);
+  const [draft, setDraft] = useState<LancamentoDraft>(
+    lancamento ? draftFromLancamento(lancamento) : { ...EMPTY_DRAFT, data: new Date().toISOString().slice(0, 10) },
+  );
 
   useEffect(() => {
     if (!open) return;
 
-    if (lancamento) {
-      const stored = sessionStorage.getItem(draftKey);
-      if (!stored) {
-        setDraft(draftFromLancamento(lancamento));
-      }
-    } else {
-      const stored = sessionStorage.getItem("draft:lancamento-new");
-      if (!stored) {
-        setDraft({ ...EMPTY_DRAFT, data: new Date().toISOString().slice(0, 10) });
-      }
-    }
-  }, [open, lancamento?.id, draftKey, lancamento, setDraft]);
+    setDraft(
+      lancamento ? draftFromLancamento(lancamento) : { ...EMPTY_DRAFT, data: new Date().toISOString().slice(0, 10) },
+    );
+  }, [open, lancamento]);
 
   const { tipo, descricao, valor, data, categoria, observacao } = draft;
 
@@ -88,10 +73,12 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
     if (categoria && !(categorias as readonly string[]).includes(categoria)) {
       setDraft((prev) => ({ ...prev, categoria: "" }));
     }
-  }, [categoria, categorias, setDraft]);
+  }, [categoria, categorias]);
 
   const handleClose = () => {
-    clearDraft();
+    setDraft(
+      lancamento ? draftFromLancamento(lancamento) : { ...EMPTY_DRAFT, data: new Date().toISOString().slice(0, 10) },
+    );
     onOpenChange(false);
   };
 
@@ -129,7 +116,6 @@ export function LancamentoFormModal({ open, onOpenChange, lancamento, onSave, is
       origem: "manual",
     });
 
-    clearDraft();
     onOpenChange(false);
     toast.success(isEdit ? "Lançamento atualizado." : "Lançamento criado.");
   };

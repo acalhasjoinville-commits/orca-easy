@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { HelpCircle, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+
 import { useFaqAdmin, useFaqMutations, type FaqInput, type FaqItem } from "@/hooks/useFaq";
-import { useDraft } from "@/hooks/useDraft";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 
 function normalize(value: string) {
   return value
@@ -47,21 +46,6 @@ function formFromFaq(item: FaqItem): FaqInput {
   };
 }
 
-function getDraftSuffix(prefix: string) {
-  try {
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith(prefix)) {
-        return key.slice(prefix.length);
-      }
-    }
-  } catch {
-    // ignore localStorage failures
-  }
-
-  return null;
-}
-
 export function SuperAdminFaq() {
   const { data: faqs = [], isLoading } = useFaqAdmin();
   const { createFaq, updateFaq, deleteFaq } = useFaqMutations();
@@ -70,13 +54,7 @@ export function SuperAdminFaq() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<FaqItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FaqItem | null>(null);
-  const draftKey = editing ? `draft:faq-edit:${editing.id}` : "draft:faq-new";
-  const [form, setForm, clearDraft, wasRestored] = useDraft<FaqInput>(
-    draftKey,
-    editing ? formFromFaq(editing) : EMPTY_FORM,
-    400,
-    "local",
-  );
+  const [form, setForm] = useState<FaqInput>(EMPTY_FORM);
 
   const categorias = useMemo(() => {
     const values = Array.from(new Set(faqs.map((item) => item.categoria.trim()).filter(Boolean)));
@@ -94,17 +72,19 @@ export function SuperAdminFaq() {
     });
   }, [faqs, search, categoria]);
 
-  const stats = useMemo(() => {
-    return {
+  const stats = useMemo(
+    () => ({
       total: faqs.length,
       ativas: faqs.filter((item) => item.ativo).length,
       inativas: faqs.filter((item) => !item.ativo).length,
       categorias: new Set(faqs.map((item) => item.categoria)).size,
-    };
-  }, [faqs]);
+    }),
+    [faqs],
+  );
 
   const handleOpenCreate = () => {
     setEditing(null);
+    setForm(EMPTY_FORM);
     setDialogOpen(true);
   };
 
@@ -114,10 +94,14 @@ export function SuperAdminFaq() {
     setDialogOpen(true);
   };
 
+  const handleClose = () => {
+    setDialogOpen(false);
+    setEditing(null);
+    setForm(EMPTY_FORM);
+  };
+
   const handleSave = async () => {
-    if (!form.pergunta.trim() || !form.resposta.trim()) {
-      return;
-    }
+    if (!form.pergunta.trim() || !form.resposta.trim()) return;
 
     if (editing) {
       await updateFaq.mutateAsync({ id: editing.id, input: form });
@@ -125,66 +109,10 @@ export function SuperAdminFaq() {
       await createFaq.mutateAsync(form);
     }
 
-    clearDraft();
-    setDialogOpen(false);
-    setEditing(null);
-    setForm(EMPTY_FORM);
+    handleClose();
   };
 
   const isSaving = createFaq.isPending || updateFaq.isPending;
-
-  useEffect(() => {
-    if (!dialogOpen || !wasRestored) return;
-    toast.info("Rascunho da FAQ restaurado.", { duration: 2000 });
-  }, [dialogOpen, wasRestored]);
-
-  useEffect(() => {
-    if (dialogOpen) return;
-
-    try {
-      if (localStorage.getItem("draft:faq-new")) {
-        setEditing(null);
-        setDialogOpen(true);
-        return;
-      }
-    } catch {
-      return;
-    }
-
-    const draftId = getDraftSuffix("draft:faq-edit:");
-    if (!draftId) return;
-
-    const target = faqs.find((item) => item.id === draftId);
-    if (!target) return;
-
-    setEditing(target);
-    setDialogOpen(true);
-  }, [dialogOpen, faqs]);
-
-  useEffect(() => {
-    if (!dialogOpen) return;
-
-    if (editing) {
-      try {
-        const stored = localStorage.getItem(draftKey);
-        if (!stored) {
-          setForm(formFromFaq(editing));
-        }
-      } catch {
-        setForm(formFromFaq(editing));
-      }
-      return;
-    }
-
-    try {
-      const stored = localStorage.getItem("draft:faq-new");
-      if (!stored) {
-        setForm(EMPTY_FORM);
-      }
-    } catch {
-      setForm(EMPTY_FORM);
-    }
-  }, [dialogOpen, editing, draftKey, setForm]);
 
   if (isLoading) {
     return (
@@ -204,7 +132,7 @@ export function SuperAdminFaq() {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => (open ? setDialogOpen(true) : handleClose())}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4" />
@@ -273,7 +201,7 @@ export function SuperAdminFaq() {
               </div>
 
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
+                <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
                 <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
