@@ -1,0 +1,109 @@
+import { matchPath } from "react-router-dom";
+
+import type { Tab } from "@/components/AppSidebar";
+
+export interface ResolvedAppShellRoute {
+  tab: Tab;
+  orcamentoId: string | null;
+  isEditingOrcamento: boolean;
+}
+
+const PRIMARY_TAB_PATHS: Record<
+  Exclude<Tab, "orcamento-detalhes" | "orcamento-novo">,
+  string
+> = {
+  dashboard: "/dashboard",
+  agenda: "/agenda",
+  orcamentos: "/orcamentos",
+  clientes: "/clientes",
+  financeiro: "/financeiro",
+  usuarios: "/usuarios",
+  ajuda: "/ajuda",
+  config: "/configuracoes",
+};
+
+export function getPrimaryPathForTab(tab: Exclude<Tab, "orcamento-detalhes" | "orcamento-novo">) {
+  return PRIMARY_TAB_PATHS[tab];
+}
+
+export function getOrcamentoNewPath() {
+  return "/orcamentos/novo";
+}
+
+export function getOrcamentoDetailsPath(orcamentoId: string) {
+  return `/orcamentos/${orcamentoId}`;
+}
+
+export function getOrcamentoEditPath(orcamentoId: string) {
+  return `/orcamentos/${orcamentoId}/editar`;
+}
+
+export function getPathForTab(tab: Tab) {
+  if (tab === "orcamento-detalhes") {
+    return PRIMARY_TAB_PATHS.orcamentos;
+  }
+
+  if (tab === "orcamento-novo") {
+    return getOrcamentoNewPath();
+  }
+
+  return getPrimaryPathForTab(tab);
+}
+
+export function resolveAppShellRoute(pathname: string): ResolvedAppShellRoute {
+  if (pathname === "/" || pathname === "/dashboard") {
+    return { tab: "dashboard", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/agenda") {
+    return { tab: "agenda", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/orcamentos") {
+    return { tab: "orcamentos", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/orcamentos/novo") {
+    return { tab: "orcamento-novo", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  const editMatch = matchPath("/orcamentos/:orcamentoId/editar", pathname);
+  if (editMatch?.params.orcamentoId) {
+    return {
+      tab: "orcamento-novo",
+      orcamentoId: editMatch.params.orcamentoId,
+      isEditingOrcamento: true,
+    };
+  }
+
+  const detailMatch = matchPath("/orcamentos/:orcamentoId", pathname);
+  if (detailMatch?.params.orcamentoId) {
+    return {
+      tab: "orcamento-detalhes",
+      orcamentoId: detailMatch.params.orcamentoId,
+      isEditingOrcamento: false,
+    };
+  }
+
+  if (pathname === "/clientes") {
+    return { tab: "clientes", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/financeiro") {
+    return { tab: "financeiro", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/usuarios") {
+    return { tab: "usuarios", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/ajuda") {
+    return { tab: "ajuda", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/config" || pathname === "/configuracoes") {
+    return { tab: "config", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  return { tab: "dashboard", orcamentoId: null, isEditingOrcamento: false };
+}
