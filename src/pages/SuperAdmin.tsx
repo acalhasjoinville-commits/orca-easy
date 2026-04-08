@@ -6,11 +6,12 @@ import { SuperAdminEmpresaDetail } from "@/components/super-admin/SuperAdminEmpr
 import { SuperAdminUsuarios } from "@/components/super-admin/SuperAdminUsuarios";
 import { SuperAdminConvites } from "@/components/super-admin/SuperAdminConvites";
 import { SuperAdminAuditoria } from "@/components/super-admin/SuperAdminAuditoria";
+import { SuperAdminFaq } from "@/components/super-admin/SuperAdminFaq";
 import { SuperAdminAparencia } from "@/components/super-admin/SuperAdminAparencia";
 import { useAuth } from "@/hooks/useAuth";
 
 const SUPER_ADMIN_SHELL_STORAGE_KEY = "orcacalhas:super-admin-shell:v1";
-const RESTORABLE_SA_TABS: SATab[] = ["dashboard", "empresas", "usuarios", "convites", "auditoria", "aparencia"];
+const RESTORABLE_SA_TABS: SATab[] = ["dashboard", "empresas", "usuarios", "convites", "auditoria", "faq", "aparencia"];
 
 interface StoredSuperAdminState {
   tab?: SATab;
@@ -79,6 +80,8 @@ export default function SuperAdminPage() {
         return <SuperAdminConvites />;
       case "auditoria":
         return <SuperAdminAuditoria />;
+      case "faq":
+        return <SuperAdminFaq />;
       case "aparencia":
         return <SuperAdminAparencia />;
     }

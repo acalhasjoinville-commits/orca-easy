@@ -27,6 +27,7 @@ const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ 
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
+const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
 const EditarPerfil = lazy(() =>
   import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
 );
@@ -67,6 +68,7 @@ const RESTORABLE_TABS: Tab[] = [
   "clientes",
   "financeiro",
   "usuarios",
+  "ajuda",
   "config",
 ];
 
@@ -496,6 +498,8 @@ const Index = () => {
         return { title: "Financeiro", helper: "Movimentações, leitura dos números e rotina financeira." };
       case "usuarios":
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
+      case "ajuda":
+        return { title: "Ajuda", helper: "Perguntas frequentes e orientações rápidas para o uso do sistema." };
       case "config":
         return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
       default:
@@ -559,6 +563,7 @@ const Index = () => {
         ))}
       {tab === "usuarios" &&
         (canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />)}
+      {tab === "ajuda" && <Ajuda />}
       {tab === "config" &&
         (canManageSettings ? (
           <Configuracoes />
