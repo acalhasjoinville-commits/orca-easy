@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia";
+export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia" | "faq";
 
 interface Props {
   active: SATab;
