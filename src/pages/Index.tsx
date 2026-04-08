@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Button } from "@/components/ui/button";
-import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useClientes, useEmpresa, useOrcamentos } from "@/hooks/useSupabaseData";
@@ -525,7 +524,6 @@ const Index = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-background">
-        <SystemThemeApplicator />
         <header className="h-14 flex items-center border-b bg-card px-4 sticky top-0 z-50 shadow-sm">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
             OC
@@ -567,7 +565,6 @@ const Index = () => {
 
   return (
     <>
-      <SystemThemeApplicator />
       <div className="h-screen w-full overflow-hidden bg-background">
         <div className="flex h-full w-full">
           <AppSidebar active={tab} collapsed={desktopSidebarCollapsed} onNavigate={guardedNavigate} />
