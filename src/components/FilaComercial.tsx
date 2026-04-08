@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFilaComercial, FilaComercialItem } from "@/hooks/useFollowUp";
 import { Orcamento, StatusFollowUp, STATUS_FOLLOWUP_CONFIG } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertTriangle, CalendarDays, Clock, Eye, Loader2, MessageCircle, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
+import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 interface FilaComercialProps {
   onViewOrcamento: (orc: Orcamento) => void;
@@ -16,12 +18,22 @@ interface FilaComercialProps {
 }
 
 type QueueSort = "prioridade" | "data_criacao";
+const FILA_COMERCIAL_VIEW_STORAGE_KEY = "orcacalhas:fila-comercial-view:v1";
 
 const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
 
+interface StoredFilaComercialViewState {
+  search?: string;
+  filterStatus?: string;
+  filterResponsavel?: string;
+  sortBy?: QueueSort;
+}
+
 const fmtDate = (dateValue: string | null | undefined) => {
-  if (!dateValue) return "Sem data";
-  return new Date(dateValue).toLocaleDateString("pt-BR", {
+  const localDate = toLocalDateStr(dateValue);
+  if (!localDate) return "Sem data";
+  const [year, month, day] = localDate.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
   });
@@ -30,9 +42,10 @@ const fmtDate = (dateValue: string | null | undefined) => {
 const formatCurrency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function getDayTimestamp(dateValue: string | null | undefined) {
-  if (!dateValue) return null;
-  const date = new Date(dateValue);
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const localDate = toLocalDateStr(dateValue);
+  if (!localDate) return null;
+  const [year, month, day] = localDate.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
 }
 
 function getPriorityRank(item: FilaComercialItem, todayTs: number) {
@@ -79,6 +92,7 @@ function getRetornoLabel(item: FilaComercialItem) {
 }
 
 export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProps) {
+  const { user } = useAuth();
   const { data: items, isLoading } = useFilaComercial();
   const isMobile = useIsMobile();
 
@@ -87,10 +101,40 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
   const [filterResponsavel, setFilterResponsavel] = useState<string>("all");
   const [sortBy, setSortBy] = useState<QueueSort>("prioridade");
 
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = sessionStorage.getItem(`${FILA_COMERCIAL_VIEW_STORAGE_KEY}:${user.id}`);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StoredFilaComercialViewState;
+      if (typeof parsed.search === "string") setSearch(parsed.search);
+      if (typeof parsed.filterStatus === "string") setFilterStatus(parsed.filterStatus);
+      if (typeof parsed.filterResponsavel === "string") setFilterResponsavel(parsed.filterResponsavel);
+      if (parsed.sortBy === "prioridade" || parsed.sortBy === "data_criacao") setSortBy(parsed.sortBy);
+    } catch {
+      // ignore restore failures
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const state: StoredFilaComercialViewState = {
+        search,
+        filterStatus,
+        filterResponsavel,
+        sortBy,
+      };
+      sessionStorage.setItem(`${FILA_COMERCIAL_VIEW_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
+    } catch {
+      // ignore persistence failures
+    }
+  }, [user, search, filterStatus, filterResponsavel, sortBy]);
+
   const todayTs = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today.getTime();
+    const [year, month, day] = getTodayLocal().split("-").map(Number);
+    return new Date(year, month - 1, day).getTime();
   }, []);
 
   const kpis = useMemo(() => {

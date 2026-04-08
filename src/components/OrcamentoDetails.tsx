@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toLocalDateStr } from "@/lib/dateUtils";
 
 interface OrcamentoDetailsProps {
   orcamento: Orcamento;
@@ -91,6 +92,11 @@ function formatDateValue(value: string | null | undefined, mode: "date" | "datet
   return mode === "datetime"
     ? format(parsed, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
     : format(parsed, "dd/MM/yyyy", { locale: ptBR });
+}
+
+function toDateOnlyInput(date: Date): string {
+  const localDate = toLocalDateStr(date.toISOString());
+  return localDate ?? date.toISOString();
 }
 
 type TimelineEvent = {
@@ -399,7 +405,7 @@ export function OrcamentoDetails({
 
   const handleDataPrevistaSelect = (date: Date | undefined) => {
     if (onUpdateDataPrevista) {
-      onUpdateDataPrevista(orcamento, date ? date.toISOString() : null);
+      onUpdateDataPrevista(orcamento, date ? toDateOnlyInput(date) : null);
     }
     setDataPrevPopoverOpen(false);
   };

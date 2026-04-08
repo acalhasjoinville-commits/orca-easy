@@ -1,31 +1,14 @@
-import { useState } from 'react';
-import { useFollowUp, useTeamMembers } from '@/hooks/useFollowUp';
-import {
-  StatusFollowUp,
-  TipoInteracao,
-  STATUS_FOLLOWUP_CONFIG,
-  TIPO_INTERACAO_CONFIG,
-} from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { useState } from "react";
+import { useFollowUp, useTeamMembers } from "@/hooks/useFollowUp";
+import { StatusFollowUp, TipoInteracao, STATUS_FOLLOWUP_CONFIG, TIPO_INTERACAO_CONFIG } from "@/lib/types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   MessageSquarePlus,
   Clock,
@@ -38,9 +21,10 @@ import {
   Pencil,
   Save,
   X,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 interface FollowUpBlockProps {
   orcamentoId: string;
@@ -49,26 +33,33 @@ interface FollowUpBlockProps {
 const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
 const allTipos = Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[];
 
+function formatShortDate(value: string | null | undefined) {
+  const localDate = toLocalDateStr(value);
+  if (!localDate) return null;
+  const [year, month, day] = localDate.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
+}
+
 export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
   const { data: teamMembers = [] } = useTeamMembers();
 
   const [editing, setEditing] = useState(false);
-  const [editStatus, setEditStatus] = useState<StatusFollowUp>('sem_retorno');
-  const [editProximaAcao, setEditProximaAcao] = useState('');
-  const [editDataRetorno, setEditDataRetorno] = useState('');
-  const [editObservacoes, setEditObservacoes] = useState('');
+  const [editStatus, setEditStatus] = useState<StatusFollowUp>("sem_retorno");
+  const [editProximaAcao, setEditProximaAcao] = useState("");
+  const [editDataRetorno, setEditDataRetorno] = useState("");
+  const [editObservacoes, setEditObservacoes] = useState("");
   const [editResponsavelId, setEditResponsavelId] = useState<string | null>(null);
 
   const [showLogDialog, setShowLogDialog] = useState(false);
-  const [logTipo, setLogTipo] = useState<TipoInteracao>('contato');
-  const [logDescricao, setLogDescricao] = useState('');
+  const [logTipo, setLogTipo] = useState<TipoInteracao>("contato");
+  const [logDescricao, setLogDescricao] = useState("");
   const [showAllLogs, setShowAllLogs] = useState(false);
 
   const startEdit = () => {
     setEditStatus(followUp.statusFollowUp);
     setEditProximaAcao(followUp.proximaAcao);
-    setEditDataRetorno(followUp.dataRetorno || '');
+    setEditDataRetorno(followUp.dataRetorno || "");
     setEditObservacoes(followUp.observacoes);
     setEditResponsavelId(followUp.responsavelId);
     setEditing(true);
@@ -83,26 +74,26 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
         observacoes: editObservacoes,
         responsavelId: editResponsavelId,
       });
-      toast.success('Follow-up atualizado');
+      toast.success("Follow-up atualizado");
       setEditing(false);
     } catch {
-      toast.error('Erro ao salvar follow-up');
+      toast.error("Erro ao salvar follow-up");
     }
   };
 
   const handleAddLog = async () => {
     if (!logDescricao.trim()) {
-      toast.error('Preencha a descrição');
+      toast.error("Preencha a descrição");
       return;
     }
     try {
       await addLog.mutateAsync({ tipo: logTipo, descricao: logDescricao.trim() });
-      toast.success('Interação registrada');
+      toast.success("Interação registrada");
       setShowLogDialog(false);
-      setLogDescricao('');
-      setLogTipo('contato');
+      setLogDescricao("");
+      setLogTipo("contato");
     } catch {
-      toast.error('Erro ao registrar interação');
+      toast.error("Erro ao registrar interação");
     }
   };
 
@@ -118,9 +109,10 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
 
   const stConfig = STATUS_FOLLOWUP_CONFIG[followUp.statusFollowUp];
   const displayedLogs = showAllLogs ? logs : logs.slice(0, 5);
-
-  const isOverdue = followUp.dataRetorno && new Date(followUp.dataRetorno) < new Date(new Date().toDateString());
-  const isToday = followUp.dataRetorno && new Date(followUp.dataRetorno).toDateString() === new Date().toDateString();
+  const retornoLocal = toLocalDateStr(followUp.dataRetorno);
+  const todayLocal = getTodayLocal();
+  const isOverdue = retornoLocal ? retornoLocal < todayLocal : false;
+  const isToday = retornoLocal ? retornoLocal === todayLocal : false;
 
   return (
     <>
@@ -132,7 +124,12 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
               <h2 className="text-sm font-semibold text-foreground">Acompanhamento Comercial</h2>
             </div>
             <div className="flex items-center gap-1.5">
-              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowLogDialog(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs h-8 gap-1.5"
+                onClick={() => setShowLogDialog(true)}
+              >
                 <MessageSquarePlus className="h-3.5 w-3.5" />
                 Registrar Interação
               </Button>
@@ -150,7 +147,9 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Status:</span>
-                  <Badge variant="outline" className={cn('text-[11px]', stConfig.color)}>{stConfig.label}</Badge>
+                  <Badge variant="outline" className={cn("text-[11px]", stConfig.color)}>
+                    {stConfig.label}
+                  </Badge>
                 </div>
                 {followUp.proximaAcao && (
                   <div className="flex items-start gap-2">
@@ -161,15 +160,17 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                 {followUp.dataRetorno && (
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-3 w-3 text-muted-foreground" />
-                    <span className={cn(
-                      'text-xs font-medium',
-                      isOverdue && 'text-destructive',
-                      isToday && 'text-amber-600',
-                      !isOverdue && !isToday && 'text-foreground'
-                    )}>
-                      Retorno: {new Date(followUp.dataRetorno).toLocaleDateString('pt-BR')}
-                      {isOverdue && ' (atrasado)'}
-                      {isToday && ' (hoje)'}
+                    <span
+                      className={cn(
+                        "text-xs font-medium",
+                        isOverdue && "text-destructive",
+                        isToday && "text-amber-600",
+                        !isOverdue && !isToday && "text-foreground",
+                      )}
+                    >
+                      Retorno: {formatShortDate(followUp.dataRetorno)}
+                      {isOverdue && " (atrasado)"}
+                      {isToday && " (hoje)"}
                     </span>
                   </div>
                 )}
@@ -185,13 +186,18 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                   <div className="flex items-center gap-2">
                     <Clock className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
-                      Última interação: {new Date(followUp.ultimaInteracaoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      Última interação:{" "}
+                      {new Date(followUp.ultimaInteracaoEm).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 )}
-                {followUp.observacoes && (
-                  <p className="text-xs text-muted-foreground italic">{followUp.observacoes}</p>
-                )}
+                {followUp.observacoes && <p className="text-xs text-muted-foreground italic">{followUp.observacoes}</p>}
               </div>
             </div>
           ) : (
@@ -224,12 +230,17 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Responsável</label>
-                  <Select value={editResponsavelId || '_none'} onValueChange={(v) => setEditResponsavelId(v === '_none' ? null : v)}>
+                  <Select
+                    value={editResponsavelId || "_none"}
+                    onValueChange={(v) => setEditResponsavelId(v === "_none" ? null : v)}
+                  >
                     <SelectTrigger className="h-9 text-xs">
                       <SelectValue placeholder="Nenhum" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="_none" className="text-xs">Nenhum</SelectItem>
+                      <SelectItem value="_none" className="text-xs">
+                        Nenhum
+                      </SelectItem>
                       {teamMembers.map((m) => (
                         <SelectItem key={m.id} value={m.id} className="text-xs">
                           {m.name}
@@ -259,7 +270,11 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <Button size="sm" className="text-xs h-8 gap-1" onClick={saveEdit} disabled={upsertFollowUp.isPending}>
-                  {upsertFollowUp.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  {upsertFollowUp.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Save className="h-3.5 w-3.5" />
+                  )}
                   Salvar
                 </Button>
                 <Button variant="ghost" size="sm" className="text-xs h-8 gap-1" onClick={() => setEditing(false)}>
@@ -275,7 +290,9 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
             <>
               <Separator className="my-4" />
               <div className="space-y-0">
-                <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Histórico de Interações</p>
+                <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                  Histórico de Interações
+                </p>
                 {displayedLogs.map((log) => (
                   <div key={log.id} className="flex items-start gap-2.5 py-2 border-b border-border/50 last:border-0">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
@@ -287,13 +304,16 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                           {TIPO_INTERACAO_CONFIG[log.tipo]?.label ?? log.tipo}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
-                          {new Date(log.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          {new Date(log.createdAt).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">{log.descricao}</p>
-                      {log.userName && (
-                        <span className="text-[10px] text-muted-foreground/70">por {log.userName}</span>
-                      )}
+                      {log.userName && <span className="text-[10px] text-muted-foreground/70">por {log.userName}</span>}
                     </div>
                   </div>
                 ))}
@@ -305,7 +325,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                     onClick={() => setShowAllLogs(!showAllLogs)}
                   >
                     {showAllLogs ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showAllLogs ? 'Mostrar menos' : `Ver todas (${logs.length})`}
+                    {showAllLogs ? "Mostrar menos" : `Ver todas (${logs.length})`}
                   </Button>
                 )}
               </div>
@@ -347,7 +367,9 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowLogDialog(false)}>Cancelar</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowLogDialog(false)}>
+              Cancelar
+            </Button>
             <Button size="sm" onClick={handleAddLog} disabled={addLog.isPending} className="gap-1">
               {addLog.isPending && <Loader2 className="h-3 w-3 animate-spin" />}
               Registrar
