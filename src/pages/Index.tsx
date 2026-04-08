@@ -156,12 +156,14 @@ const Index = () => {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0 });
+      if (isMobile) {
+        window.scrollTo({ top: 0, left: 0 });
+      }
       mainContentRef.current?.scrollTo({ top: 0, left: 0 });
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [location.pathname]);
+  }, [isMobile, location.pathname]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -566,11 +568,11 @@ const Index = () => {
   return (
     <>
       <SystemThemeApplicator />
-      <div className="min-h-screen w-full bg-background">
-        <div className="flex min-h-screen w-full">
+      <div className="h-screen w-full overflow-hidden bg-background">
+        <div className="flex h-full w-full">
           <AppSidebar active={tab} collapsed={desktopSidebarCollapsed} onNavigate={guardedNavigate} />
 
-          <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b bg-card/85 px-4 backdrop-blur-sm lg:px-6">
               <Button
                 variant="ghost"

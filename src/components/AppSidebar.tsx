@@ -6,15 +6,15 @@ import { cn } from "@/lib/utils";
 
 export type Tab =
   | "dashboard"
+  | "agenda"
   | "orcamentos"
   | "orcamento-detalhes"
   | "orcamento-novo"
-  | "agenda"
   | "clientes"
   | "financeiro"
   | "usuarios"
-  | "config"
-  | "ajuda";
+  | "ajuda"
+  | "config";
 
 interface AppSidebarProps {
   active: Tab;
@@ -70,16 +70,6 @@ const operationItems: NavItem[] = [
   },
 ];
 
-const supportItems: NavItem[] = [
-  {
-    title: "Ajuda",
-    helper: "Perguntas frequentes e orientações",
-    tab: "ajuda",
-    icon: HelpCircle,
-    permission: "all",
-  },
-];
-
 const adminItems: NavItem[] = [
   {
     title: "Configurações",
@@ -94,6 +84,16 @@ const adminItems: NavItem[] = [
     tab: "usuarios",
     icon: Users,
     permission: "canManageUsers",
+  },
+];
+
+const supportItems: NavItem[] = [
+  {
+    title: "Ajuda",
+    helper: "Perguntas frequentes e orientações",
+    tab: "ajuda",
+    icon: HelpCircle,
+    permission: "all",
   },
 ];
 
@@ -113,8 +113,8 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
   };
 
   const visibleOps = operationItems.filter((item) => permissionMap[item.permission]);
-  const visibleSupport = supportItems.filter((item) => permissionMap[item.permission]);
   const visibleAdmin = adminItems.filter((item) => permissionMap[item.permission]);
+  const visibleSupport = supportItems.filter((item) => permissionMap[item.permission]);
 
   const renderItem = ({ title, helper, tab, icon: Icon }: NavItem) => {
     const isActive = tab === "orcamentos" ? isOrcamentoTab(active) : active === tab;
@@ -155,7 +155,7 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
   return (
     <aside
       className={cn(
-        "flex shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
+        "flex h-full shrink-0 flex-col overflow-y-auto border-r bg-sidebar text-sidebar-foreground transition-all duration-200",
         collapsed ? "w-[86px]" : "w-[288px]",
       )}
     >
