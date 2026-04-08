@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Loader2, Search } from "lucide-react";
 import { useFaqPublic } from "@/hooks/useFaq";
+import { useAuth } from "@/hooks/useAuth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,15 +14,57 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
+const AJUDA_VIEW_STORAGE_KEY = "orcacalhas:ajuda-view:v1";
+
+interface StoredAjudaViewState {
+  search?: string;
+  categoria?: string;
+}
+
 export function Ajuda() {
+  const { user } = useAuth();
   const { data: faqs = [], isLoading } = useFaqPublic();
   const [search, setSearch] = useState("");
   const [categoria, setCategoria] = useState("Todas");
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = sessionStorage.getItem(`${AJUDA_VIEW_STORAGE_KEY}:${user.id}`);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as StoredAjudaViewState;
+      if (typeof parsed.search === "string") {
+        setSearch(parsed.search);
+      }
+      if (typeof parsed.categoria === "string") {
+        setCategoria(parsed.categoria);
+      }
+    } catch {
+      // ignore restore failures
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const state: StoredAjudaViewState = { search, categoria };
+      sessionStorage.setItem(`${AJUDA_VIEW_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
+    } catch {
+      // ignore persistence failures
+    }
+  }, [user, search, categoria]);
 
   const categorias = useMemo(() => {
     const values = Array.from(new Set(faqs.map((item) => item.categoria.trim()).filter(Boolean)));
     return ["Todas", ...values];
   }, [faqs]);
+
+  useEffect(() => {
+    if (!categorias.includes(categoria)) {
+      setCategoria("Todas");
+    }
+  }, [categorias, categoria]);
 
   const filtered = useMemo(() => {
     const query = normalize(search.trim());
@@ -91,7 +134,8 @@ export function Ajuda() {
             <div>
               <p className="text-sm font-semibold text-foreground">Perguntas frequentes</p>
               <p className="text-xs text-muted-foreground">
-                {filtered.length} resultado{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}
+                {filtered.length} resultado{filtered.length !== 1 ? "s" : ""} encontrado
+                {filtered.length !== 1 ? "s" : ""}
               </p>
             </div>
           </div>
@@ -114,7 +158,9 @@ export function Ajuda() {
                       <div className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
                         {item.categoria}
                       </div>
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{item.resposta}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                        {item.resposta}
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

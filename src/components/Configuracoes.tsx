@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from "@/hooks/useSupabaseTechnicalData";
 import { Search } from "lucide-react";
 import { useEmpresa, usePoliticas } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Motor1Entry,
   Motor2Entry,
@@ -73,6 +74,9 @@ import {
 type EntitySection = "motor1" | "motor2" | "insumos" | "regras" | "catalogo" | "politicas";
 type ConfigTab = "empresa" | "materiais" | "regras" | "catalogo" | "politicas";
 type ConfigEntity = Motor1Entry | Motor2Entry | InsumoEntry | RegraCalculo | ServicoTemplate | PoliticaComercial;
+const CONFIGURACOES_VIEW_STORAGE_KEY = "orcacalhas:config-view:v1";
+const configTabs: ConfigTab[] = ["empresa", "materiais", "regras", "catalogo", "politicas"];
+const isConfigTab = (value: string): value is ConfigTab => configTabs.includes(value as ConfigTab);
 
 /* ── Combobox com busca para seleção de insumos ── */
 function InsumoCombobox({
@@ -616,8 +620,37 @@ function ItemRow({
 
 // ─── Main Component ───
 export function Configuracoes() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<ConfigTab>("empresa");
   const [activeSection, setActiveSection] = useState<EntitySection>("motor1");
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const raw = sessionStorage.getItem(`${CONFIGURACOES_VIEW_STORAGE_KEY}:${user.id}`);
+      if (!raw) return;
+      if (isConfigTab(raw)) {
+        setTab(raw);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as { tab?: string };
+      if (parsed.tab && isConfigTab(parsed.tab)) {
+        setTab(parsed.tab);
+      }
+    } catch {
+      // ignore restore failures
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      sessionStorage.setItem(`${CONFIGURACOES_VIEW_STORAGE_KEY}:${user.id}`, JSON.stringify({ tab }));
+    } catch {
+      // ignore persistence failures
+    }
+  }, [user, tab]);
 
   const { motor1, isLoading: loadingM1, addMotor1, updateMotor1, deleteMotor1 } = useMotor1();
   const { motor2, isLoading: loadingM2, addMotor2, updateMotor2, deleteMotor2 } = useMotor2();

@@ -33,7 +33,7 @@ interface OrcamentosProps {
   onEditOrcamento?: (orc: Orcamento) => void;
 }
 
-const ORCAMENTOS_VIEW_STORAGE_KEY = "orcacalhas:orcamentos-view:v1";
+const ORCAMENTOS_VIEW_STORAGE_KEY = "orcacalhas:orcamentos-view:v2";
 
 const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = {
   pendente: { label: "Pendente", color: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" },
@@ -47,6 +47,7 @@ const statusConfig: Record<StatusOrcamento, { label: string; color: string }> = 
 };
 
 const allStatuses: StatusOrcamento[] = ["pendente", "aprovado", "rejeitado", "executado", "cancelado"];
+const isStatusOrcamento = (value: string): value is StatusOrcamento => allStatuses.includes(value as StatusOrcamento);
 
 const filterChips: { key: StatusOrcamento; label: string }[] = [
   { key: "pendente", label: "Pendentes" },
@@ -73,6 +74,12 @@ interface OrcamentoActionMeta {
   detail: string;
   tone: OrcamentoActionTone;
   rank: number;
+}
+
+interface StoredOrcamentosViewState {
+  activeTab?: "lista" | "followup";
+  search?: string;
+  filters?: StatusOrcamento[];
 }
 
 const isDateOnlyValue = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -245,8 +252,22 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     if (!user) return;
     try {
       const stored = sessionStorage.getItem(`${ORCAMENTOS_VIEW_STORAGE_KEY}:${user.id}`);
+      if (!stored) return;
+
       if (stored === "lista" || stored === "followup") {
         setActiveTab(stored);
+        return;
+      }
+
+      const parsed = JSON.parse(stored) as StoredOrcamentosViewState;
+      if (parsed.activeTab === "lista" || parsed.activeTab === "followup") {
+        setActiveTab(parsed.activeTab);
+      }
+      if (typeof parsed.search === "string") {
+        setSearch(parsed.search);
+      }
+      if (Array.isArray(parsed.filters)) {
+        setActiveFilters(new Set(parsed.filters.filter(isStatusOrcamento)));
       }
     } catch {
       // ignore sessionStorage restore failures
@@ -255,8 +276,17 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
 
   useEffect(() => {
     if (!user) return;
-    sessionStorage.setItem(`${ORCAMENTOS_VIEW_STORAGE_KEY}:${user.id}`, activeTab);
-  }, [user, activeTab]);
+    try {
+      const state: StoredOrcamentosViewState = {
+        activeTab,
+        search,
+        filters: Array.from(activeFilters),
+      };
+      sessionStorage.setItem(`${ORCAMENTOS_VIEW_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
+    } catch {
+      // ignore sessionStorage persistence failures
+    }
+  }, [user, activeTab, search, activeFilters]);
   const todayKey = useMemo(() => {
     const today = new Date();
     const year = today.getFullYear();
