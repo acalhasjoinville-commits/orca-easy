@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+type DraftStorageType = "session" | "local";
+
+function getStorage(type: DraftStorageType) {
+  return type === "local" ? localStorage : sessionStorage;
+}
+
 /**
  * Generic draft persistence hook using sessionStorage.
  * Saves state with debounce, restores on mount, clears on successful save.
@@ -12,12 +18,13 @@ export function useDraft<T>(
   key: string,
   initialValue: T,
   debounceMs = 400,
+  storageType: DraftStorageType = "session",
 ): [T, React.Dispatch<React.SetStateAction<T>>, () => void, boolean] {
   const [wasRestored, setWasRestored] = useState(false);
 
   const [state, setState] = useState<T>(() => {
     try {
-      const stored = sessionStorage.getItem(key);
+      const stored = getStorage(storageType).getItem(key);
       if (stored) {
         setWasRestored(true);
         return JSON.parse(stored) as T;
@@ -31,12 +38,14 @@ export function useDraft<T>(
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyRef = useRef(key);
   const stateRef = useRef(state);
+  const storageTypeRef = useRef(storageType);
   keyRef.current = key;
   stateRef.current = state;
+  storageTypeRef.current = storageType;
 
   const persistDraft = useCallback(() => {
     try {
-      sessionStorage.setItem(keyRef.current, JSON.stringify(stateRef.current));
+      getStorage(storageTypeRef.current).setItem(keyRef.current, JSON.stringify(stateRef.current));
     } catch {
       // storage full or unavailable
     }
@@ -77,7 +86,7 @@ export function useDraft<T>(
 
   const clearDraft = useCallback(() => {
     try {
-      sessionStorage.removeItem(keyRef.current);
+      getStorage(storageTypeRef.current).removeItem(keyRef.current);
     } catch {
       // ignore
     }
