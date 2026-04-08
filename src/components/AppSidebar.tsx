@@ -1,4 +1,4 @@
-import { CalendarDays, DollarSign, FileText, LayoutDashboard, Settings, Users } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +13,8 @@ export type Tab =
   | "clientes"
   | "financeiro"
   | "usuarios"
-  | "config";
+  | "config"
+  | "ajuda";
 
 interface AppSidebarProps {
   active: Tab;
@@ -69,6 +70,16 @@ const operationItems: NavItem[] = [
   },
 ];
 
+const supportItems: NavItem[] = [
+  {
+    title: "Ajuda",
+    helper: "Perguntas frequentes e orientações",
+    tab: "ajuda",
+    icon: HelpCircle,
+    permission: "all",
+  },
+];
+
 const adminItems: NavItem[] = [
   {
     title: "Configurações",
@@ -102,6 +113,7 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
   };
 
   const visibleOps = operationItems.filter((item) => permissionMap[item.permission]);
+  const visibleSupport = supportItems.filter((item) => permissionMap[item.permission]);
   const visibleAdmin = adminItems.filter((item) => permissionMap[item.permission]);
 
   const renderItem = ({ title, helper, tab, icon: Icon }: NavItem) => {
@@ -199,6 +211,17 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
               </p>
             )}
             <div className="space-y-1">{visibleAdmin.map(renderItem)}</div>
+          </div>
+        )}
+
+        {visibleSupport.length > 0 && (
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">
+                Suporte
+              </p>
+            )}
+            <div className="space-y-1">{visibleSupport.map(renderItem)}</div>
           </div>
         )}
       </nav>

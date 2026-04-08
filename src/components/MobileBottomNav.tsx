@@ -1,4 +1,4 @@
-import { CalendarDays, DollarSign, FileText, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
+import { CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -98,6 +98,7 @@ export function MobileBottomNav({
   if (canManageUsers) {
     secondaryItems.push({ title: "Usuários", tab: "usuarios", icon: Users });
   }
+  secondaryItems.push({ title: "Ajuda", tab: "ajuda", icon: HelpCircle });
 
   const isSecondaryActive = secondaryItems.some((item) => item.tab === active);
 

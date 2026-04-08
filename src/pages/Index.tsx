@@ -27,6 +27,7 @@ const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ 
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
+const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
 const EditarPerfil = lazy(() =>
   import("@/components/EditarPerfil").then((module) => ({ default: module.EditarPerfil })),
 );
@@ -347,6 +348,8 @@ const Index = () => {
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "config":
         return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
+      case "ajuda":
+        return { title: "Ajuda", helper: "Perguntas frequentes e orientações sobre o sistema." };
       default:
         return { title: "", helper: "" };
     }
@@ -413,6 +416,7 @@ const Index = () => {
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Configurações." />
         ))}
+      {tab === "ajuda" && <Ajuda />}
     </Suspense>
   );
 

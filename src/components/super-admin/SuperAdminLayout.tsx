@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   ChevronLeft,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia";
+export type SATab = "dashboard" | "empresas" | "usuarios" | "convites" | "auditoria" | "aparencia" | "faq";
 
 interface Props {
   active: SATab;
@@ -73,6 +74,12 @@ const navItems: NavItem[] = [
     label: "Aparencia",
     helper: "Cor principal da interface",
     icon: Palette,
+  },
+  {
+    tab: "faq",
+    label: "FAQ",
+    helper: "Perguntas frequentes do sistema",
+    icon: HelpCircle,
   },
 ];
 
