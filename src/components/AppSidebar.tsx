@@ -213,6 +213,17 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
             <div className="space-y-1">{visibleAdmin.map(renderItem)}</div>
           </div>
         )}
+
+        {visibleSupport.length > 0 && (
+          <div className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">
+                Suporte
+              </p>
+            )}
+            <div className="space-y-1">{visibleSupport.map(renderItem)}</div>
+          </div>
+        )}
       </nav>
     </aside>
   );

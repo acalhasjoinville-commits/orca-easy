@@ -75,6 +75,12 @@ const navItems: NavItem[] = [
     helper: "Cor principal da interface",
     icon: Palette,
   },
+  {
+    tab: "faq",
+    label: "FAQ",
+    helper: "Perguntas frequentes do sistema",
+    icon: HelpCircle,
+  },
 ];
 
 export function SuperAdminLayout({ active, onNavigate, children }: Props) {

@@ -416,6 +416,7 @@ const Index = () => {
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Configurações." />
         ))}
+      {tab === "ajuda" && <Ajuda />}
     </Suspense>
   );
 

@@ -36,6 +36,8 @@ export default function SuperAdminPage() {
         return <SuperAdminAuditoria />;
       case "aparencia":
         return <SuperAdminAparencia />;
+      case "faq":
+        return <SuperAdminFaq />;
     }
   })();
 
