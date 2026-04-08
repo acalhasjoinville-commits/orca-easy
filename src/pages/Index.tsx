@@ -1,16 +1,23 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { LogOut, Loader2, PanelLeftClose, PanelLeftOpen, Shield, UserCircle } from "lucide-react";
+import { toast } from "sonner";
+
 import { AppSidebar, Tab } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { Orcamento } from "@/lib/types";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useOrcamentos, useClientes, useEmpresa } from "@/hooks/useSupabaseData";
-import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
-
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { LogOut, Loader2, PanelLeftClose, PanelLeftOpen, Shield, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SystemThemeApplicator } from "@/components/SystemThemeApplicator";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useClientes, useEmpresa, useOrcamentos } from "@/hooks/useSupabaseData";
+import {
+  getOrcamentoDetailsPath,
+  getOrcamentoEditPath,
+  getOrcamentoNewPath,
+  getPathForTab,
+  resolveAppShellRoute,
+} from "@/lib/appShellRoutes";
+import { Orcamento } from "@/lib/types";
 
 const Dashboard = lazy(() => import("@/components/Dashboard").then((module) => ({ default: module.Dashboard })));
 const Orcamentos = lazy(() => import("@/components/Orcamentos").then((module) => ({ default: module.Orcamentos })));
@@ -58,30 +65,31 @@ function SectionLoader() {
   );
 }
 
-const APP_SHELL_STORAGE_KEY = "orcacalhas:app-shell:v1";
-const RESTORABLE_TABS: Tab[] = [
-  "dashboard",
-  "agenda",
-  "orcamentos",
-  "orcamento-detalhes",
-  "orcamento-novo",
-  "clientes",
-  "financeiro",
-  "usuarios",
-  "ajuda",
-  "config",
-];
-
-interface StoredAppShellState {
-  tab?: Tab;
-  selectedOrcamentoId?: string | null;
-  editingOrcamentoId?: string | null;
-  desktopSidebarCollapsed?: boolean;
+function InlineRouteFallback({
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-xl px-4 py-12">
+      <div className="rounded-3xl border bg-card p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <Button className="mt-5" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-function isRestorableTab(value: string): value is Tab {
-  return RESTORABLE_TABS.includes(value as Tab);
-}
+const DESKTOP_SIDEBAR_STORAGE_KEY = "orcacalhas:desktop-sidebar-collapsed:v1";
 
 const Index = () => {
   const {
@@ -99,20 +107,22 @@ const Index = () => {
     canManageUsers,
   } = useAuth();
 
-  const [tab, setTab] = useState<Tab>("dashboard");
   const [wizardKey, setWizardKey] = useState(0);
   const [clienteCreateRequest, setClienteCreateRequest] = useState(0);
   const [lancamentoCreateRequest, setLancamentoCreateRequest] = useState(0);
-  const [editingOrcamento, setEditingOrcamento] = useState<Orcamento | null>(null);
-  const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [profileOpen, setProfileOpen] = useState(false);
+  const location = useLocation();
   const mainContentRef = useRef<HTMLElement | null>(null);
 
+  const activeRoute = useMemo(() => resolveAppShellRoute(location.pathname), [location.pathname]);
+  const tab = activeRoute.tab;
+
   const {
-    orcamentos: _orc,
+    orcamentos: orcamentos,
     isLoading: orcamentosLoading,
     getNextNumero,
     addOrcamento,
@@ -120,17 +130,18 @@ const Index = () => {
   } = useOrcamentos();
   const { clientes } = useClientes();
   const { empresa } = useEmpresa();
-  const restoredShellStateRef = useRef<StoredAppShellState | null>(null);
-  const restoredShellUserIdRef = useRef<string | null>(null);
 
-  const isTabAllowed = useCallback((candidate: Tab) => {
-    if (candidate === "config") return canManageSettings;
-    if (candidate === "financeiro") return canViewFinanceiro;
-    if (candidate === "clientes") return canManageClientes;
-    if (candidate === "orcamento-novo") return canCreateEditBudget;
-    if (candidate === "usuarios") return canManageUsers;
-    return true;
-  }, [canManageClientes, canManageSettings, canCreateEditBudget, canManageUsers, canViewFinanceiro]);
+  const routeOrcamento = useMemo(
+    () =>
+      activeRoute.orcamentoId
+        ? (orcamentos.find((orcamento) => orcamento.id === activeRoute.orcamentoId) ?? null)
+        : null,
+    [orcamentos, activeRoute.orcamentoId],
+  );
+
+  const selectedOrcamento = activeRoute.tab === "orcamento-detalhes" ? routeOrcamento : null;
+  const editingOrcamento = activeRoute.isEditingOrcamento ? routeOrcamento : null;
+  const isEditingRoute = activeRoute.tab === "orcamento-novo" && activeRoute.isEditingOrcamento;
 
   useEffect(() => {
     if (!("scrollRestoration" in window.history)) return;
@@ -150,119 +161,43 @@ const Index = () => {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [tab]);
+  }, [location.pathname]);
 
   useEffect(() => {
-    if (!user || !rolesLoaded || !hasAnyRole || restoredShellUserIdRef.current === user.id) return;
-
-    restoredShellUserIdRef.current = user.id;
+    if (!user?.id) return;
 
     try {
-      const raw = sessionStorage.getItem(`${APP_SHELL_STORAGE_KEY}:${user.id}`);
-      if (!raw) return;
-
-      const parsed = JSON.parse(raw) as StoredAppShellState;
-
-      if (typeof parsed.desktopSidebarCollapsed === "boolean") {
-        setDesktopSidebarCollapsed(parsed.desktopSidebarCollapsed);
+      const stored = sessionStorage.getItem(`${DESKTOP_SIDEBAR_STORAGE_KEY}:${user.id}`);
+      if (stored === "1" || stored === "0") {
+        setDesktopSidebarCollapsed(stored === "1");
       }
-
-      const nextTab =
-        parsed.tab && isRestorableTab(parsed.tab) && isTabAllowed(parsed.tab) ? parsed.tab : "dashboard";
-
-      if (nextTab === "orcamento-detalhes") {
-        if (parsed.selectedOrcamentoId) {
-          restoredShellStateRef.current = parsed;
-          setTab(nextTab);
-        } else {
-          setTab("orcamentos");
-        }
-        return;
-      }
-
-      if (nextTab === "orcamento-novo" && parsed.editingOrcamentoId) {
-        restoredShellStateRef.current = parsed;
-      } else {
-        restoredShellStateRef.current = null;
-        setSelectedOrcamento(null);
-        setEditingOrcamento(null);
-      }
-
-      setTab(nextTab);
     } catch {
-      restoredShellStateRef.current = null;
+      // ignore storage errors
     }
-  }, [
-    user,
-    rolesLoaded,
-    hasAnyRole,
-    canManageSettings,
-    canViewFinanceiro,
-    canManageClientes,
-    canCreateEditBudget,
-    canManageUsers,
-    isTabAllowed,
-  ]);
+  }, [user?.id]);
 
   useEffect(() => {
-    const pending = restoredShellStateRef.current;
-    if (!pending || orcamentosLoading) return;
+    if (!user?.id) return;
 
-    if (tab === "orcamento-detalhes") {
-      const restored = pending.selectedOrcamentoId ? _orc.find((orc) => orc.id === pending.selectedOrcamentoId) : null;
-
-      if (restored) {
-        setSelectedOrcamento(restored);
-      } else {
-        setSelectedOrcamento(null);
-        setTab("orcamentos");
-      }
-
-      restoredShellStateRef.current = null;
-      return;
+    try {
+      sessionStorage.setItem(`${DESKTOP_SIDEBAR_STORAGE_KEY}:${user.id}`, desktopSidebarCollapsed ? "1" : "0");
+    } catch {
+      // ignore storage errors
     }
-
-    if (tab === "orcamento-novo" && pending.editingOrcamentoId) {
-      const restored = _orc.find((orc) => orc.id === pending.editingOrcamentoId);
-
-      if (restored) {
-        setEditingOrcamento(restored);
-      } else {
-        setEditingOrcamento(null);
-        setTab("orcamentos");
-      }
-
-      restoredShellStateRef.current = null;
-    }
-  }, [tab, _orc, orcamentosLoading]);
+  }, [user?.id, desktopSidebarCollapsed]);
 
   useEffect(() => {
-    if (!user || !rolesLoaded || !hasAnyRole) return;
+    if (!user || loading || !rolesLoaded || !hasAnyRole) return;
 
-    const state: StoredAppShellState = {
-      tab,
-      desktopSidebarCollapsed,
-      selectedOrcamentoId: tab === "orcamento-detalhes" ? selectedOrcamento?.id ?? null : null,
-      editingOrcamentoId: tab === "orcamento-novo" ? editingOrcamento?.id ?? null : null,
-    };
+    if (location.pathname === "/") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, rolesLoaded, hasAnyRole, location.pathname, navigate]);
 
-    sessionStorage.setItem(`${APP_SHELL_STORAGE_KEY}:${user.id}`, JSON.stringify(state));
-  }, [
-    user,
-    rolesLoaded,
-    hasAnyRole,
-    tab,
-    desktopSidebarCollapsed,
-    selectedOrcamento?.id,
-    editingOrcamento?.id,
-  ]);
-
-  // Auth loading state
   if (loading) {
     return <FullScreenLoader />;
   }
 
-  // Not authenticated → login page
   if (!user) {
     return (
       <Suspense fallback={<FullScreenLoader />}>
@@ -271,17 +206,14 @@ const Index = () => {
     );
   }
 
-  // Still loading roles → show spinner (avoid flashing PendingApproval)
   if (!rolesLoaded) {
     return <FullScreenLoader />;
   }
 
-  // Super admin without company role → redirect to super admin area
   if (isSuperAdmin && !hasAnyRole) {
     return <Navigate to="/super-admin" replace />;
   }
 
-  // Empresa suspensa ou bloqueada → tela de bloqueio (exceto super admin)
   if (!isSuperAdmin && empresaStatus && empresaStatus !== "ativa") {
     return (
       <Suspense fallback={<FullScreenLoader />}>
@@ -290,7 +222,6 @@ const Index = () => {
     );
   }
 
-  // Authenticated but no role → pending approval
   if (!hasAnyRole) {
     return (
       <Suspense fallback={<FullScreenLoader />}>
@@ -299,7 +230,6 @@ const Index = () => {
     );
   }
 
-  // Guard navigation: redirect to dashboard if user navigates to restricted tab
   const guardedNavigate = (newTab: Tab) => {
     if (newTab === "config" && !canManageSettings) {
       toast.error("Sem permissão para acessar Configurações.");
@@ -314,26 +244,19 @@ const Index = () => {
       return;
     }
     if (newTab === "orcamento-novo" && !canCreateEditBudget) {
-      toast.error("Sem permissão para criar/editar orçamentos.");
+      toast.error("Sem permissão para criar ou editar orçamentos.");
       return;
     }
     if (newTab === "usuarios" && !canManageUsers) {
       toast.error("Sem permissão para gerenciar usuários.");
       return;
     }
-    if (newTab !== "orcamento-detalhes") {
-      setSelectedOrcamento(null);
-    }
-    if (newTab !== "orcamento-novo") {
-      setEditingOrcamento(null);
-    }
-    setTab(newTab);
+
+    navigate(getPathForTab(newTab));
   };
 
   const goToList = () => {
-    setSelectedOrcamento(null);
-    setEditingOrcamento(null);
-    setTab("orcamentos");
+    navigate(getPathForTab("orcamentos"));
   };
 
   const goToNew = () => {
@@ -341,10 +264,9 @@ const Index = () => {
       toast.error("Sem permissão para criar orçamentos.");
       return;
     }
-    setSelectedOrcamento(null);
-    setEditingOrcamento(null);
-    setWizardKey((k) => k + 1);
-    setTab("orcamento-novo");
+
+    setWizardKey((value) => value + 1);
+    navigate(getOrcamentoNewPath());
   };
 
   const goToNewCliente = () => {
@@ -352,7 +274,8 @@ const Index = () => {
       toast.error("Sem permissão para cadastrar clientes.");
       return;
     }
-    setTab("clientes");
+
+    navigate(getPathForTab("clientes"));
     setClienteCreateRequest((value) => value + 1);
   };
 
@@ -361,42 +284,42 @@ const Index = () => {
       toast.error("Sem permissão para criar lançamentos financeiros.");
       return;
     }
-    setTab("financeiro");
+
+    navigate(getPathForTab("financeiro"));
     setLancamentoCreateRequest((value) => value + 1);
   };
 
-  const goToDetails = (orc: Orcamento) => {
-    setEditingOrcamento(null);
-    setSelectedOrcamento(orc);
-    setTab("orcamento-detalhes");
+  const goToDetails = (orcamento: Orcamento) => {
+    navigate(getOrcamentoDetailsPath(orcamento.id));
   };
 
-  const goToEdit = (orc: Orcamento) => {
+  const goToEdit = (orcamento: Orcamento) => {
     if (!canCreateEditBudget) {
       toast.error("Sem permissão para editar orçamentos.");
       return;
     }
-    setSelectedOrcamento(null);
-    setEditingOrcamento(orc);
-    setWizardKey((k) => k + 1);
-    setTab("orcamento-novo");
+
+    setWizardKey((value) => value + 1);
+    navigate(getOrcamentoEditPath(orcamento.id));
   };
 
-  const handleDuplicate = async (orc: Orcamento) => {
+  const handleDuplicate = async (orcamento: Orcamento) => {
     if (!canCreateEditBudget) {
       toast.error("Sem permissão para duplicar orçamentos.");
       return;
     }
+
     try {
       const novoNumero = await getNextNumero();
       const novoOrcamento: Orcamento = {
-        ...orc,
+        ...orcamento,
         id: crypto.randomUUID(),
         numeroOrcamento: novoNumero,
         dataCriacao: new Date().toISOString(),
         status: "pendente",
         dataExecucao: null,
       };
+
       await addOrcamento.mutateAsync(novoOrcamento);
       toast.success(`Orçamento #${novoNumero} duplicado com sucesso!`);
       goToDetails(novoOrcamento);
@@ -405,80 +328,72 @@ const Index = () => {
     }
   };
 
-  const handleMarkExecuted = async (orc: Orcamento) => {
+  const handleMarkExecuted = async (orcamento: Orcamento) => {
     try {
-      const updated: Orcamento = {
-        ...orc,
+      await updateOrcamento.mutateAsync({
+        ...orcamento,
         status: "executado",
         dataExecucao: new Date().toISOString(),
-      };
-      await updateOrcamento.mutateAsync(updated);
-      setSelectedOrcamento(updated);
+      });
       toast.success("Orçamento marcado como executado!");
     } catch {
       toast.error("Erro ao marcar como executado.");
     }
   };
 
-  const handleMarkFaturado = async (orc: Orcamento) => {
-    if (orc.dataFaturamento) {
+  const handleMarkFaturado = async (orcamento: Orcamento) => {
+    if (orcamento.dataFaturamento) {
       toast.error("Orçamento já foi faturado.");
       return;
     }
+
     try {
-      const updated: Orcamento = {
-        ...orc,
+      await updateOrcamento.mutateAsync({
+        ...orcamento,
         dataFaturamento: new Date().toISOString(),
-      };
-      await updateOrcamento.mutateAsync(updated);
-      setSelectedOrcamento(updated);
+      });
       toast.success("Orçamento marcado como faturado!");
     } catch {
       toast.error("Erro ao marcar como faturado.");
     }
   };
 
-  const handleMarkPago = async (orc: Orcamento) => {
-    if (orc.dataPagamento) {
+  const handleMarkPago = async (orcamento: Orcamento) => {
+    if (orcamento.dataPagamento) {
       toast.error("Orçamento já foi marcado como pago.");
       return;
     }
+
     try {
-      const updated: Orcamento = {
-        ...orc,
+      await updateOrcamento.mutateAsync({
+        ...orcamento,
         dataPagamento: new Date().toISOString(),
-      };
-      await updateOrcamento.mutateAsync(updated);
-      setSelectedOrcamento(updated);
+      });
       toast.success("Orçamento marcado como pago!");
     } catch {
       toast.error("Erro ao marcar como pago.");
     }
   };
 
-  const handleUpdateDataPrevista = async (orc: Orcamento, date: string | null) => {
+  const handleUpdateDataPrevista = async (orcamento: Orcamento, date: string | null) => {
     try {
-      const updated: Orcamento = {
-        ...orc,
+      await updateOrcamento.mutateAsync({
+        ...orcamento,
         dataPrevista: date,
-      };
-      await updateOrcamento.mutateAsync(updated);
-      setSelectedOrcamento(updated);
+      });
       toast.success(date ? "Data prevista atualizada!" : "Data prevista removida.");
     } catch {
       toast.error("Erro ao atualizar data prevista.");
     }
   };
 
-  const handleCancelOrcamento = async (orc: Orcamento) => {
+  const handleCancelOrcamento = async (orcamento: Orcamento) => {
     try {
-      const updated: Orcamento = {
-        ...orc,
+      await updateOrcamento.mutateAsync({
+        ...orcamento,
         status: "cancelado",
         dataCancelamento: new Date().toISOString(),
-      };
-      await updateOrcamento.mutateAsync(updated);
-      setSelectedOrcamento(updated);
+      });
       toast.success("Orçamento cancelado.");
     } catch {
       toast.error("Erro ao cancelar orçamento.");
@@ -489,13 +404,15 @@ const Index = () => {
     switch (tab) {
       case "dashboard":
         return { title: "Dashboard", helper: "Resumo rápido da operação e dos números principais." };
+      case "agenda":
+        return { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." };
       case "orcamentos":
         return { title: "Orçamentos", helper: "Acompanhe status, datas operacionais e próximos passos." };
       case "orcamento-detalhes":
         return { title: "Detalhes do orçamento", helper: "Revise itens, dados do cliente e situação comercial." };
       case "orcamento-novo":
         return {
-          title: editingOrcamento ? "Editar orçamento" : "Novo orçamento",
+          title: isEditingRoute ? "Editar orçamento" : "Novo orçamento",
           helper: "Fluxo guiado para montar a proposta com mais clareza.",
         };
       case "clientes":
@@ -513,63 +430,87 @@ const Index = () => {
     }
   };
 
-  const headerMeta =
-    tab === "agenda"
-      ? { title: "Agenda", helper: "Compromissos comerciais e operacionais da semana." }
-      : getHeaderMeta();
+  const headerMeta = getHeaderMeta();
 
   const content = (
     <Suspense fallback={<SectionLoader />}>
       {tab === "dashboard" && (
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
-      {tab === "agenda" && <Agenda orcamentos={_orc} onViewOrcamento={goToDetails} />}
+
+      {tab === "agenda" && <Agenda orcamentos={orcamentos} onViewOrcamento={goToDetails} />}
+
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
       )}
-      {tab === "orcamento-detalhes" && selectedOrcamento && (
-        <OrcamentoDetails
-          orcamento={selectedOrcamento}
-          cliente={clientes.find((c) => c.id === selectedOrcamento.clienteId)}
-          empresa={empresa}
-          onBack={goToList}
-          onEdit={goToEdit}
-          onDuplicate={handleDuplicate}
-          onMarkExecuted={handleMarkExecuted}
-          onMarkFaturado={handleMarkFaturado}
-          onMarkPago={handleMarkPago}
-          onUpdateDataPrevista={handleUpdateDataPrevista}
-          onCancelOrcamento={handleCancelOrcamento}
-        />
-      )}
+
+      {tab === "orcamento-detalhes" &&
+        (orcamentosLoading ? (
+          <SectionLoader />
+        ) : selectedOrcamento ? (
+          <OrcamentoDetails
+            orcamento={selectedOrcamento}
+            cliente={clientes.find((cliente) => cliente.id === selectedOrcamento.clienteId)}
+            empresa={empresa}
+            onBack={goToList}
+            onEdit={goToEdit}
+            onDuplicate={handleDuplicate}
+            onMarkExecuted={handleMarkExecuted}
+            onMarkFaturado={handleMarkFaturado}
+            onMarkPago={handleMarkPago}
+            onUpdateDataPrevista={handleUpdateDataPrevista}
+            onCancelOrcamento={handleCancelOrcamento}
+          />
+        ) : (
+          <InlineRouteFallback
+            title="Orçamento não encontrado"
+            description="Não conseguimos localizar esse orçamento. Ele pode ter sido removido ou você pode não ter acesso a ele."
+            actionLabel="Voltar para orçamentos"
+            onAction={goToList}
+          />
+        ))}
+
       {tab === "orcamento-novo" &&
         (canCreateEditBudget ? (
-          <OrcamentoWizard
-            key={wizardKey}
-            onDone={() => {
-              setEditingOrcamento(null);
-              setTab("orcamentos");
-            }}
-            editingOrcamento={editingOrcamento}
-          />
+          isEditingRoute && orcamentosLoading ? (
+            <SectionLoader />
+          ) : isEditingRoute && !editingOrcamento ? (
+            <InlineRouteFallback
+              title="Orçamento não encontrado"
+              description="Não conseguimos localizar o orçamento que você tentou editar."
+              actionLabel="Voltar para orçamentos"
+              onAction={goToList}
+            />
+          ) : (
+            <OrcamentoWizard
+              key={`${location.pathname}:${wizardKey}`}
+              onDone={() => navigate(getPathForTab("orcamentos"))}
+              editingOrcamento={editingOrcamento}
+            />
+          )
         ) : (
           <AccessDenied message="Você não tem permissão para criar ou editar orçamentos." />
         ))}
+
       {tab === "clientes" &&
         (canManageClientes ? (
           <Clientes openNewRequest={clienteCreateRequest} />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Clientes." />
         ))}
+
       {tab === "financeiro" &&
         (canViewFinanceiro ? (
           <Financeiro openNewLancamentoRequest={lancamentoCreateRequest} />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
         ))}
+
       {tab === "usuarios" &&
         (canManageUsers ? <Usuarios /> : <AccessDenied message="Você não tem permissão para gerenciar usuários." />)}
+
       {tab === "ajuda" && <Ajuda />}
+
       {tab === "config" &&
         (canManageSettings ? (
           <Configuracoes />
