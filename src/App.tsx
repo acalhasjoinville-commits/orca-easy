@@ -53,6 +53,18 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Index />} />
+            <Route path="/agenda" element={<Index />} />
+            <Route path="/orcamentos" element={<Index />} />
+            <Route path="/orcamentos/novo" element={<Index />} />
+            <Route path="/orcamentos/:orcamentoId" element={<Index />} />
+            <Route path="/orcamentos/:orcamentoId/editar" element={<Index />} />
+            <Route path="/clientes" element={<Index />} />
+            <Route path="/financeiro" element={<Index />} />
+            <Route path="/usuarios" element={<Index />} />
+            <Route path="/ajuda" element={<Index />} />
+            <Route path="/configuracoes" element={<Index />} />
+            <Route path="/config" element={<Navigate to="/configuracoes" replace />} />
             <Route path="/super-admin" element={<SuperAdminGuard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
