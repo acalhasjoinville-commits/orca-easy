@@ -13,7 +13,8 @@ export type Tab =
   | "clientes"
   | "financeiro"
   | "usuarios"
-  | "config";
+  | "config"
+  | "ajuda";
 
 interface AppSidebarProps {
   active: Tab;
