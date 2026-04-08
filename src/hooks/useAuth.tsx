@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { AuthError, User, Session } from "@supabase/supabase-js";
@@ -8,6 +8,7 @@ export type EmpresaStatus = "ativa" | "suspensa" | "bloqueada";
 
 const APP_ROLES: AppRole[] = ["admin", "vendedor", "financeiro"];
 const EMPRESA_STATUSES: EmpresaStatus[] = ["ativa", "suspensa", "bloqueada"];
+const AUTH_BOOTSTRAP_STORAGE_KEY = "orcacalhas:auth-bootstrap:v1";
 
 type UserRoleRow = Pick<Tables<"user_roles">, "role">;
 
@@ -17,6 +18,38 @@ function isAppRole(value: string): value is AppRole {
 
 function isEmpresaStatus(value: string | null): value is EmpresaStatus {
   return value !== null && EMPRESA_STATUSES.includes(value as EmpresaStatus);
+}
+
+interface CachedAuthState {
+  session: Session;
+  roles: AppRole[];
+  rolesLoaded: boolean;
+  empresaId: string | null;
+  empresaStatus: EmpresaStatus | null;
+  isSuperAdmin: boolean;
+}
+
+function readCachedAuthState(): CachedAuthState | null {
+  try {
+    const raw = sessionStorage.getItem(AUTH_BOOTSTRAP_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<CachedAuthState>;
+    const cachedSession = parsed.session;
+
+    if (!cachedSession?.user?.id) return null;
+
+    return {
+      session: cachedSession,
+      roles: Array.isArray(parsed.roles) ? parsed.roles.filter(isAppRole) : [],
+      rolesLoaded: parsed.rolesLoaded === true,
+      empresaId: typeof parsed.empresaId === "string" ? parsed.empresaId : null,
+      empresaStatus: isEmpresaStatus(parsed.empresaStatus ?? null) ? (parsed.empresaStatus ?? null) : null,
+      isSuperAdmin: parsed.isSuperAdmin === true,
+    };
+  } catch {
+    return null;
+  }
 }
 
 interface AuthContextType {
@@ -46,16 +79,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [rolesLoaded, setRolesLoaded] = useState(false);
-  const [empresaId, setEmpresaId] = useState<string | null>(null);
-  const [empresaStatus, setEmpresaStatus] = useState<EmpresaStatus | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const cachedAuthState = readCachedAuthState();
+  const [user, setUser] = useState<User | null>(cachedAuthState?.session.user ?? null);
+  const [session, setSession] = useState<Session | null>(cachedAuthState?.session ?? null);
+  const [loading, setLoading] = useState(cachedAuthState ? false : true);
+  const [roles, setRoles] = useState<AppRole[]>(cachedAuthState?.roles ?? []);
+  const [rolesLoaded, setRolesLoaded] = useState(cachedAuthState?.rolesLoaded ?? false);
+  const [empresaId, setEmpresaId] = useState<string | null>(cachedAuthState?.empresaId ?? null);
+  const [empresaStatus, setEmpresaStatus] = useState<EmpresaStatus | null>(cachedAuthState?.empresaStatus ?? null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(cachedAuthState?.isSuperAdmin ?? false);
+  const currentUserIdRef = useRef<string | null>(cachedAuthState?.session.user.id ?? null);
 
-  const fetchRolesAndEmpresa = useCallback(async (userId: string) => {
+  const fetchRolesAndEmpresa = useCallback(async (userId: string, resetBeforeFetch = true) => {
+    if (resetBeforeFetch) {
+      setRolesLoaded(false);
+    }
+
     try {
       const { data: rolesData, error: rolesErr } = await supabase
         .from("user_roles")
@@ -110,16 +149,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    try {
+      if (!session?.user) {
+        sessionStorage.removeItem(AUTH_BOOTSTRAP_STORAGE_KEY);
+        return;
+      }
+
+      const state: CachedAuthState = {
+        session,
+        roles,
+        rolesLoaded,
+        empresaId,
+        empresaStatus,
+        isSuperAdmin,
+      };
+
+      sessionStorage.setItem(AUTH_BOOTSTRAP_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // ignore storage errors
+    }
+  }, [session, roles, rolesLoaded, empresaId, empresaStatus, isSuperAdmin]);
+
+  useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
+      setLoading(false);
 
       if (newSession?.user) {
-        setRolesLoaded(false);
-        setTimeout(() => fetchRolesAndEmpresa(newSession.user.id), 0);
+        const isSameUser = currentUserIdRef.current === newSession.user.id;
+        currentUserIdRef.current = newSession.user.id;
+
+        if (!isSameUser) {
+          setRoles([]);
+          setEmpresaId(null);
+          setIsSuperAdmin(false);
+          setEmpresaStatus(null);
+        }
+
+        setTimeout(() => fetchRolesAndEmpresa(newSession.user.id, !isSameUser), 0);
       } else {
+        currentUserIdRef.current = null;
         setRoles([]);
         setEmpresaId(null);
         setIsSuperAdmin(false);
@@ -131,12 +203,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
+      setLoading(false);
 
       if (existingSession?.user) {
-        fetchRolesAndEmpresa(existingSession.user.id).then(() => setLoading(false));
+        const isSameUser = currentUserIdRef.current === existingSession.user.id;
+        currentUserIdRef.current = existingSession.user.id;
+        fetchRolesAndEmpresa(existingSession.user.id, !isSameUser);
       } else {
+        currentUserIdRef.current = null;
         setRolesLoaded(true);
-        setLoading(false);
       }
     });
 
@@ -185,6 +260,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setEmpresaId(null);
       setIsSuperAdmin(false);
       setEmpresaStatus(null);
+      setRolesLoaded(true);
+      currentUserIdRef.current = null;
+      try {
+        sessionStorage.removeItem(AUTH_BOOTSTRAP_STORAGE_KEY);
+      } catch {
+        // ignore storage errors
+      }
     },
   };
 
