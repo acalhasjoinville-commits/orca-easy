@@ -1,30 +1,20 @@
 import { useMemo, useState } from "react";
-import {
-  CalendarDays,
-  Phone,
-  Hammer,
-  Receipt,
-  Banknote,
-  AlertTriangle,
-  ChevronRight,
-  Clock,
-} from "lucide-react";
+import { AlertTriangle, Banknote, CalendarDays, ChevronRight, Clock, Hammer, Phone, Receipt } from "lucide-react";
+
 import { useFilaComercial } from "@/hooks/useFollowUp";
 import { useAuth } from "@/hooks/useAuth";
 import { Orcamento } from "@/lib/types";
-import { toLocalDateStr, getTodayLocal, addDaysLocal, formatDateLabel } from "@/lib/dateUtils";
+import { addDaysLocal, formatDateLabel, getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-
-// ─── Types ───
 
 type AreaType = "comercial" | "operacao" | "financeiro";
 type FilterType = "todos" | AreaType;
 
 interface AgendaEvento {
   id: string;
-  date: string; // YYYY-MM-DD local
+  date: string;
   area: AreaType;
   subtype: string;
   orcamentoId: string;
@@ -36,6 +26,8 @@ interface AgendaSection {
   key: string;
   label: string;
   isOverdue: boolean;
+  isHistory?: boolean;
+  showItemDate?: boolean;
   eventos: AgendaEvento[];
 }
 
@@ -44,15 +36,26 @@ interface AgendaProps {
   onViewOrcamento: (orc: Orcamento) => void;
 }
 
-// ─── Area config ───
-
 const areaConfig: Record<AreaType, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
-  comercial: { label: "Comercial", color: "text-orange-600", bgColor: "bg-orange-100 dark:bg-orange-950", icon: Phone },
-  operacao: { label: "Operação", color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-950", icon: Hammer },
-  financeiro: { label: "Financeiro", color: "text-emerald-600", bgColor: "bg-emerald-100 dark:bg-emerald-950", icon: Receipt },
+  comercial: {
+    label: "Comercial",
+    color: "text-orange-600",
+    bgColor: "bg-orange-100 dark:bg-orange-950",
+    icon: Phone,
+  },
+  operacao: {
+    label: "Operação",
+    color: "text-blue-600",
+    bgColor: "bg-blue-100 dark:bg-blue-950",
+    icon: Hammer,
+  },
+  financeiro: {
+    label: "Financeiro",
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-100 dark:bg-emerald-950",
+    icon: Receipt,
+  },
 };
-
-// ─── Filter pills ───
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -61,7 +64,11 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "financeiro", label: "Financeiro" },
 ];
 
-// ─── Component ───
+function compareAgendaEventos(a: AgendaEvento, b: AgendaEvento) {
+  if (a.date !== b.date) return a.date.localeCompare(b.date);
+  if (a.area !== b.area) return a.area.localeCompare(b.area);
+  return a.numero - b.numero;
+}
 
 export function Agenda({ orcamentos, onViewOrcamento }: AgendaProps) {
   const { canViewFinanceiro } = useAuth();
@@ -73,9 +80,13 @@ export function Agenda({ orcamentos, onViewOrcamento }: AgendaProps) {
   const limiteMax = addDaysLocal(7);
   const limitePassado = addDaysLocal(-7);
 
+  const effectiveFilter = !canViewFinanceiro && filter === "financeiro" ? "todos" : filter;
+
   const orcamentosMap = useMemo(() => {
     const map = new Map<string, Orcamento>();
-    for (const o of orcamentos) map.set(o.id, o);
+    for (const orcamento of orcamentos) {
+      map.set(orcamento.id, orcamento);
+    }
     return map;
   }, [orcamentos]);
 
@@ -83,205 +94,222 @@ export function Agenda({ orcamentos, onViewOrcamento }: AgendaProps) {
     const result: AgendaEvento[] = [];
     const fila = filaComercial ?? [];
 
-    // ─── Comercial: follow-ups with data_retorno ───
     for (const item of fila) {
       if (item.statusFollowUp === "concluido") continue;
       if (item.statusOrcamento === "cancelado" || item.statusOrcamento === "rejeitado") continue;
 
       const retornoLocal = toLocalDateStr(item.dataRetorno);
-      if (!retornoLocal) continue;
+      if (!retornoLocal || retornoLocal > limiteMax) continue;
 
-      // Show overdue (no limit) + future up to 7 days
-      if (retornoLocal <= limiteMax) {
-        result.push({
-          id: `com-${item.orcamentoId}`,
-          date: retornoLocal,
-          area: "comercial",
-          subtype: retornoLocal < hoje ? "Retorno vencido" : "Retorno comercial",
-          orcamentoId: item.orcamentoId,
-          numero: item.numeroOrcamento,
-          nomeCliente: item.nomeCliente,
-        });
-      }
+      result.push({
+        id: `com-${item.orcamentoId}`,
+        date: retornoLocal,
+        area: "comercial",
+        subtype: retornoLocal < hoje ? "Retorno vencido" : "Retorno comercial",
+        orcamentoId: item.orcamentoId,
+        numero: item.numeroOrcamento,
+        nomeCliente: item.nomeCliente,
+      });
     }
 
-    // ─── Operação: approved budgets with dataPrevista ───
-    for (const orc of orcamentos) {
-      if (orc.status !== "aprovado") continue;
+    for (const orcamento of orcamentos) {
+      if (orcamento.status === "aprovado") {
+        const previstaLocal = toLocalDateStr(orcamento.dataPrevista);
+        if (previstaLocal && previstaLocal <= limiteMax) {
+          result.push({
+            id: `op-${orcamento.id}`,
+            date: previstaLocal,
+            area: "operacao",
+            subtype: previstaLocal < hoje ? "Execução atrasada" : "Execução prevista",
+            orcamentoId: orcamento.id,
+            numero: orcamento.numeroOrcamento,
+            nomeCliente: orcamento.nomeCliente,
+          });
+        }
+      }
 
-      const previstaLocal = toLocalDateStr(orc.dataPrevista);
-      if (!previstaLocal) continue;
+      if (!canViewFinanceiro || orcamento.status === "cancelado") continue;
 
-      if (previstaLocal <= limiteMax) {
+      const faturamentoLocal = toLocalDateStr(orcamento.dataFaturamento);
+      if (faturamentoLocal && faturamentoLocal >= limitePassado && faturamentoLocal <= hoje) {
         result.push({
-          id: `op-${orc.id}`,
-          date: previstaLocal,
-          area: "operacao",
-          subtype: previstaLocal < hoje ? "Execução atrasada" : "Execução prevista",
-          orcamentoId: orc.id,
-          numero: orc.numeroOrcamento,
-          nomeCliente: orc.nomeCliente,
+          id: `fin-fat-${orcamento.id}`,
+          date: faturamentoLocal,
+          area: "financeiro",
+          subtype: "Faturamento registrado",
+          orcamentoId: orcamento.id,
+          numero: orcamento.numeroOrcamento,
+          nomeCliente: orcamento.nomeCliente,
         });
       }
-    }
 
-    // ─── Financeiro registrado (historical, last 7 days only) ───
-    if (canViewFinanceiro) {
-      for (const orc of orcamentos) {
-        if (orc.status === "cancelado") continue;
-
-        const fatLocal = toLocalDateStr(orc.dataFaturamento);
-        if (fatLocal && fatLocal >= limitePassado && fatLocal <= hoje) {
-          result.push({
-            id: `fin-fat-${orc.id}`,
-            date: fatLocal,
-            area: "financeiro",
-            subtype: "Faturamento registrado",
-            orcamentoId: orc.id,
-            numero: orc.numeroOrcamento,
-            nomeCliente: orc.nomeCliente,
-          });
-        }
-
-        const pagLocal = toLocalDateStr(orc.dataPagamento);
-        if (pagLocal && pagLocal >= limitePassado && pagLocal <= hoje) {
-          result.push({
-            id: `fin-pag-${orc.id}`,
-            date: pagLocal,
-            area: "financeiro",
-            subtype: "Pagamento registrado",
-            orcamentoId: orc.id,
-            numero: orc.numeroOrcamento,
-            nomeCliente: orc.nomeCliente,
-          });
-        }
+      const pagamentoLocal = toLocalDateStr(orcamento.dataPagamento);
+      if (pagamentoLocal && pagamentoLocal >= limitePassado && pagamentoLocal <= hoje) {
+        result.push({
+          id: `fin-pag-${orcamento.id}`,
+          date: pagamentoLocal,
+          area: "financeiro",
+          subtype: "Pagamento registrado",
+          orcamentoId: orcamento.id,
+          numero: orcamento.numeroOrcamento,
+          nomeCliente: orcamento.nomeCliente,
+        });
       }
     }
 
     return result;
-  }, [filaComercial, orcamentos, canViewFinanceiro, hoje, limiteMax, limitePassado]);
+  }, [canViewFinanceiro, filaComercial, hoje, limiteMax, limitePassado, orcamentos]);
 
-  // ─── Filter ───
   const visibleFilters = canViewFinanceiro
     ? filterOptions
-    : filterOptions.filter((f) => f.value !== "financeiro");
+    : filterOptions.filter((option) => option.value !== "financeiro");
 
-  const filtered = filter === "todos" ? eventos : eventos.filter((e) => e.area === filter);
+  const filtered = effectiveFilter === "todos" ? eventos : eventos.filter((evento) => evento.area === effectiveFilter);
 
-  // ─── Group into sections ───
   const sections = useMemo(() => {
     const groups = new Map<string, AgendaEvento[]>();
-
-    for (const ev of filtered) {
-      const list = groups.get(ev.date) || [];
-      list.push(ev);
-      groups.set(ev.date, list);
-    }
-
-    // Sort dates
-    const sortedDates = Array.from(groups.keys()).sort();
-
     const result: AgendaSection[] = [];
     const overdue: AgendaEvento[] = [];
+    const financeToday: AgendaEvento[] = [];
+    const financeHistory: AgendaEvento[] = [];
 
-    for (const date of sortedDates) {
-      const items = groups.get(date)!;
-
-      if (date < hoje) {
-        // Only comercial and operacao can be "atrasados"
-        const atrasados = items.filter((e) => e.area !== "financeiro");
-        const financeiros = items.filter((e) => e.area === "financeiro");
-
-        overdue.push(...atrasados);
-
-        // Financeiro items in the past go under "Últimos registros"
-        if (financeiros.length > 0) {
-          result.push({
-            key: `fin-${date}`,
-            label: formatDateLabel(date, hoje, amanha),
-            isOverdue: false,
-            eventos: financeiros,
-          });
+    for (const evento of filtered) {
+      if (evento.area === "financeiro") {
+        if (evento.date === hoje) {
+          financeToday.push(evento);
+        } else {
+          financeHistory.push(evento);
         }
-      } else {
-        result.push({
-          key: date,
-          label: formatDateLabel(date, hoje, amanha),
-          isOverdue: false,
-          eventos: items,
-        });
+        continue;
       }
+
+      if (evento.date < hoje) {
+        overdue.push(evento);
+        continue;
+      }
+
+      const list = groups.get(evento.date) || [];
+      list.push(evento);
+      groups.set(evento.date, list);
     }
 
-    // Prepend overdue section
     if (overdue.length > 0) {
-      result.unshift({
+      result.push({
         key: "atrasados",
         label: "Atrasados",
         isOverdue: true,
-        eventos: overdue.sort((a, b) => a.date.localeCompare(b.date)),
+        eventos: overdue.sort(compareAgendaEventos),
+      });
+    }
+
+    for (const date of Array.from(groups.keys()).sort()) {
+      result.push({
+        key: date,
+        label: formatDateLabel(date, hoje, amanha),
+        isOverdue: false,
+        eventos: (groups.get(date) || []).sort(compareAgendaEventos),
+      });
+    }
+
+    if (financeToday.length > 0) {
+      result.push({
+        key: "financeiro-hoje",
+        label: effectiveFilter === "financeiro" ? "Hoje" : "Registros financeiros de hoje",
+        isOverdue: false,
+        isHistory: true,
+        eventos: financeToday.sort(compareAgendaEventos),
+      });
+    }
+
+    if (financeHistory.length > 0) {
+      result.push({
+        key: "financeiro-historico",
+        label: "Últimos registros financeiros",
+        isOverdue: false,
+        isHistory: true,
+        showItemDate: true,
+        eventos: financeHistory.sort((a, b) => {
+          if (a.date === b.date) return a.numero - b.numero;
+          return b.date.localeCompare(a.date);
+        }),
       });
     }
 
     return result;
-  }, [filtered, hoje, amanha]);
+  }, [amanha, effectiveFilter, filtered, hoje]);
 
   const handleClick = (orcamentoId: string) => {
-    const orc = orcamentosMap.get(orcamentoId);
-    if (orc) onViewOrcamento(orc);
+    const orcamento = orcamentosMap.get(orcamentoId);
+    if (orcamento) onViewOrcamento(orcamento);
   };
 
   return (
-    <div className="space-y-6 p-4 lg:p-6">
-      {/* Filters */}
+    <div className="mx-auto max-w-[1100px] space-y-6 px-4 pb-24 pt-5 lg:px-6 lg:pb-8">
+      <Card className="border-dashed bg-muted/20">
+        <CardContent className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Agenda da operação</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Veja retornos comerciais, execuções previstas e registros recentes em uma linha do tempo simples para a
+                semana.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap gap-2">
-        {visibleFilters.map((opt) => (
+        {visibleFilters.map((option) => (
           <button
-            key={opt.value}
-            onClick={() => setFilter(opt.value)}
+            key={option.value}
+            onClick={() => setFilter(option.value)}
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
-              filter === opt.value
+              effectiveFilter === option.value
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-muted/80",
             )}
           >
-            {opt.label}
+            {option.label}
           </button>
         ))}
       </div>
 
-      {/* Loading */}
       {filaLoading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
           <Clock className="h-4 w-4 animate-spin" />
-          Carregando agenda…
+          Carregando agenda...
         </div>
       )}
 
-      {/* Empty */}
       {!filaLoading && sections.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <CalendarDays className="h-10 w-10 text-muted-foreground/40 mb-3" />
+            <CalendarDays className="mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos próximos dias</p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="mt-1 text-xs text-muted-foreground/70">
               Quando houver retornos comerciais, execuções previstas ou registros financeiros, eles aparecerão aqui.
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Sections */}
       {sections.map((section) => (
         <div key={section.key} className="space-y-2">
-          {/* Section header */}
           <div className="flex items-center gap-2">
             {section.isOverdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
             <h3
               className={cn(
                 "text-sm font-semibold",
-                section.isOverdue ? "text-destructive" : "text-foreground",
+                section.isOverdue
+                  ? "text-destructive"
+                  : section.isHistory
+                    ? "text-muted-foreground"
+                    : "text-foreground",
               )}
             >
               {section.label}
@@ -289,54 +317,63 @@ export function Agenda({ orcamentos, onViewOrcamento }: AgendaProps) {
             <Badge
               variant="secondary"
               className={cn(
-                "text-[10px] px-1.5 py-0",
-                section.isOverdue && "bg-destructive/10 text-destructive border-destructive/20",
+                "px-1.5 py-0 text-[10px]",
+                section.isOverdue && "border-destructive/20 bg-destructive/10 text-destructive",
+                section.isHistory && "bg-muted text-muted-foreground",
               )}
             >
               {section.eventos.length}
             </Badge>
           </div>
 
-          {/* Events */}
           <div className="space-y-1.5">
-            {section.eventos.map((ev) => {
-              const config = areaConfig[ev.area];
+            {section.eventos.map((evento) => {
+              const config = areaConfig[evento.area];
               const Icon = config.icon;
 
               return (
                 <button
-                  key={ev.id}
-                  onClick={() => handleClick(ev.orcamentoId)}
+                  key={evento.id}
+                  onClick={() => handleClick(evento.orcamentoId)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/50",
-                    section.isOverdue && ev.area !== "financeiro" && "border-destructive/20",
+                    section.isOverdue && evento.area !== "financeiro" && "border-destructive/20",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                      config.bgColor,
-                    )}
-                  >
+                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
                     <Icon className={cn("h-4 w-4", config.color)} />
                   </div>
+
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground truncate">
-                        #{ev.numero} — {ev.nomeCliente}
+                      <span className="truncate text-sm font-medium text-foreground">
+                        #{evento.numero} - {evento.nomeCliente}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="mt-0.5 flex items-center gap-2">
                       <Badge
                         variant="outline"
-                        className={cn("text-[10px] px-1.5 py-0 border-0", config.bgColor, config.color)}
+                        className={cn("border-0 px-1.5 py-0 text-[10px]", config.bgColor, config.color)}
                       >
                         {config.label}
                       </Badge>
-                      <span className="text-[11px] text-muted-foreground">{ev.subtype}</span>
+                      <span className="text-[11px] text-muted-foreground">{evento.subtype}</span>
+                      {section.showItemDate && (
+                        <>
+                          <span className="text-[11px] text-muted-foreground/50">•</span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {formatDateLabel(evento.date, hoje, amanha)}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+
+                  {evento.area === "financeiro" ? (
+                    <Banknote className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  )}
                 </button>
               );
             })}
