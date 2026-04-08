@@ -2,7 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useFaqAdmin, useFaqMutations, type FaqInput, type FaqItem } from "@/hooks/useFaq";
 import { useDraft } from "@/hooks/useDraft";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -245,9 +254,7 @@ export function SuperAdminFaq() {
                     type="number"
                     min="0"
                     value={String(form.ordem)}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, ordem: Number(event.target.value || 0) }))
-                    }
+                    onChange={(event) => setForm((current) => ({ ...current, ordem: Number(event.target.value || 0) }))}
                   />
                 </div>
               </div>
@@ -287,7 +294,8 @@ export function SuperAdminFaq() {
             <div>
               <p className="text-sm font-semibold text-foreground">Conteúdo da ajuda</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Use esta área para manter a ajuda sempre alinhada com os fluxos reais do sistema e com as dúvidas mais comuns da operação.
+                Use esta área para manter a ajuda sempre alinhada com os fluxos reais do sistema e com as dúvidas mais
+                comuns da operação.
               </p>
             </div>
           </div>
@@ -338,7 +346,10 @@ export function SuperAdminFaq() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={item.ativo ? "default" : "secondary"} className="text-[10px] uppercase tracking-wide">
+                    <Badge
+                      variant={item.ativo ? "default" : "secondary"}
+                      className="text-[10px] uppercase tracking-wide"
+                    >
                       {item.ativo ? "Ativa" : "Inativa"}
                     </Badge>
                     <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
