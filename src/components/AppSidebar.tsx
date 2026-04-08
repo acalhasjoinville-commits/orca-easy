@@ -70,6 +70,16 @@ const operationItems: NavItem[] = [
   },
 ];
 
+const supportItems: NavItem[] = [
+  {
+    title: "Ajuda",
+    helper: "Perguntas frequentes e orientações",
+    tab: "ajuda",
+    icon: HelpCircle,
+    permission: "all",
+  },
+];
+
 const adminItems: NavItem[] = [
   {
     title: "Configurações",
