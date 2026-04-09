@@ -88,7 +88,7 @@ interface StoredConfiguracoesSearchState {
   searchPoliticas?: string;
 }
 
-/* â”€â”€ Combobox com busca para seleÃ§Ã£o de insumos â”€â”€ */
+/* â”€â”€ Combobox com busca para seleção de insumos â”€â”€ */
 function InsumoCombobox({
   insumos,
   value,
@@ -145,31 +145,31 @@ const tabMeta: Record<ConfigTab, { title: string; description: string; helper: s
   empresa: {
     title: "Empresa e identidade",
     description: "Define os dados institucionais e a identidade visual usada no sistema e nos PDFs.",
-    helper: "Ajuste logo, cores e dados de contato sem alterar a lÃ³gica comercial do sistema.",
+    helper: "Ajuste logo, cores e dados de contato sem alterar a lógica comercial do sistema.",
     icon: Building2,
   },
   materiais: {
     title: "Base de materiais",
-    description: "Cadastre os materiais que alimentam o cÃ¡lculo de custo dos serviÃ§os.",
+    description: "Cadastre os materiais que alimentam o cálculo de custo dos serviços.",
     helper: "Cadastre os materiais dos dois motores conforme o tipo de cálculo usado em cada serviço.",
     icon: Layers,
   },
   regras: {
     title: "Regras de consumo",
-    description: "Definem como os insumos entram no cÃ¡lculo padrÃ£o de cada serviÃ§o.",
-    helper: "As regras sÃ£o base padrÃ£o: o usuÃ¡rio ainda pode ajustar os insumos depois no orÃ§amento.",
+    description: "Definem como os insumos entram no cálculo padrão de cada serviço.",
+    helper: "As regras são base padrão: o usuário ainda pode ajustar os insumos depois no orçamento.",
     icon: Calculator,
   },
   catalogo: {
-    title: "CatÃ¡logo de serviÃ§os",
-    description: "Conecta material, regra e serviÃ§o para automatizar o orÃ§amento.",
-    helper: "Cada serviÃ§o do catÃ¡logo direciona o motor, o material e a regra aplicada automaticamente.",
+    title: "Catálogo de serviços",
+    description: "Conecta material, regra e serviço para automatizar o orçamento.",
+    helper: "Cada serviço do catálogo direciona o motor, o material e a regra aplicada automaticamente.",
     icon: BookOpen,
   },
   politicas: {
-    title: "PolÃ­ticas comerciais",
+    title: "Políticas comerciais",
     description: "Centralizam validade, garantia e textos operacionais usados no atendimento.",
-    helper: "Esses textos aparecem em orÃ§amentos e OS, entÃ£o vale manter um padrÃ£o claro e profissional.",
+    helper: "Esses textos aparecem em orçamentos e OS, então vale manter um padrão claro e profissional.",
     icon: FileText,
   },
 };
@@ -210,7 +210,7 @@ function MinhaEmpresaForm() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. MÃ¡ximo 2MB.", { duration: 5000 });
+      toast.error("Arquivo muito grande. Máximo 2MB.", { duration: 5000 });
       return;
     }
     setUploading(true);
@@ -261,10 +261,10 @@ function MinhaEmpresaForm() {
       <Card className="border-dashed bg-muted/20">
         <CardContent className="p-4">
           <p className="text-sm font-medium text-foreground">
-            Esses dados aparecem no sistema, nos orÃ§amentos e nos PDFs.
+            Esses dados aparecem no sistema, nos orçamentos e nos PDFs.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Ajuste logo, cores e dados institucionais aqui para manter a apresentaÃ§Ã£o da empresa consistente.
+            Ajuste logo, cores e dados institucionais aqui para manter a apresentação da empresa consistente.
           </p>
         </CardContent>
       </Card>
@@ -302,13 +302,13 @@ function MinhaEmpresaForm() {
                 {uploading ? "Enviando..." : "Upload Logo"}
               </Button>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-              <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, mÃ¡x 2MB</p>
+              <p className="text-[10px] text-muted-foreground mt-1">PNG ou JPG, máx 2MB</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">ðŸŽ¨ Cor PrimÃ¡ria</p>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -328,7 +328,7 @@ function MinhaEmpresaForm() {
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">âœ¨ Cor Destaque</p>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -364,11 +364,11 @@ function MinhaEmpresaForm() {
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-medium text-muted-foreground">RazÃ£o Social</Label>
+                <Label className="text-[11px] font-medium text-muted-foreground">Razão Social</Label>
                 <Input
                   value={form.razaoSocial}
                   onChange={(e) => set("razaoSocial", e.target.value)}
-                  placeholder="RazÃ£o social"
+                  placeholder="Razão social"
                   className="h-9 mt-1"
                 />
               </div>
@@ -378,7 +378,7 @@ function MinhaEmpresaForm() {
               <Input
                 value={form.slogan}
                 onChange={(e) => set("slogan", e.target.value)}
-                placeholder="Ex: A soluÃ§Ã£o estÃ¡ no nome"
+                placeholder="Ex: A solução está no nome"
                 className="h-9 mt-1"
               />
             </div>
@@ -419,11 +419,11 @@ function MinhaEmpresaForm() {
       {/* Address */}
       <Card>
         <CardContent className="p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">EndereÃ§o</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-4">Endereço</h3>
           <div className="space-y-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <div className="sm:col-span-3">
-                <Label className="text-[11px] font-medium text-muted-foreground">EndereÃ§o</Label>
+                <Label className="text-[11px] font-medium text-muted-foreground">Endereço</Label>
                 <Input
                   value={form.endereco}
                   onChange={(e) => set("endereco", e.target.value)}
@@ -432,11 +432,11 @@ function MinhaEmpresaForm() {
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-medium text-muted-foreground">NÃºmero</Label>
+                <Label className="text-[11px] font-medium text-muted-foreground">Número</Label>
                 <Input
                   value={form.numero}
                   onChange={(e) => set("numero", e.target.value)}
-                  placeholder="NÂº"
+                  placeholder="Nº"
                   className="h-9 mt-1"
                 />
               </div>
@@ -606,9 +606,9 @@ function ItemRow({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar exclusÃ£o</AlertDialogTitle>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Deseja remover este item? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+                  Deseja remover este item? Esta ação não pode ser desfeita.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -865,19 +865,19 @@ export function Configuracoes() {
 
     if (item.metodoCalculo === "multiplicar") {
       const quantidade = sampleMetragem * fator;
-      return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirÃ¡ ${quantidade.toLocaleString("pt-BR", {
+      return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
         maximumFractionDigits: 2,
       })} unidade(s) (${sampleMetragem} Ã— ${fator.toLocaleString("pt-BR")}).`;
     }
 
     if (fator <= 0) {
-      return `Exemplo: defina quantos metros sÃ£o necessÃ¡rios para usar 1 unidade de ${insumoNome}.`;
+      return `Exemplo: defina quantos metros são necessários para usar 1 unidade de ${insumoNome}.`;
     }
 
     const quantidade = sampleMetragem / fator;
-    return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirÃ¡ ${quantidade.toLocaleString("pt-BR", {
+    return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
       maximumFractionDigits: 2,
-    })} unidade(s) (${sampleMetragem} Ã· ${fator.toLocaleString("pt-BR")}).`;
+    })} unidade(s) (${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}).`;
   };
 
   // â”€â”€â”€ Form renderers â”€â”€â”€
@@ -885,18 +885,18 @@ export function Configuracoes() {
     <div className="space-y-3">
       <div className="rounded-lg border bg-muted/20 p-3">
         <p className="text-xs font-medium text-foreground">
-          Essa regra define o consumo padrÃ£o de insumos por serviÃ§o.
+          Essa regra define o consumo padrão de insumos por serviço.
         </p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Ela permanece ajustÃ¡vel no orÃ§amento. Aqui vocÃª cadastra somente a base automÃ¡tica usada pelo sistema.
+          Ela permanece ajustável no orçamento. Aqui você cadastra somente a base automática usada pelo sistema.
         </p>
       </div>
       <div className="rounded-lg border border-primary/10 bg-primary/5 p-3">
-        <p className="text-xs font-medium text-foreground">Como ler os mÃ©todos</p>
+        <p className="text-xs font-medium text-foreground">Como ler os métodos</p>
         <div className="mt-2 space-y-2 text-[11px] text-muted-foreground">
           <p>
             <span className="font-medium text-foreground">Por metro:</span> multiplica a metragem pelo fator. Exemplo:
-            fator <span className="font-medium text-foreground">0,5</span> em um serviÃ§o de{" "}
+            fator <span className="font-medium text-foreground">0,5</span> em um serviço de{" "}
             <span className="font-medium text-foreground">12 m</span> gera{" "}
             <span className="font-medium text-foreground">6 unidades</span>.
           </p>
@@ -968,14 +968,14 @@ export function Configuracoes() {
   const renderCatalogoForm = () => (
     <div className="space-y-3">
       <div className="rounded-lg border bg-muted/20 p-3">
-        <p className="text-xs font-medium text-foreground">O catÃ¡logo conecta serviÃ§o, material e regra.</p>
+        <p className="text-xs font-medium text-foreground">O catálogo conecta serviço, material e regra.</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Ao usar esse serviÃ§o no orÃ§amento, o sistema vai buscar o material, aplicar a regra e calcular os insumos
+          Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos
           automaticamente.
         </p>
       </div>
       <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Nome do ServiÃ§o</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Nome do Serviço</Label>
         <Input
           value={form.nomeServico || ""}
           onChange={(e) => setField("nomeServico", e.target.value)}
@@ -983,7 +983,7 @@ export function Configuracoes() {
         />
       </div>
       <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Regra de CÃ¡lculo</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Regra de Cálculo</Label>
         <Select value={form.regraId || ""} onValueChange={(v) => setField("regraId", v)}>
           <SelectTrigger className="mt-1">
             <SelectValue placeholder="Selecione" />
@@ -1010,7 +1010,7 @@ export function Configuracoes() {
         </Select>
       </div>
       <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Material PadrÃ£o</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Material Padrão</Label>
         <Select value={form.materialPadrao || ""} onValueChange={(v) => setField("materialPadrao", v)}>
           <SelectTrigger className="mt-1">
             <SelectValue placeholder="Selecione" />
@@ -1048,7 +1048,7 @@ export function Configuracoes() {
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator FÃ¡cil</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Fácil</Label>
           <Input
             type="number"
             inputMode="decimal"
@@ -1058,7 +1058,7 @@ export function Configuracoes() {
           />
         </div>
         <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator MÃ©dio</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Médio</Label>
           <Input
             type="number"
             inputMode="decimal"
@@ -1068,7 +1068,7 @@ export function Configuracoes() {
           />
         </div>
         <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator DifÃ­cil</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground">Fator Difícil</Label>
           <Input
             type="number"
             inputMode="decimal"
@@ -1088,15 +1088,15 @@ export function Configuracoes() {
       <div className="rounded-lg border bg-muted/20 p-3">
         <p className="text-xs font-medium text-foreground">Esses textos padronizam o atendimento comercial.</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Use esta Ã¡rea para definir validade, garantia e condiÃ§Ãµes que aparecem no orÃ§amento e na OS.
+          Use esta área para definir validade, garantia e condições que aparecem no orçamento e na OS.
         </p>
       </div>
       <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Nome da PolÃ­tica</Label>
+        <Label className="text-[11px] font-medium text-muted-foreground">Nome da Política</Label>
         <Input
           value={form.nomePolitica || ""}
           onChange={(e) => setField("nomePolitica", e.target.value)}
-          placeholder="Ex: PadrÃ£o Residencial"
+          placeholder="Ex: Padrão Residencial"
           className="mt-1"
         />
       </div>
@@ -1131,7 +1131,7 @@ export function Configuracoes() {
         <Textarea
           value={form.formasPagamento || ""}
           onChange={(e) => setField("formasPagamento", e.target.value)}
-          placeholder="CondiÃ§Ãµes de pagamento padrÃ£o..."
+          placeholder="Condições de pagamento padrão..."
           rows={2}
           className="text-sm mt-1"
         />
@@ -1163,19 +1163,19 @@ export function Configuracoes() {
   const simpleFields: Record<string, { label: string; key: string; type?: string }[]> = {
     motor1: [
       { label: "Material", key: "material" },
-      { label: "Densidade (g/cmÂ³)", key: "densidade", type: "number" },
-      { label: "PreÃ§o/Kg (R$)", key: "precoQuilo", type: "number" },
+      { label: "Densidade (g/cm³)", key: "densidade", type: "number" },
+      { label: "Preço/Kg (R$)", key: "precoQuilo", type: "number" },
     ],
     motor2: [
       { label: "Material", key: "material" },
       { label: "Espessura (mm)", key: "espessura", type: "number" },
       { label: "Corte/Largura (mm)", key: "corte", type: "number" },
-      { label: "PreÃ§o/Metro (R$)", key: "precoMetroLinear", type: "number" },
+      { label: "Preço/Metro (R$)", key: "precoMetroLinear", type: "number" },
     ],
     insumos: [
       { label: "Nome da Embalagem", key: "nomeEmbalagemCompra" },
       { label: "Nome da Unidade de Consumo", key: "nomeUnidadeConsumo" },
-      { label: "PreÃ§o da Embalagem (R$)", key: "precoEmbalagem", type: "number" },
+      { label: "Preço da Embalagem (R$)", key: "precoEmbalagem", type: "number" },
       { label: "Qtd na Embalagem", key: "qtdEmbalagem", type: "number" },
     ],
   };
@@ -1192,9 +1192,9 @@ export function Configuracoes() {
         "Cadastre material, espessura, corte e preço por metro para os serviços que usam material já dobrado.",
     },
     insumos: {
-      title: "Custo unitÃ¡rio automÃ¡tico",
+      title: "Custo unitário automático",
       description:
-        "O sistema usa preÃ§o da embalagem e quantidade para calcular automaticamente o custo unitÃ¡rio de cada insumo.",
+        "O sistema usa preço da embalagem e quantidade para calcular automaticamente o custo unitário de cada insumo.",
     },
   };
 
@@ -1230,9 +1230,9 @@ export function Configuracoes() {
     motor1: "Motor 1",
     motor2: "Motor 2",
     insumos: "Insumo",
-    regras: "Regra de CÃ¡lculo",
-    catalogo: "ServiÃ§o",
-    politicas: "PolÃ­tica Comercial",
+    regras: "Regra de Cálculo",
+    catalogo: "Serviço",
+    politicas: "Política Comercial",
   };
 
   const dialogTitle = `${editItem ? "Editar" : "Adicionar"} ${sectionLabels[activeSection]}`;
@@ -1293,7 +1293,7 @@ export function Configuracoes() {
       {/* Motor 1 */}
       <SubSection
         title="Motor 1 â€” Chapas e Bobinas"
-        description="Materiais comprados em bobina/chapa, com cÃ¡lculo por peso."
+        description="Materiais comprados em bobina/chapa, com cálculo por peso."
         onAdd={() => openAdd("motor1")}
         isEmpty={filteredMotor1.length === 0 && motor1.length === 0}
         emptyText="Nenhum material cadastrado no Motor 1."
@@ -1318,7 +1318,7 @@ export function Configuracoes() {
             >
               <p className="text-sm font-medium">{e.material}</p>
               <p className="text-xs text-muted-foreground">
-                {e.densidade} g/cmÂ³ Â· {fmt(e.precoQuilo)}/kg
+                {e.densidade} g/cm³ · {fmt(e.precoQuilo)}/kg
               </p>
             </ItemRow>
           ))
@@ -1369,7 +1369,7 @@ export function Configuracoes() {
       {/* Insumos */}
       <SubSection
         title="Insumos"
-        description="Materiais consumÃ­veis usados nas regras de cÃ¡lculo."
+        description="Materiais consumíveis usados nas regras de cálculo."
         onAdd={() => openAdd("insumos")}
         isEmpty={filteredInsumos.length === 0 && insumos.length === 0}
         emptyText="Nenhum insumo cadastrado."
@@ -1394,7 +1394,7 @@ export function Configuracoes() {
             >
               <p className="text-sm font-medium">{e.nomeEmbalagemCompra}</p>
               <p className="text-xs text-muted-foreground">
-                {e.nomeUnidadeConsumo} Â· {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} â†’{" "}
+                {e.nomeUnidadeConsumo} · {fmt(e.precoEmbalagem)} / {e.qtdEmbalagem} â†’{" "}
                 <span className="font-semibold text-primary">{fmt(getCustoUnitario(e))}/un</span>
               </p>
             </ItemRow>
@@ -1407,8 +1407,8 @@ export function Configuracoes() {
   const renderRegrasTab = () => (
     <div className="space-y-6 max-w-3xl">
       <SubSection
-        title="Regras de CÃ¡lculo"
-        description="Definem como os insumos entram no cÃ¡lculo do orÃ§amento."
+        title="Regras de Cálculo"
+        description="Definem como os insumos entram no cálculo do orçamento."
         onAdd={() => openAdd("regras")}
         isEmpty={filteredRegras.length === 0 && regras.length === 0}
         emptyText="Nenhuma regra cadastrada."
@@ -1452,17 +1452,17 @@ export function Configuracoes() {
   const renderCatalogoTab = () => (
     <div className="space-y-6 max-w-3xl">
       <SubSection
-        title="CatÃ¡logo de ServiÃ§os"
-        description="ServiÃ§os disponÃ­veis para orÃ§amento, com motor, material e fatores de dificuldade."
+        title="Catálogo de Serviços"
+        description="Serviços disponíveis para orçamento, com motor, material e fatores de dificuldade."
         onAdd={() => openAdd("catalogo")}
         isEmpty={filteredCatalogo.length === 0 && servicos.length === 0}
-        emptyText="Nenhum serviÃ§o cadastrado."
+        emptyText="Nenhum serviço cadastrado."
         searchValue={searchCatalogo}
         onSearchChange={setSearchCatalogo}
         totalCount={servicos.length}
         filteredCount={filteredCatalogo.length}
         searchPlaceholder="Buscar por nome, material ou regra..."
-        addLabel="Novo serviÃ§o"
+        addLabel="Novo serviço"
       >
         {filteredCatalogo.length === 0 && servicos.length > 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 px-5">
@@ -1485,7 +1485,7 @@ export function Configuracoes() {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {e.materialPadrao} Â· {e.espessuraPadrao}mm Â· {e.cortePadrao}mm
+                {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
               </p>
               <p className="text-[11px] text-muted-foreground/70">Regra: {regraName(e.regraId)}</p>
             </ItemRow>
@@ -1498,8 +1498,8 @@ export function Configuracoes() {
   const renderPoliticasTab = () => (
     <div className="space-y-6 max-w-3xl">
       <SubSection
-        title="PolÃ­ticas Comerciais"
-        description="CondiÃ§Ãµes comerciais usadas no orÃ§amento e na Ordem de ServiÃ§o."
+        title="Políticas Comerciais"
+        description="Condições comerciais usadas no orçamento e na Ordem de Serviço."
         onAdd={() => openAdd("politicas")}
         isEmpty={filteredPoliticas.length === 0 && politicas.length === 0}
         searchValue={searchPoliticas}
@@ -1507,8 +1507,8 @@ export function Configuracoes() {
         totalCount={politicas.length}
         filteredCount={filteredPoliticas.length}
         searchPlaceholder="Buscar por nome, pagamento ou garantia..."
-        addLabel="Nova polÃ­tica"
-        emptyText="Nenhuma polÃ­tica cadastrada."
+        addLabel="Nova política"
+        emptyText="Nenhuma política cadastrada."
       >
         {filteredPoliticas.length === 0 && politicas.length > 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 px-5">
@@ -1526,7 +1526,7 @@ export function Configuracoes() {
             >
               <p className="text-sm font-medium">{e.nomePolitica}</p>
               <p className="text-xs text-muted-foreground">
-                {e.validadeDias} dias Â· Garantia: {e.tempoGarantia || "â€”"}
+                {e.validadeDias} dias · Garantia: {e.tempoGarantia || "â€”"}
               </p>
               {e.formasPagamento && (
                 <p className="text-[11px] text-muted-foreground/70 truncate max-w-[300px]">{e.formasPagamento}</p>
@@ -1541,10 +1541,10 @@ export function Configuracoes() {
   const dialogDescription: Record<EntitySection, string> = {
     motor1: "Cadastre materiais do Motor 1 com base em peso, densidade e preço por quilo.",
     motor2: "Cadastre materiais do Motor 2 com material, espessura, corte e preço por metro linear.",
-    insumos: "Defina os itens de consumo. O custo unitÃ¡rio continua sendo calculado automaticamente pelo sistema.",
-    regras: "Monte a regra padrÃ£o de consumo que serÃ¡ aplicada automaticamente aos serviÃ§os do catÃ¡logo.",
-    catalogo: "Conecte serviÃ§o, material e regra sem alterar a estrutura do cÃ¡lculo existente.",
-    politicas: "Edite os textos e condiÃ§Ãµes comerciais usados no orÃ§amento e na ordem de serviÃ§o.",
+    insumos: "Defina os itens de consumo. O custo unitário continua sendo calculado automaticamente pelo sistema.",
+    regras: "Monte a regra padrão de consumo que será aplicada automaticamente aos serviços do catálogo.",
+    catalogo: "Conecte serviço, material e regra sem alterar a estrutura do cálculo existente.",
+    politicas: "Edite os textos e condições comerciais usados no orçamento e na ordem de serviço.",
   };
 
   const dialogWidthClass =
@@ -1557,7 +1557,7 @@ export function Configuracoes() {
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-foreground">ConfiguraÃ§Ãµes</h1>
+        <h1 className="text-xl font-bold text-foreground">Configurações</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
       </div>
 
@@ -1577,11 +1577,11 @@ export function Configuracoes() {
           </TabsTrigger>
           <TabsTrigger value="catalogo" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <BookOpen className="h-4 w-4" />
-            <span className="truncate">CatÃ¡logo</span>
+            <span className="truncate">Catálogo</span>
           </TabsTrigger>
           <TabsTrigger value="politicas" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">
             <FileText className="h-4 w-4" />
-            <span className="truncate">PolÃ­ticas</span>
+            <span className="truncate">Políticas</span>
           </TabsTrigger>
         </TabsList>
 
