@@ -308,7 +308,7 @@ function MinhaEmpresaForm() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">ðŸŽ¨ Cor Primária</p>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">🎨 Cor Primária</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -328,7 +328,7 @@ function MinhaEmpresaForm() {
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">âœ¨ Cor Destaque</p>
+              <p className="text-[11px] font-medium text-muted-foreground mb-1.5">✨ Cor Destaque</p>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
