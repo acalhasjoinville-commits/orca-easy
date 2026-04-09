@@ -864,20 +864,19 @@ export function Configuracoes() {
     const insumoNome = insumos.find((insumo) => insumo.id === item.insumoId)?.nomeEmbalagemCompra || "este insumo";
 
     if (item.metodoCalculo === "multiplicar") {
-      const quantidade = sampleMetragem * fator;
-      return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
-        maximumFractionDigits: 2,
-      })} unidade(s) (${sampleMetragem} Ã— ${fator.toLocaleString("pt-BR")}).`;
+      if (fator <= 0) {
+        return `Exemplo: defina o fator por metro para ${insumoNome}.`;
+      }
+      const quantidade = Math.ceil(sampleMetragem * fator);
+      return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade} unidade(s) (⌈${sampleMetragem} × ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade}).`;
     }
 
     if (fator <= 0) {
       return `Exemplo: defina quantos metros são necessários para usar 1 unidade de ${insumoNome}.`;
     }
 
-    const quantidade = sampleMetragem / fator;
-    return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
-      maximumFractionDigits: 2,
-    })} unidade(s) (${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}).`;
+    const quantidade = Math.ceil(sampleMetragem / fator);
+    return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade} unidade(s) (⌈${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade}).`;
   };
 
   // â”€â”€â”€ Form renderers â”€â”€â”€
