@@ -31,15 +31,43 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
+function isEditableElement(target: Element | null): target is HTMLElement {
+  return (
+    target instanceof HTMLElement &&
+    (target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT" ||
+      target.isContentEditable)
+  );
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, onPointerDownCapture, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+
+    const handlePointerDownCapture = (event: React.PointerEvent<HTMLButtonElement>) => {
+      onPointerDownCapture?.(event);
+      if (event.defaultPrevented || asChild) return;
+      if (event.pointerType && event.pointerType !== "touch") return;
+
+      const activeElement = document.activeElement;
+      if (!isEditableElement(activeElement) || activeElement === event.currentTarget) return;
+
+      activeElement.blur();
+    };
+
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        onPointerDownCapture={handlePointerDownCapture}
+        {...props}
+      />
+    );
   },
 );
 Button.displayName = "Button";
