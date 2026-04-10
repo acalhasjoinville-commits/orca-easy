@@ -122,7 +122,7 @@ function InsumoCombobox({
               {insumos.map((ins) => (
                 <CommandItem
                   key={ins.id}
-                  value={ins.nomeEmbalagemCompra}
+                  value={`${ins.nomeEmbalagemCompra} ${ins.nomeUnidadeConsumo}`}
                   onSelect={() => {
                     onSelect(ins.id);
                     setOpen(false);
@@ -130,7 +130,10 @@ function InsumoCombobox({
                   className="text-xs"
                 >
                   <Check className={cn("mr-2 h-3 w-3", value === ins.id ? "opacity-100" : "opacity-0")} />
-                  {ins.nomeEmbalagemCompra}
+                  <div className="flex flex-col">
+                    <span>{ins.nomeEmbalagemCompra}</span>
+                    <span className="text-[10px] text-muted-foreground">Consumo: {ins.nomeUnidadeConsumo}</span>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -861,23 +864,32 @@ export function Configuracoes() {
   const getRegraItemPreview = (item: ItemRegra) => {
     const sampleMetragem = 12;
     const fator = Number(item.fator) || 0;
-    const insumoNome = insumos.find((insumo) => insumo.id === item.insumoId)?.nomeEmbalagemCompra || "este insumo";
+    const insumo = insumos.find((i) => i.id === item.insumoId);
+    const nomeConsumo = insumo?.nomeUnidadeConsumo || "este insumo";
 
     if (item.metodoCalculo === "multiplicar") {
-      const quantidade = sampleMetragem * fator;
-      return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
-        maximumFractionDigits: 2,
-      })} unidade(s) (${sampleMetragem} × ${fator.toLocaleString("pt-BR")}).`;
+      const quantidade = Math.ceil(sampleMetragem * fator);
+      let texto = `Em ${sampleMetragem} m → ⌈${sampleMetragem} × ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade} x ${nomeConsumo}`;
+      if (insumo && insumo.qtdEmbalagem > 0) {
+        const custoUnit = getCustoUnitario(insumo);
+        const custoTotal = quantidade * custoUnit;
+        texto += ` · Custo: ${quantidade} × R$ ${custoUnit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} = R$ ${custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${insumo.nomeEmbalagemCompra} R$ ${insumo.precoEmbalagem.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ÷ ${insumo.qtdEmbalagem})`;
+      }
+      return texto;
     }
 
     if (fator <= 0) {
-      return `Exemplo: defina quantos metros são necessários para usar 1 unidade de ${insumoNome}.`;
+      return `Defina quantos metros são necessários para usar 1 x ${nomeConsumo}.`;
     }
 
-    const quantidade = sampleMetragem / fator;
-    return `Exemplo: em ${sampleMetragem} m, ${insumoNome} consumirá ${quantidade.toLocaleString("pt-BR", {
-      maximumFractionDigits: 2,
-    })} unidade(s) (${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}).`;
+    const quantidade = Math.ceil(sampleMetragem / fator);
+    let texto = `Em ${sampleMetragem} m → ⌈${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade} x ${nomeConsumo}`;
+    if (insumo && insumo.qtdEmbalagem > 0) {
+      const custoUnit = getCustoUnitario(insumo);
+      const custoTotal = quantidade * custoUnit;
+      texto += ` · Custo: ${quantidade} × R$ ${custoUnit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} = R$ ${custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${insumo.nomeEmbalagemCompra} R$ ${insumo.precoEmbalagem.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ÷ ${insumo.qtdEmbalagem})`;
+    }
+    return texto;
   };
 
   // ─── Form renderers ───
@@ -895,16 +907,20 @@ export function Configuracoes() {
         <p className="text-xs font-medium text-foreground">Como ler os métodos</p>
         <div className="mt-2 space-y-2 text-[11px] text-muted-foreground">
           <p>
-            <span className="font-medium text-foreground">Por metro:</span> multiplica a metragem pelo fator. Exemplo:
-            fator <span className="font-medium text-foreground">0,5</span> em um serviço de{" "}
-            <span className="font-medium text-foreground">12 m</span> gera{" "}
-            <span className="font-medium text-foreground">6 unidades</span>.
+            <span className="font-medium text-foreground">Por metro:</span> multiplica a metragem pelo fator para obter
+            a quantidade da unidade de consumo. Ex: fator{" "}
+            <span className="font-medium text-foreground">5</span> em{" "}
+            <span className="font-medium text-foreground">12 m</span> →{" "}
+            <span className="font-medium text-foreground">⌈12 × 5⌉ = 60 x rebite 306</span>.
           </p>
           <p>
-            <span className="font-medium text-foreground">A cada X m:</span> usa 1 unidade a cada quantidade de metros
-            definida no fator. Exemplo: fator <span className="font-medium text-foreground">3</span> em{" "}
-            <span className="font-medium text-foreground">12 m</span> gera{" "}
-            <span className="font-medium text-foreground">4 unidades</span>.
+            <span className="font-medium text-foreground">A cada X m:</span> usa 1 unidade de consumo a cada X metros. Ex: fator{" "}
+            <span className="font-medium text-foreground">5</span> em{" "}
+            <span className="font-medium text-foreground">20 m</span> →{" "}
+            <span className="font-medium text-foreground">⌈20 ÷ 5⌉ = 4 x sachê de PU 800g</span>.
+          </p>
+          <p className="italic">
+            O custo unitário é calculado a partir da embalagem: preço da embalagem ÷ quantidade na embalagem.
           </p>
         </div>
       </div>
@@ -1477,7 +1493,7 @@ export function Configuracoes() {
         ) : (
           filteredRegras.map((e) => {
             const insNames = e.itensRegra
-              .map((ir) => insumos.find((ins) => ins.id === ir.insumoId)?.nomeEmbalagemCompra)
+              .map((ir) => insumos.find((ins) => ins.id === ir.insumoId)?.nomeUnidadeConsumo)
               .filter(Boolean);
             const displayNames =
               insNames.length <= 3 ? insNames.join(", ") : `${insNames.slice(0, 3).join(", ")} +${insNames.length - 3}`;
