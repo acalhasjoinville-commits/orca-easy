@@ -127,13 +127,13 @@ function InsumoCombobox({
                     onSelect(ins.id);
                     setOpen(false);
                   }}
-                  className="text-xs"
+                  className="flex flex-col items-start gap-0.5 text-xs"
                 >
-                  <Check className={cn("mr-2 h-3 w-3", value === ins.id ? "opacity-100" : "opacity-0")} />
-                  <div className="flex flex-col">
+                  <div className="flex items-center">
+                    <Check className={cn("mr-2 h-3 w-3", value === ins.id ? "opacity-100" : "opacity-0")} />
                     <span>{ins.nomeEmbalagemCompra}</span>
-                    <span className="text-[10px] text-muted-foreground">Consumo: {ins.nomeUnidadeConsumo}</span>
                   </div>
+                  <span className="pl-5 text-[10px] text-muted-foreground">Consumo: {ins.nomeUnidadeConsumo}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -863,33 +863,44 @@ export function Configuracoes() {
 
   const getRegraItemPreview = (item: ItemRegra) => {
     const sampleMetragem = 12;
+    const insumo = insumos.find((insumo) => insumo.id === item.insumoId);
     const fator = Number(item.fator) || 0;
-    const insumo = insumos.find((i) => i.id === item.insumoId);
-    const nomeConsumo = insumo?.nomeUnidadeConsumo || "este insumo";
+    const unidadeConsumo = insumo?.nomeUnidadeConsumo || "este item";
+    const nomeEmbalagem = insumo?.nomeEmbalagemCompra;
+    const fatorFormatado = fator.toLocaleString("pt-BR");
+
+    const formatCurrency = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    const buildCostText = (quantidade: number) => {
+      if (!insumo || !(insumo.qtdEmbalagem > 0)) return "";
+
+      const custoUnitario = getCustoUnitario(insumo);
+      const custoTotal = quantidade * custoUnitario;
+
+      return ` Custo: ${quantidade} × ${formatCurrency(custoUnitario)} = ${formatCurrency(custoTotal)} (${nomeEmbalagem} ${formatCurrency(
+        insumo.precoEmbalagem,
+      )} ÷ ${insumo.qtdEmbalagem}).`;
+    };
 
     if (item.metodoCalculo === "multiplicar") {
-      const quantidade = Math.ceil(sampleMetragem * fator);
-      let texto = `Em ${sampleMetragem} m → ⌈${sampleMetragem} × ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade} x ${nomeConsumo}`;
-      if (insumo && insumo.qtdEmbalagem > 0) {
-        const custoUnit = getCustoUnitario(insumo);
-        const custoTotal = quantidade * custoUnit;
-        texto += ` · Custo: ${quantidade} × R$ ${custoUnit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} = R$ ${custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${insumo.nomeEmbalagemCompra} R$ ${insumo.precoEmbalagem.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ÷ ${insumo.qtdEmbalagem})`;
+      if (fator <= 0) {
+        return `Exemplo: defina quantas unidades de consumo entram por metro para ${unidadeConsumo}.`;
       }
-      return texto;
+
+      const quantidade = Math.ceil(sampleMetragem * fator);
+      return `Exemplo em ${sampleMetragem} m: ⌈${sampleMetragem} × ${fatorFormatado}⌉ = ${quantidade} x ${unidadeConsumo}.${buildCostText(
+        quantidade,
+      )}`;
     }
 
     if (fator <= 0) {
-      return `Defina quantos metros são necessários para usar 1 x ${nomeConsumo}.`;
+      return `Exemplo: defina quantos metros são necessários para consumir 1 x ${unidadeConsumo}.`;
     }
 
     const quantidade = Math.ceil(sampleMetragem / fator);
-    let texto = `Em ${sampleMetragem} m → ⌈${sampleMetragem} ÷ ${fator.toLocaleString("pt-BR")}⌉ = ${quantidade} x ${nomeConsumo}`;
-    if (insumo && insumo.qtdEmbalagem > 0) {
-      const custoUnit = getCustoUnitario(insumo);
-      const custoTotal = quantidade * custoUnit;
-      texto += ` · Custo: ${quantidade} × R$ ${custoUnit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} = R$ ${custoTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${insumo.nomeEmbalagemCompra} R$ ${insumo.precoEmbalagem.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ÷ ${insumo.qtdEmbalagem})`;
-    }
-    return texto;
+    return `Exemplo em ${sampleMetragem} m: ⌈${sampleMetragem} ÷ ${fatorFormatado}⌉ = ${quantidade} x ${unidadeConsumo}.${buildCostText(
+      quantidade,
+    )}`;
   };
 
   // ─── Form renderers ───
@@ -908,19 +919,19 @@ export function Configuracoes() {
         <div className="mt-2 space-y-2 text-[11px] text-muted-foreground">
           <p>
             <span className="font-medium text-foreground">Por metro:</span> multiplica a metragem pelo fator para obter
-            a quantidade da unidade de consumo. Ex: fator{" "}
-            <span className="font-medium text-foreground">5</span> em{" "}
-            <span className="font-medium text-foreground">12 m</span> →{" "}
-            <span className="font-medium text-foreground">⌈12 × 5⌉ = 60 x rebite 306</span>.
+            a quantidade de unidades de consumo. Exemplo: fator <span className="font-medium text-foreground">8</span>{" "}
+            em um serviço de <span className="font-medium text-foreground">12 m</span> gera{" "}
+            <span className="font-medium text-foreground">96 x rebite 310</span>.
           </p>
           <p>
-            <span className="font-medium text-foreground">A cada X m:</span> usa 1 unidade de consumo a cada X metros. Ex: fator{" "}
-            <span className="font-medium text-foreground">5</span> em{" "}
-            <span className="font-medium text-foreground">20 m</span> →{" "}
-            <span className="font-medium text-foreground">⌈20 ÷ 5⌉ = 4 x sachê de PU 800g</span>.
+            <span className="font-medium text-foreground">A cada X m:</span> usa 1 unidade de consumo a cada quantidade
+            de metros definida no fator. Exemplo: fator <span className="font-medium text-foreground">3</span> em{" "}
+            <span className="font-medium text-foreground">12 m</span> gera{" "}
+            <span className="font-medium text-foreground">4 x sachê de PU 800g</span>.
           </p>
-          <p className="italic">
-            O custo unitário é calculado a partir da embalagem: preço da embalagem ÷ quantidade na embalagem.
+          <p>
+            <span className="font-medium text-foreground">Custo unitário:</span> vem do preço da embalagem dividido pela
+            quantidade dentro da embalagem. A regra consome a unidade de consumo, não a caixa ou o pacote.
           </p>
         </div>
       </div>
@@ -1493,7 +1504,10 @@ export function Configuracoes() {
         ) : (
           filteredRegras.map((e) => {
             const insNames = e.itensRegra
-              .map((ir) => insumos.find((ins) => ins.id === ir.insumoId)?.nomeUnidadeConsumo)
+              .map((ir) => {
+                const insumo = insumos.find((ins) => ins.id === ir.insumoId);
+                return insumo?.nomeUnidadeConsumo || insumo?.nomeEmbalagemCompra;
+              })
               .filter(Boolean);
             const displayNames =
               insNames.length <= 3 ? insNames.join(", ") : `${insNames.slice(0, 3).join(", ")} +${insNames.length - 3}`;
