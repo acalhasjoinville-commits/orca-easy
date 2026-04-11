@@ -14,6 +14,7 @@ interface MobileBottomNavProps {
   onNewOrcamento: () => void;
   onNewCliente?: () => void;
   onNewLancamento?: () => void;
+  onNewVisita?: () => void;
 }
 
 interface NavButtonProps {
@@ -48,6 +49,7 @@ export function MobileBottomNav({
   onNewOrcamento,
   onNewCliente,
   onNewLancamento,
+  onNewVisita,
 }: MobileBottomNavProps) {
   const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers, canManageClientes, isSuperAdmin } =
     useAuth();
@@ -81,6 +83,15 @@ export function MobileBottomNav({
       description: "Registre receita ou despesa direto pelo atalho central.",
       icon: DollarSign,
       onSelect: onNewLancamento,
+    });
+  }
+
+  if (onNewVisita) {
+    quickActions.push({
+      label: "Nova visita",
+      description: "Agende uma visita técnica ou comercial para um novo atendimento.",
+      icon: CalendarDays,
+      onSelect: onNewVisita,
     });
   }
 

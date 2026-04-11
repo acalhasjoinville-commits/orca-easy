@@ -109,6 +109,7 @@ const Index = () => {
   const [wizardKey, setWizardKey] = useState(0);
   const [clienteCreateRequest, setClienteCreateRequest] = useState(0);
   const [lancamentoCreateRequest, setLancamentoCreateRequest] = useState(0);
+  const [visitaCreateRequest, setVisitaCreateRequest] = useState(0);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -290,6 +291,11 @@ const Index = () => {
     setLancamentoCreateRequest((value) => value + 1);
   };
 
+  const goToNewVisita = () => {
+    navigate(getPathForTab("agenda"));
+    setVisitaCreateRequest((value) => value + 1);
+  };
+
   const goToDetails = (orcamento: Orcamento) => {
     navigate(getOrcamentoDetailsPath(orcamento.id));
   };
@@ -439,7 +445,7 @@ const Index = () => {
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
 
-      {tab === "agenda" && <Agenda orcamentos={orcamentos} onViewOrcamento={goToDetails} />}
+      {tab === "agenda" && <Agenda orcamentos={orcamentos} onViewOrcamento={goToDetails} openNewVisitaRequest={visitaCreateRequest} />}
 
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />
@@ -555,6 +561,7 @@ const Index = () => {
           onNewOrcamento={goToNew}
           onNewCliente={goToNewCliente}
           onNewLancamento={goToNewLancamento}
+          onNewVisita={goToNewVisita}
         />
         <Suspense fallback={null}>
           <EditarPerfil open={profileOpen} onOpenChange={setProfileOpen} />

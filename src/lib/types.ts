@@ -243,3 +243,38 @@ export const TIPO_INTERACAO_CONFIG: Record<TipoInteracao, { label: string }> = {
   encerrado: { label: 'Encerrado' },
   observacao: { label: 'Observação' },
 };
+
+// ─── VISITAS (pré-orçamento) ───
+
+export type StatusVisita = 'agendada' | 'realizada' | 'cancelada' | 'reagendada';
+
+export interface Visita {
+  id: string;
+  empresaId: string;
+  nomeCliente: string;
+  telefone: string;
+  enderecoCompleto: string;
+  bairro: string;
+  cidade: string;
+  complemento: string;
+  pontoReferencia: string;
+  tipoServico: string;
+  observacoes: string;
+  responsavelId: string | null;
+  responsavelNome: string;
+  origemContato: string;
+  dataVisita: string;
+  horaVisita: string;
+  status: StatusVisita;
+  clienteId: string | null;
+  orcamentoId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const STATUS_VISITA_CONFIG: Record<StatusVisita, { label: string; color: string }> = {
+  agendada: { label: 'Agendada', color: 'bg-blue-500/15 text-blue-700 border-blue-500/30' },
+  realizada: { label: 'Realizada', color: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
+  cancelada: { label: 'Cancelada', color: 'bg-red-500/15 text-red-600 border-red-500/30' },
+  reagendada: { label: 'Reagendada', color: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
+};
