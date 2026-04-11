@@ -99,7 +99,7 @@ export function useAddVisita() {
         data_visita: input.dataVisita,
         hora_visita: input.horaVisita,
         status: input.status ?? "agendada",
-      } as Record<string, unknown>);
+      });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["visitas"] }),
