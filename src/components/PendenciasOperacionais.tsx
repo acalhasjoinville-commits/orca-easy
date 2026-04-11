@@ -6,9 +6,11 @@ import {
   DollarSign,
   Hammer,
   Loader2,
+  MapPin,
   MessageCircle,
   PhoneCall,
 } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { PendenciaItem, Pendencias } from "@/hooks/usePendencias";
 import { Orcamento } from "@/lib/types";
@@ -18,6 +20,7 @@ interface PendenciasOperacionaisProps {
   pendencias: Pendencias;
   canViewFinanceiro: boolean;
   onViewOrcamento: (orcamento: Orcamento) => void;
+  onOpenAgenda: () => void;
   orcamentosMap: Map<string, Orcamento>;
 }
 
@@ -25,14 +28,25 @@ export function PendenciasOperacionais({
   pendencias,
   canViewFinanceiro,
   onViewOrcamento,
+  onOpenAgenda,
   orcamentosMap,
 }: PendenciasOperacionaisProps) {
-  const { comercial, operacao, financeiro, totalComercial, totalOperacao, totalFinanceiro, isComercialLoading } =
-    pendencias;
+  const {
+    comercial,
+    operacao,
+    financeiro,
+    visitas,
+    totalComercial,
+    totalOperacao,
+    totalFinanceiro,
+    totalVisitas,
+    isComercialLoading,
+    isVisitasLoading,
+  } = pendencias;
 
-  const totalGeral = totalComercial + totalOperacao + (canViewFinanceiro ? totalFinanceiro : 0);
+  const totalGeral = totalComercial + totalOperacao + totalVisitas + (canViewFinanceiro ? totalFinanceiro : 0);
 
-  if (totalGeral === 0 && !isComercialLoading) {
+  if (totalGeral === 0 && !isComercialLoading && !isVisitasLoading) {
     return (
       <Card className="border-dashed bg-muted/20">
         <CardContent className="flex items-center gap-3 p-5">
@@ -49,6 +63,12 @@ export function PendenciasOperacionais({
   }
 
   const handleView = (item: PendenciaItem) => {
+    if (item.visitaId) {
+      onOpenAgenda();
+      return;
+    }
+
+    if (!item.orcamentoId) return;
     const orcamento = orcamentosMap.get(item.orcamentoId);
     if (orcamento) onViewOrcamento(orcamento);
   };
@@ -67,11 +87,12 @@ export function PendenciasOperacionais({
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            O que exige atenção imediata nas áreas comercial, operação{canViewFinanceiro ? " e financeiro" : ""}.
+            O que exige atenção imediata nas áreas comercial, visitas, operação
+            {canViewFinanceiro ? " e financeiro" : ""}.
           </p>
         </div>
 
-        <div className={cn("grid gap-4", canViewFinanceiro ? "md:grid-cols-3" : "md:grid-cols-2")}>
+        <div className={cn("grid gap-4", canViewFinanceiro ? "md:grid-cols-4" : "md:grid-cols-3")}>
           <PendenciaColumn
             title="Comercial"
             icon={PhoneCall}
@@ -98,6 +119,29 @@ export function PendenciasOperacionais({
               items={comercial.semRetorno}
               tone="text-muted-foreground"
               icon={MessageCircle}
+              onClick={handleView}
+            />
+          </PendenciaColumn>
+
+          <PendenciaColumn
+            title="Visitas"
+            icon={MapPin}
+            total={totalVisitas}
+            iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+            isLoading={isVisitasLoading}
+          >
+            <PendenciaGroup
+              label="Visitas para hoje"
+              items={visitas.visitasHoje}
+              tone="text-amber-600 dark:text-amber-400"
+              icon={CalendarClock}
+              onClick={handleView}
+            />
+            <PendenciaGroup
+              label="Visitas atrasadas"
+              items={visitas.visitasAtrasadas}
+              tone="text-red-500"
+              icon={AlertTriangle}
               onClick={handleView}
             />
           </PendenciaColumn>
@@ -233,12 +277,21 @@ function PendenciaGroup({
       <div className="space-y-0.5">
         {items.slice(0, 5).map((item) => (
           <button
-            key={item.orcamentoId}
+            key={item.id}
             onClick={() => onClick(item)}
             className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-background/60"
           >
-            <span className="font-bold text-primary">#{item.numero}</span>
-            <span className="truncate text-muted-foreground">- {item.nomeCliente}</span>
+            {item.numero ? (
+              <>
+                <span className="font-bold text-primary">#{item.numero}</span>
+                <span className="truncate text-muted-foreground">- {item.nomeCliente}</span>
+              </>
+            ) : (
+              <>
+                <span className="truncate font-medium text-foreground">{item.nomeCliente}</span>
+                {item.horaVisita && <span className="shrink-0 text-muted-foreground">{item.horaVisita}</span>}
+              </>
+            )}
           </button>
         ))}
 

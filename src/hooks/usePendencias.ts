@@ -1,12 +1,16 @@
 import { useMemo } from "react";
 import { useFilaComercial, FilaComercialItem } from "@/hooks/useFollowUp";
-import { Orcamento } from "@/lib/types";
-import { toLocalDateStr, getTodayLocal } from "@/lib/dateUtils";
+import { useVisitas } from "@/hooks/useVisitas";
+import { Orcamento, Visita } from "@/lib/types";
+import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 export interface PendenciaItem {
-  orcamentoId: string;
-  numero: number;
+  id: string;
+  orcamentoId?: string | null;
+  visitaId?: string | null;
+  numero?: number | null;
   nomeCliente: string;
+  horaVisita?: string | null;
 }
 
 export interface PendenciasComercial {
@@ -26,18 +30,27 @@ export interface PendenciasFinanceiro {
   faturadosSemPagamento: PendenciaItem[];
 }
 
+export interface PendenciasVisitas {
+  visitasHoje: PendenciaItem[];
+  visitasAtrasadas: PendenciaItem[];
+}
+
 export interface Pendencias {
   comercial: PendenciasComercial;
   operacao: PendenciasOperacao;
   financeiro: PendenciasFinanceiro;
+  visitas: PendenciasVisitas;
   totalComercial: number;
   totalOperacao: number;
   totalFinanceiro: number;
+  totalVisitas: number;
   isComercialLoading: boolean;
+  isVisitasLoading: boolean;
 }
 
 export function usePendencias(orcamentos: Orcamento[]): Pendencias {
   const { data: filaComercial, isLoading: isComercialLoading } = useFilaComercial();
+  const { visitas, isLoading: isVisitasLoading } = useVisitas();
 
   return useMemo(() => {
     const hoje = getTodayLocal();
@@ -70,6 +83,8 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
 
     const executadosSemFaturamento: PendenciaItem[] = [];
     const faturadosSemPagamento: PendenciaItem[] = [];
+    const visitasHoje: PendenciaItem[] = [];
+    const visitasAtrasadas: PendenciaItem[] = [];
 
     for (const orcamento of orcamentos) {
       if (orcamento.status === "aprovado") {
@@ -97,6 +112,16 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
       }
     }
 
+    for (const visita of visitas) {
+      if (visita.status !== "agendada" && visita.status !== "reagendada") continue;
+
+      if (visita.dataVisita === hoje) {
+        visitasHoje.push(toItemVisita(visita));
+      } else if (visita.dataVisita < hoje) {
+        visitasAtrasadas.push(toItemVisita(visita));
+      }
+    }
+
     return {
       comercial: {
         followUpsHoje,
@@ -112,16 +137,23 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
         executadosSemFaturamento,
         faturadosSemPagamento,
       },
+      visitas: {
+        visitasHoje,
+        visitasAtrasadas,
+      },
       totalComercial: followUpsHoje.length + followUpsAtrasados.length + semRetorno.length,
       totalOperacao: aprovadosSemDataPrevista.length + execucaoHoje.length + execucaoAtrasada.length,
       totalFinanceiro: executadosSemFaturamento.length + faturadosSemPagamento.length,
+      totalVisitas: visitasHoje.length + visitasAtrasadas.length,
       isComercialLoading,
+      isVisitasLoading,
     };
-  }, [filaComercial, isComercialLoading, orcamentos]);
+  }, [filaComercial, isComercialLoading, isVisitasLoading, orcamentos, visitas]);
 }
 
 function toItem(item: FilaComercialItem): PendenciaItem {
   return {
+    id: item.orcamentoId,
     orcamentoId: item.orcamentoId,
     numero: item.numeroOrcamento,
     nomeCliente: item.nomeCliente,
@@ -130,8 +162,18 @@ function toItem(item: FilaComercialItem): PendenciaItem {
 
 function toItemOrc(orcamento: Orcamento): PendenciaItem {
   return {
+    id: orcamento.id,
     orcamentoId: orcamento.id,
     numero: orcamento.numeroOrcamento,
     nomeCliente: orcamento.nomeCliente,
+  };
+}
+
+function toItemVisita(visita: Visita): PendenciaItem {
+  return {
+    id: visita.id,
+    visitaId: visita.id,
+    nomeCliente: visita.nomeCliente,
+    horaVisita: visita.horaVisita?.slice(0, 5) ?? null,
   };
 }
