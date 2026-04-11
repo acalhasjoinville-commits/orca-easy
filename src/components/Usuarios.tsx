@@ -63,9 +63,15 @@ const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 const ROLE_HELPERS: Record<AppRole, string> = {
-  admin: "Gerencia usuários, permissões e configurações.",
-  vendedor: "Acessa clientes e orçamentos.",
-  financeiro: "Acompanha e registra movimentações financeiras.",
+  admin: "Controla a operação da empresa e também a gestão de acessos.",
+  vendedor: "Cuida da rotina comercial e operacional ligada ao orçamento.",
+  financeiro: "Fica focado no financeiro, sem acesso à agenda comercial.",
+};
+
+const ROLE_ACCESS: Record<AppRole, string[]> = {
+  admin: ["Dashboard", "Agenda", "Orçamentos", "Clientes", "Financeiro", "Configurações", "Usuários"],
+  vendedor: ["Dashboard", "Agenda", "Orçamentos", "Clientes"],
+  financeiro: ["Dashboard", "Orçamentos", "Financeiro"],
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -320,13 +326,31 @@ export function Usuarios() {
                 Cada papel libera partes diferentes do sistema. Você pode convidar alguém por e-mail, aprovar quem já
                 entrou na empresa e ajustar acessos sem mexer no restante da conta.
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid gap-2 sm:grid-cols-3">
                 {ROLE_OPTIONS.map((role) => (
-                  <div key={role} className="rounded-lg border bg-background/80 px-2.5 py-2">
+                  <div key={role} className="rounded-lg border bg-background/80 px-3 py-3">
                     <p className="text-xs font-semibold text-foreground">{ROLE_LABELS[role]}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{ROLE_HELPERS[role]}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {ROLE_ACCESS[role].map((access) => (
+                        <Badge
+                          key={`${role}-${access}`}
+                          variant="outline"
+                          className={cn("text-[10px] px-1.5 py-0", ROLE_COLORS[role])}
+                        >
+                          {access}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 ))}
+              </div>
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                <p className="text-[11px] font-medium text-foreground">Sem papel definido</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  A pessoa consegue entrar com a conta, mas fica em{" "}
+                  <span className="font-medium text-foreground">Aguardando aprovação</span> até receber um papel.
+                </p>
               </div>
             </div>
           </div>
@@ -411,6 +435,15 @@ export function Usuarios() {
                 </>
               )}
             </Button>
+          </div>
+
+          <div className="rounded-lg border bg-muted/20 px-3 py-2">
+            <p className="text-[11px] font-medium text-foreground">Papel selecionado: {ROLE_LABELS[inviteRole]}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{ROLE_HELPERS[inviteRole]}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Acesso liberado:{" "}
+              <span className="font-medium text-foreground">{ROLE_ACCESS[inviteRole].join(" · ")}</span>
+            </p>
           </div>
 
           {filteredInvites.length > 0 && (
