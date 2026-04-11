@@ -178,27 +178,16 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
         )}
       </div>
 
-      <div className="border-b border-sidebar-border px-3 py-4">
-        <div
-          className={cn(
-            "rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/30 px-3 py-3",
-            collapsed && "px-0 py-3 text-center",
-          )}
-        >
-          {!collapsed ? (
-            <>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">
-                Operação
-              </p>
-              <p className="mt-2 text-sm font-medium text-sidebar-foreground">
-                Acompanhe orçamento, execução, financeiro e cadastros em um fluxo único.
-              </p>
-            </>
-          ) : (
-            <LayoutDashboard className="mx-auto h-4 w-4 text-sidebar-foreground/70" />
-          )}
+      {!collapsed && (
+        <div className="border-b border-sidebar-border px-3 py-4">
+          <div className="rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/30 px-3 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">Operação</p>
+            <p className="mt-2 text-sm font-medium text-sidebar-foreground">
+              Acompanhe orçamento, execução, financeiro e cadastros em um fluxo único.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <nav className="flex-1 space-y-4 px-3 py-4">
         <div className="space-y-1">
