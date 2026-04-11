@@ -1,4 +1,15 @@
-import { CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, MoreHorizontal, Plus, Settings, Shield, Users } from "lucide-react";
+import {
+  CalendarDays,
+  DollarSign,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  MoreHorizontal,
+  Plus,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -89,13 +100,15 @@ export function MobileBottomNav({
   if (onNewVisita) {
     quickActions.push({
       label: "Nova visita",
-      description: "Agende uma visita técnica ou comercial para um novo atendimento.",
+      description: "Agende uma visita tÃ©cnica ou comercial para um novo atendimento.",
       icon: CalendarDays,
       onSelect: onNewVisita,
     });
   }
 
   const secondaryItems: { title: string; tab: Tab; icon: React.ElementType }[] = [];
+
+  secondaryItems.push({ title: "Ajuda", tab: "ajuda", icon: HelpCircle });
 
   if (canManageClientes) {
     secondaryItems.push({ title: "Clientes", tab: "clientes", icon: Users });
@@ -109,7 +122,6 @@ export function MobileBottomNav({
   if (canManageUsers) {
     secondaryItems.push({ title: "Usuários", tab: "usuarios", icon: Users });
   }
-  secondaryItems.push({ title: "Ajuda", tab: "ajuda", icon: HelpCircle });
 
   const isSecondaryActive = secondaryItems.some((item) => item.tab === active);
 

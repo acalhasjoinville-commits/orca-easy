@@ -1,4 +1,4 @@
-export type TipoPessoa = 'PF' | 'PJ';
+export type TipoPessoa = "PF" | "PJ";
 
 export interface Cliente {
   id: string;
@@ -41,7 +41,7 @@ export function getCustoUnitario(insumo: InsumoEntry): number {
   return insumo.qtdEmbalagem > 0 ? insumo.precoEmbalagem / insumo.qtdEmbalagem : 0;
 }
 
-export type MetodoCalculo = 'multiplicar' | 'dividir';
+export type MetodoCalculo = "multiplicar" | "dividir";
 
 export interface ItemRegra {
   id: string;
@@ -69,8 +69,8 @@ export interface ServicoTemplate {
   dificuldadeDificil: number;
 }
 
-export type MotorType = 'motor1' | 'motor2';
-export type Dificuldade = 'facil' | 'medio' | 'dificil';
+export type MotorType = "motor1" | "motor2";
+export type Dificuldade = "facil" | "medio" | "dificil";
 
 export interface InsumoCalculado {
   insumoId: string;
@@ -101,7 +101,7 @@ export interface ItemServico {
   insumosOverrides?: Record<string, number>;
 }
 
-export type StatusOrcamento = 'pendente' | 'aprovado' | 'rejeitado' | 'executado' | 'cancelado';
+export type StatusOrcamento = "pendente" | "aprovado" | "rejeitado" | "executado" | "cancelado";
 
 export interface PoliticaComercial {
   id: string;
@@ -125,7 +125,7 @@ export interface MinhaEmpresa {
   bairro: string;
   cidade: string;
   estado: string;
-  corPrimaria: string;
+  corPrimaria: string | null;
   corDestaque: string;
   slogan: string;
 }
@@ -163,7 +163,7 @@ export interface Orcamento {
   termoRecebimentoOsSnapshot?: string | null;
 }
 
-export type TipoLancamento = 'receita' | 'despesa';
+export type TipoLancamento = "receita" | "despesa";
 
 export interface LancamentoFinanceiro {
   id: string;
@@ -178,29 +178,31 @@ export interface LancamentoFinanceiro {
 }
 
 export const CATEGORIAS_DESPESA = [
-  'Material',
-  'Combustível',
-  'Folha / Salário',
-  'Aluguel',
-  'Ferramentas',
-  'Impostos',
-  'Serviços de Terceiros',
-  'Administrativo',
-  'Transporte',
-  'Outros',
+  "Material",
+  "Combustível",
+  "Folha / Salário",
+  "Aluguel",
+  "Ferramentas",
+  "Impostos",
+  "Serviços de Terceiros",
+  "Administrativo",
+  "Transporte",
+  "Outros",
 ] as const;
 
-export const CATEGORIAS_RECEITA = [
-  'Receita Avulsa',
-  'Entrada Manual',
-  'Ajuste Positivo',
-  'Outros',
-] as const;
+export const CATEGORIAS_RECEITA = ["Receita Avulsa", "Entrada Manual", "Ajuste Positivo", "Outros"] as const;
 
 // ─── FOLLOW-UP COMERCIAL ───
 
-export type StatusFollowUp = 'sem_retorno' | 'agendado' | 'em_negociacao' | 'aguardando_cliente' | 'concluido';
-export type TipoInteracao = 'contato' | 'retorno_agendado' | 'negociacao' | 'cliente_sem_resposta' | 'aprovado' | 'encerrado' | 'observacao';
+export type StatusFollowUp = "sem_retorno" | "agendado" | "em_negociacao" | "aguardando_cliente" | "concluido";
+export type TipoInteracao =
+  | "contato"
+  | "retorno_agendado"
+  | "negociacao"
+  | "cliente_sem_resposta"
+  | "aprovado"
+  | "encerrado"
+  | "observacao";
 
 export interface OrcamentoFollowUp {
   id: string;
@@ -227,26 +229,26 @@ export interface FollowUpLog {
 }
 
 export const STATUS_FOLLOWUP_CONFIG: Record<StatusFollowUp, { label: string; color: string }> = {
-  sem_retorno: { label: 'Sem retorno', color: 'bg-gray-500/15 text-gray-600 border-gray-500/30' },
-  agendado: { label: 'Agendado', color: 'bg-blue-500/15 text-blue-700 border-blue-500/30' },
-  em_negociacao: { label: 'Em negociação', color: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
-  aguardando_cliente: { label: 'Aguardando cliente', color: 'bg-purple-500/15 text-purple-700 border-purple-500/30' },
-  concluido: { label: 'Concluído', color: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
+  sem_retorno: { label: "Sem retorno", color: "bg-gray-500/15 text-gray-600 border-gray-500/30" },
+  agendado: { label: "Agendado", color: "bg-blue-500/15 text-blue-700 border-blue-500/30" },
+  em_negociacao: { label: "Em negociação", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+  aguardando_cliente: { label: "Aguardando cliente", color: "bg-purple-500/15 text-purple-700 border-purple-500/30" },
+  concluido: { label: "Concluído", color: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
 };
 
 export const TIPO_INTERACAO_CONFIG: Record<TipoInteracao, { label: string }> = {
-  contato: { label: 'Contato realizado' },
-  retorno_agendado: { label: 'Retorno agendado' },
-  negociacao: { label: 'Negociação' },
-  cliente_sem_resposta: { label: 'Cliente sem resposta' },
-  aprovado: { label: 'Aprovado' },
-  encerrado: { label: 'Encerrado' },
-  observacao: { label: 'Observação' },
+  contato: { label: "Contato realizado" },
+  retorno_agendado: { label: "Retorno agendado" },
+  negociacao: { label: "Negociação" },
+  cliente_sem_resposta: { label: "Cliente sem resposta" },
+  aprovado: { label: "Aprovado" },
+  encerrado: { label: "Encerrado" },
+  observacao: { label: "Observação" },
 };
 
-// ─── VISITAS (pré-orçamento) ───
+// VISITAS (pré-orçamento)
 
-export type StatusVisita = 'agendada' | 'realizada' | 'cancelada' | 'reagendada';
+export type StatusVisita = "agendada" | "realizada" | "cancelada" | "reagendada";
 
 export interface Visita {
   id: string;
@@ -273,8 +275,8 @@ export interface Visita {
 }
 
 export const STATUS_VISITA_CONFIG: Record<StatusVisita, { label: string; color: string }> = {
-  agendada: { label: 'Agendada', color: 'bg-blue-500/15 text-blue-700 border-blue-500/30' },
-  realizada: { label: 'Realizada', color: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
-  cancelada: { label: 'Cancelada', color: 'bg-red-500/15 text-red-600 border-red-500/30' },
-  reagendada: { label: 'Reagendada', color: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
+  agendada: { label: "Agendada", color: "bg-blue-500/15 text-blue-700 border-blue-500/30" },
+  realizada: { label: "Realizada", color: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+  cancelada: { label: "Cancelada", color: "bg-red-500/15 text-red-600 border-red-500/30" },
+  reagendada: { label: "Reagendada", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
 };
