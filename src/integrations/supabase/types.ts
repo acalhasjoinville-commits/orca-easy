@@ -921,6 +921,86 @@ export type Database = {
           },
         ]
       }
+      visitas: {
+        Row: {
+          bairro: string
+          cidade: string
+          cliente_id: string | null
+          complemento: string
+          created_at: string
+          data_visita: string
+          empresa_id: string
+          endereco_completo: string
+          hora_visita: string
+          id: string
+          nome_cliente: string
+          observacoes: string
+          orcamento_id: string | null
+          origem_contato: string
+          ponto_referencia: string
+          responsavel_id: string | null
+          responsavel_nome: string
+          status: string
+          telefone: string
+          tipo_servico: string
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string
+          cidade?: string
+          cliente_id?: string | null
+          complemento?: string
+          created_at?: string
+          data_visita: string
+          empresa_id: string
+          endereco_completo: string
+          hora_visita?: string
+          id?: string
+          nome_cliente: string
+          observacoes?: string
+          orcamento_id?: string | null
+          origem_contato?: string
+          ponto_referencia?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          telefone: string
+          tipo_servico?: string
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string
+          cidade?: string
+          cliente_id?: string | null
+          complemento?: string
+          created_at?: string
+          data_visita?: string
+          empresa_id?: string
+          endereco_completo?: string
+          hora_visita?: string
+          id?: string
+          nome_cliente?: string
+          observacoes?: string
+          orcamento_id?: string | null
+          origem_contato?: string
+          ponto_referencia?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          telefone?: string
+          tipo_servico?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
