@@ -113,8 +113,7 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
       <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Clientes</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground">
             {clientes.length > 0
               ? `${clientes.length} cliente${clientes.length !== 1 ? "s" : ""} cadastrado${clientes.length !== 1 ? "s" : ""}${clientesSemDocumento > 0 ? ` • ${clientesSemDocumento} sem documento` : ""}`
               : "Gerencie sua base de clientes"}
