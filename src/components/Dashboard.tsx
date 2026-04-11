@@ -423,6 +423,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
         pendencias={pendencias}
         canViewFinanceiro={canViewFinanceiro}
         onViewOrcamento={onViewOrcamento}
+        onOpenAgenda={() => onNavigate("agenda")}
         orcamentosMap={orcamentosMap}
       />
 
