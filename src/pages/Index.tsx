@@ -99,6 +99,7 @@ const Index = () => {
     isSuperAdmin,
     empresaStatus,
     signOut,
+    canManageAgenda,
     canManageSettings,
     canViewFinanceiro,
     canCreateEditBudget,
@@ -241,6 +242,10 @@ const Index = () => {
       toast.error("Sem permissão para acessar Financeiro.");
       return;
     }
+    if (newTab === "agenda" && !canManageAgenda) {
+      toast.error("Sem permissão para acessar Agenda.");
+      return;
+    }
     if (newTab === "clientes" && !canManageClientes) {
       toast.error("Sem permissão para acessar Clientes.");
       return;
@@ -292,6 +297,11 @@ const Index = () => {
   };
 
   const goToNewVisita = () => {
+    if (!canManageAgenda) {
+      toast.error("Sem permissão para agendar visitas.");
+      return;
+    }
+
     navigate(getPathForTab("agenda"));
     setVisitaCreateRequest((value) => value + 1);
   };
@@ -445,9 +455,12 @@ const Index = () => {
         <Dashboard onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onNavigate={guardedNavigate} />
       )}
 
-      {tab === "agenda" && (
-        <Agenda orcamentos={orcamentos} onViewOrcamento={goToDetails} openNewVisitaRequest={visitaCreateRequest} />
-      )}
+      {tab === "agenda" &&
+        (canManageAgenda ? (
+          <Agenda orcamentos={orcamentos} onViewOrcamento={goToDetails} openNewVisitaRequest={visitaCreateRequest} />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar a Agenda." />
+        ))}
 
       {tab === "orcamentos" && (
         <Orcamentos onNewOrcamento={goToNew} onViewOrcamento={goToDetails} onEditOrcamento={goToEdit} />

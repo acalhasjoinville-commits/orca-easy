@@ -68,6 +68,7 @@ interface AuthContextType {
   canManageSettings: boolean;
   canDeleteBudget: boolean;
   canViewFinanceiro: boolean;
+  canManageAgenda: boolean;
   canCreateEditBudget: boolean;
   canManageClientes: boolean;
   canManageUsers: boolean;
@@ -239,6 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canManageSettings: isAdmin,
     canDeleteBudget: isAdmin,
     canViewFinanceiro: isAdmin || isFinanceiro,
+    canManageAgenda: isAdmin || isVendedor,
     canCreateEditBudget: isAdmin || isVendedor,
     canManageClientes: isAdmin || isVendedor,
     canManageUsers: isAdmin,

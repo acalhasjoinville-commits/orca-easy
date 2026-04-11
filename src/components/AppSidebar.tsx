@@ -22,7 +22,13 @@ interface AppSidebarProps {
   onNavigate: (tab: Tab) => void;
 }
 
-type Permission = "all" | "canManageClientes" | "canViewFinanceiro" | "canManageSettings" | "canManageUsers";
+type Permission =
+  | "all"
+  | "canManageAgenda"
+  | "canManageClientes"
+  | "canViewFinanceiro"
+  | "canManageSettings"
+  | "canManageUsers";
 
 interface NavItem {
   title: string;
@@ -45,7 +51,7 @@ const operationItems: NavItem[] = [
     helper: "Compromissos e prazos da semana",
     tab: "agenda",
     icon: CalendarDays,
-    permission: "all",
+    permission: "canManageAgenda",
   },
   {
     title: "Orçamentos",
@@ -102,10 +108,11 @@ function isOrcamentoTab(tab: Tab) {
 }
 
 export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
-  const { canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
+  const { canManageAgenda, canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
 
   const permissionMap: Record<Permission, boolean> = {
     all: true,
+    canManageAgenda,
     canManageClientes,
     canViewFinanceiro,
     canManageSettings,

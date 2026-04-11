@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 interface PendenciasOperacionaisProps {
   pendencias: Pendencias;
+  canManageAgenda: boolean;
   canViewFinanceiro: boolean;
   onViewOrcamento: (orcamento: Orcamento) => void;
   onOpenAgenda: () => void;
@@ -26,6 +27,7 @@ interface PendenciasOperacionaisProps {
 
 export function PendenciasOperacionais({
   pendencias,
+  canManageAgenda,
   canViewFinanceiro,
   onViewOrcamento,
   onOpenAgenda,
@@ -44,7 +46,8 @@ export function PendenciasOperacionais({
     isVisitasLoading,
   } = pendencias;
 
-  const totalGeral = totalComercial + totalOperacao + totalVisitas + (canViewFinanceiro ? totalFinanceiro : 0);
+  const totalGeral =
+    totalComercial + totalOperacao + (canManageAgenda ? totalVisitas : 0) + (canViewFinanceiro ? totalFinanceiro : 0);
 
   if (totalGeral === 0 && !isComercialLoading && !isVisitasLoading) {
     return (
@@ -63,7 +66,7 @@ export function PendenciasOperacionais({
   }
 
   const handleView = (item: PendenciaItem) => {
-    if (item.visitaId) {
+    if (item.visitaId && canManageAgenda) {
       onOpenAgenda();
       return;
     }
@@ -87,12 +90,21 @@ export function PendenciasOperacionais({
             )}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            O que exige atenção imediata nas áreas comercial, visitas, operação
+            O que exige atenção imediata nas áreas comercial{canManageAgenda ? ", visitas" : ""}, operação
             {canViewFinanceiro ? " e financeiro" : ""}.
           </p>
         </div>
 
-        <div className={cn("grid gap-4", canViewFinanceiro ? "md:grid-cols-4" : "md:grid-cols-3")}>
+        <div
+          className={cn(
+            "grid gap-4",
+            canManageAgenda && canViewFinanceiro
+              ? "md:grid-cols-4"
+              : canManageAgenda || canViewFinanceiro
+                ? "md:grid-cols-3"
+                : "md:grid-cols-2",
+          )}
+        >
           <PendenciaColumn
             title="Comercial"
             icon={PhoneCall}
@@ -123,28 +135,30 @@ export function PendenciasOperacionais({
             />
           </PendenciaColumn>
 
-          <PendenciaColumn
-            title="Visitas"
-            icon={MapPin}
-            total={totalVisitas}
-            iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
-            isLoading={isVisitasLoading}
-          >
-            <PendenciaGroup
-              label="Visitas para hoje"
-              items={visitas.visitasHoje}
-              tone="text-amber-600 dark:text-amber-400"
-              icon={CalendarClock}
-              onClick={handleView}
-            />
-            <PendenciaGroup
-              label="Visitas atrasadas"
-              items={visitas.visitasAtrasadas}
-              tone="text-red-500"
-              icon={AlertTriangle}
-              onClick={handleView}
-            />
-          </PendenciaColumn>
+          {canManageAgenda && (
+            <PendenciaColumn
+              title="Visitas"
+              icon={MapPin}
+              total={totalVisitas}
+              iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+              isLoading={isVisitasLoading}
+            >
+              <PendenciaGroup
+                label="Visitas para hoje"
+                items={visitas.visitasHoje}
+                tone="text-amber-600 dark:text-amber-400"
+                icon={CalendarClock}
+                onClick={handleView}
+              />
+              <PendenciaGroup
+                label="Visitas atrasadas"
+                items={visitas.visitasAtrasadas}
+                tone="text-red-500"
+                icon={AlertTriangle}
+                onClick={handleView}
+              />
+            </PendenciaColumn>
+          )}
 
           <PendenciaColumn
             title="Operação"

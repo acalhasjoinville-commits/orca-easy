@@ -79,7 +79,7 @@ const statusBadgeColors: Record<StatusOrcamento, string> = {
 
 export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: DashboardProps) {
   const { orcamentos, isLoading } = useOrcamentos();
-  const { canCreateEditBudget, canViewFinanceiro, canManageClientes } = useAuth();
+  const { canCreateEditBudget, canManageAgenda, canViewFinanceiro, canManageClientes } = useAuth();
   const pendencias = usePendencias(orcamentos);
 
   const orcamentosMap = useMemo(() => {
@@ -420,6 +420,7 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
 
       <PendenciasOperacionais
         pendencias={pendencias}
+        canManageAgenda={canManageAgenda}
         canViewFinanceiro={canViewFinanceiro}
         onViewOrcamento={onViewOrcamento}
         onOpenAgenda={() => onNavigate("agenda")}

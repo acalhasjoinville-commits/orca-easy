@@ -62,8 +62,15 @@ export function MobileBottomNav({
   onNewLancamento,
   onNewVisita,
 }: MobileBottomNavProps) {
-  const { canCreateEditBudget, canViewFinanceiro, canManageSettings, canManageUsers, canManageClientes, isSuperAdmin } =
-    useAuth();
+  const {
+    canCreateEditBudget,
+    canManageAgenda,
+    canViewFinanceiro,
+    canManageSettings,
+    canManageUsers,
+    canManageClientes,
+    isSuperAdmin,
+  } = useAuth();
   const navigate = useNavigate();
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -97,7 +104,7 @@ export function MobileBottomNav({
     });
   }
 
-  if (onNewVisita) {
+  if (canManageAgenda && onNewVisita) {
     quickActions.push({
       label: "Nova visita",
       description: "Agende uma visita tÃ©cnica ou comercial para um novo atendimento.",
@@ -145,12 +152,16 @@ export function MobileBottomNav({
           onClick={() => onNavigate("dashboard")}
         />
 
-        <MobileNavButton
-          active={active === "agenda"}
-          label="Agenda"
-          icon={CalendarDays}
-          onClick={() => onNavigate("agenda")}
-        />
+        {canManageAgenda ? (
+          <MobileNavButton
+            active={active === "agenda"}
+            label="Agenda"
+            icon={CalendarDays}
+            onClick={() => onNavigate("agenda")}
+          />
+        ) : (
+          <div />
+        )}
 
         <div className="flex justify-center">
           {quickActions.length > 0 ? (
