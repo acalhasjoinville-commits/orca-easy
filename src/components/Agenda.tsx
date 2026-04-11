@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Banknote,
@@ -20,13 +20,12 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const VisitasManager = lazy(() =>
-  import("@/components/VisitasManager").then((m) => ({ default: m.VisitasManager })),
-);
+import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
+import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
 
 type AreaType = "comercial" | "operacao" | "financeiro" | "visita";
 type FilterType = "todos" | AreaType;
+type AgendaView = "timeline" | "visitas";
 
 interface AgendaEvento {
   id: string;
@@ -63,7 +62,7 @@ const areaConfig: Record<AreaType, { label: string; color: string; bgColor: stri
     icon: Phone,
   },
   operacao: {
-    label: "Operação",
+    label: "Operacao",
     color: "text-blue-600",
     bgColor: "bg-blue-100 dark:bg-blue-950",
     icon: Hammer,
@@ -86,27 +85,81 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "visita", label: "Visitas" },
   { value: "comercial", label: "Comercial" },
-  { value: "operacao", label: "Operação" },
+  { value: "operacao", label: "Operacao" },
   { value: "financeiro", label: "Financeiro" },
 ];
 
+const AGENDA_FILTER_STORAGE_KEY = "orcacalhas:agenda-view:v1";
+const AGENDA_TAB_STORAGE_KEY = "orcacalhas:agenda-tab:v1";
+
 function compareAgendaEventos(a: AgendaEvento, b: AgendaEvento) {
   if (a.date !== b.date) return a.date.localeCompare(b.date);
+
+  const timeA = a.horaVisita ?? "99:99";
+  const timeB = b.horaVisita ?? "99:99";
+  if (timeA !== timeB) return timeA.localeCompare(timeB);
+
   if (a.area !== b.area) return a.area.localeCompare(b.area);
-  return a.numero - b.numero;
+  if (a.numero !== b.numero) return a.numero - b.numero;
+  return a.nomeCliente.localeCompare(b.nomeCliente);
 }
 
 export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: AgendaProps) {
-  const { canViewFinanceiro } = useAuth();
+  const { canViewFinanceiro, user } = useAuth();
   const { data: filaComercial, isLoading: filaLoading } = useFilaComercial();
   const { visitas, isLoading: visitasLoading } = useVisitas();
+
   const [filter, setFilter] = useState<FilterType>("todos");
+  const [activeView, setActiveView] = useState<AgendaView>("timeline");
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null);
+  const [editRequest, setEditRequest] = useState<EditVisitaRequest | null>(null);
 
   const hoje = getTodayLocal();
   const amanha = addDaysLocal(1);
   const limiteMax = addDaysLocal(7);
   const limitePassado = addDaysLocal(-7);
+
+  useEffect(() => {
+    if (!user) return;
+
+    try {
+      const storedFilter = sessionStorage.getItem(`${AGENDA_FILTER_STORAGE_KEY}:${user.id}`);
+      if (
+        storedFilter === "todos" ||
+        storedFilter === "comercial" ||
+        storedFilter === "operacao" ||
+        storedFilter === "financeiro" ||
+        storedFilter === "visita"
+      ) {
+        setFilter(storedFilter);
+      }
+
+      const storedTab = sessionStorage.getItem(`${AGENDA_TAB_STORAGE_KEY}:${user.id}`);
+      if (storedTab === "timeline" || storedTab === "visitas") {
+        setActiveView(storedTab);
+      }
+    } catch {
+      // ignore restore failures
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    try {
+      sessionStorage.setItem(`${AGENDA_FILTER_STORAGE_KEY}:${user.id}`, filter);
+      sessionStorage.setItem(`${AGENDA_TAB_STORAGE_KEY}:${user.id}`, activeView);
+    } catch {
+      // ignore persistence failures
+    }
+  }, [activeView, filter, user]);
+
+  useEffect(() => {
+    if (!openNewVisitaRequest) return;
+
+    setSelectedVisita(null);
+    setActiveView("visitas");
+  }, [openNewVisitaRequest]);
 
   const effectiveFilter = !canViewFinanceiro && filter === "financeiro" ? "todos" : filter;
 
@@ -118,11 +171,18 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
     return map;
   }, [orcamentos]);
 
+  const visitasMap = useMemo(() => {
+    const map = new Map<string, Visita>();
+    for (const visita of visitas) {
+      map.set(visita.id, visita);
+    }
+    return map;
+  }, [visitas]);
+
   const eventos = useMemo(() => {
     const result: AgendaEvento[] = [];
     const fila = filaComercial ?? [];
 
-    // Follow-ups comerciais
     for (const item of fila) {
       if (item.statusFollowUp === "concluido") continue;
       if (item.statusOrcamento === "cancelado" || item.statusOrcamento === "rejeitado") continue;
@@ -142,7 +202,6 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       });
     }
 
-    // Orçamentos (operação + financeiro)
     for (const orcamento of orcamentos) {
       if (orcamento.status === "aprovado") {
         const previstaLocal = toLocalDateStr(orcamento.dataPrevista);
@@ -151,7 +210,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             id: `op-${orcamento.id}`,
             date: previstaLocal,
             area: "operacao",
-            subtype: previstaLocal < hoje ? "Execução atrasada" : "Execução prevista",
+            subtype: previstaLocal < hoje ? "Execucao atrasada" : "Execucao prevista",
             orcamentoId: orcamento.id,
             visitaId: null,
             numero: orcamento.numeroOrcamento,
@@ -191,21 +250,25 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       }
     }
 
-    // Visitas agendadas/reagendadas
-    for (const v of visitas) {
-      if (v.status !== "agendada" && v.status !== "reagendada") continue;
-      if (v.dataVisita > limiteMax) continue;
+    for (const visita of visitas) {
+      if (visita.status !== "agendada" && visita.status !== "reagendada") continue;
+      if (visita.dataVisita > limiteMax) continue;
 
       result.push({
-        id: `vis-${v.id}`,
-        date: v.dataVisita,
+        id: `vis-${visita.id}`,
+        date: visita.dataVisita,
         area: "visita",
-        subtype: v.dataVisita < hoje ? "Visita atrasada" : v.status === "reagendada" ? "Visita reagendada" : "Visita técnica",
+        subtype:
+          visita.dataVisita < hoje
+            ? "Visita atrasada"
+            : visita.status === "reagendada"
+              ? "Visita reagendada"
+              : "Visita tecnica",
         orcamentoId: null,
-        visitaId: v.id,
+        visitaId: visita.id,
         numero: 0,
-        nomeCliente: v.nomeCliente,
-        horaVisita: v.horaVisita?.slice(0, 5),
+        nomeCliente: visita.nomeCliente,
+        horaVisita: visita.horaVisita.slice(0, 5),
       });
     }
 
@@ -276,7 +339,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
     if (financeHistory.length > 0) {
       result.push({
         key: "financeiro-historico",
-        label: "Últimos registros financeiros",
+        label: "Ultimos registros financeiros",
         isOverdue: false,
         isHistory: true,
         showItemDate: true,
@@ -292,154 +355,30 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
 
   const handleClick = (evento: AgendaEvento) => {
     if (evento.visitaId) {
-      const v = visitas.find((vis) => vis.id === evento.visitaId);
-      if (v) setSelectedVisita(v);
+      const visita = visitasMap.get(evento.visitaId);
+      if (visita) setSelectedVisita(visita);
       return;
     }
+
     if (evento.orcamentoId) {
       const orcamento = orcamentosMap.get(evento.orcamentoId);
       if (orcamento) onViewOrcamento(orcamento);
     }
   };
 
+  const handleTimelineEdit = (mode: EditVisitaRequest["mode"]) => {
+    if (!selectedVisita) return;
+
+    setEditRequest({
+      key: Date.now(),
+      visita: selectedVisita,
+      mode,
+    });
+    setSelectedVisita(null);
+    setActiveView("visitas");
+  };
+
   const isTimelineLoading = filaLoading || visitasLoading;
-
-  const timelineContent = (
-    <>
-      <div className="flex flex-wrap gap-2">
-        {visibleFilters.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => setFilter(option.value)}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
-              effectiveFilter === option.value
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {isTimelineLoading && (
-        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4 animate-spin" />
-          Carregando agenda...
-        </div>
-      )}
-
-      {!isTimelineLoading && sections.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <CalendarDays className="mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos próximos dias</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              Quando houver visitas, retornos comerciais, execuções previstas ou registros financeiros, eles aparecerão
-              aqui.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {sections.map((section) => (
-        <div key={section.key} className="space-y-2">
-          <div className="flex items-center gap-2">
-            {section.isOverdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
-            <h3
-              className={cn(
-                "text-sm font-semibold",
-                section.isOverdue
-                  ? "text-destructive"
-                  : section.isHistory
-                    ? "text-muted-foreground"
-                    : "text-foreground",
-              )}
-            >
-              {section.label}
-            </h3>
-            <Badge
-              variant="secondary"
-              className={cn(
-                "px-1.5 py-0 text-[10px]",
-                section.isOverdue && "border-destructive/20 bg-destructive/10 text-destructive",
-                section.isHistory && "bg-muted text-muted-foreground",
-              )}
-            >
-              {section.eventos.length}
-            </Badge>
-          </div>
-
-          <div className="space-y-1.5">
-            {section.eventos.map((evento) => {
-              const config = areaConfig[evento.area];
-              const Icon = config.icon;
-
-              return (
-                <button
-                  key={evento.id}
-                  onClick={() => handleClick(evento)}
-                  className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/50",
-                    section.isOverdue && evento.area !== "financeiro" && "border-destructive/20",
-                  )}
-                >
-                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
-                    <Icon className={cn("h-4 w-4", config.color)} />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm font-medium text-foreground">
-                        {evento.area === "visita"
-                          ? evento.nomeCliente
-                          : `#${evento.numero} - ${evento.nomeCliente}`}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={cn("border-0 px-1.5 py-0 text-[10px]", config.bgColor, config.color)}
-                      >
-                        {config.label}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground">{evento.subtype}</span>
-                      {evento.horaVisita && (
-                        <>
-                          <span className="text-[11px] text-muted-foreground/50">•</span>
-                          <span className="text-[11px] text-muted-foreground">{evento.horaVisita}</span>
-                        </>
-                      )}
-                      {section.showItemDate && (
-                        <>
-                          <span className="text-[11px] text-muted-foreground/50">•</span>
-                          <span className="text-[11px] text-muted-foreground">
-                            {formatDateLabel(evento.date, hoje, amanha)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {evento.area === "financeiro" ? (
-                    <Banknote className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {/* Visita Detail Dialog — reuse VisitasManager's detail for timeline clicks */}
-      {selectedVisita && (
-        <VisitaTimelineDetail visita={selectedVisita} onClose={() => setSelectedVisita(null)} />
-      )}
-    </>
-  );
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 px-4 pb-24 pt-5 lg:px-6 lg:pb-8">
@@ -450,9 +389,9 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
               <CalendarDays className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Agenda da operação</p>
+              <p className="text-sm font-semibold text-foreground">Agenda da operacao</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Veja visitas técnicas, retornos comerciais, execuções previstas e registros recentes em uma linha do
+                Veja visitas tecnicas, retornos comerciais, execucoes previstas e registros recentes em uma linha do
                 tempo simples para a semana.
               </p>
             </div>
@@ -460,139 +399,162 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="timeline" className="w-full">
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as AgendaView)} className="w-full">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="timeline" className="flex-1 sm:flex-initial">
             Linha do tempo
           </TabsTrigger>
           <TabsTrigger value="visitas" className="flex-1 sm:flex-initial">
-            Gestão de visitas
+            Gestao de visitas
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="timeline" className="space-y-4">
-          {timelineContent}
-        </TabsContent>
-
-        <TabsContent value="visitas">
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-8">
-                <Clock className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            }
-          >
-            <VisitasManager openNewRequest={openNewVisitaRequest} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-// ─── Inline detail dialog for timeline visita clicks ───
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Check, Pencil, X } from "lucide-react";
-import { useUpdateVisita } from "@/hooks/useVisitas";
-import { STATUS_VISITA_CONFIG, StatusVisita } from "@/lib/types";
-import { toast } from "sonner";
-
-function VisitaTimelineDetail({ visita, onClose }: { visita: Visita; onClose: () => void }) {
-  const updateVisita = useUpdateVisita();
-  const cfg = STATUS_VISITA_CONFIG[visita.status];
-  const whatsLink = `https://wa.me/55${visita.telefone.replace(/\D/g, "")}`;
-
-  const handleStatus = async (status: StatusVisita) => {
-    try {
-      await updateVisita.mutateAsync({
-        id: visita.id,
-        nomeCliente: visita.nomeCliente,
-        telefone: visita.telefone,
-        enderecoCompleto: visita.enderecoCompleto,
-        dataVisita: visita.dataVisita,
-        horaVisita: visita.horaVisita,
-        status,
-      });
-      toast.success(`Visita marcada como ${STATUS_VISITA_CONFIG[status].label.toLowerCase()}.`);
-      onClose();
-    } catch {
-      toast.error("Erro ao atualizar status.");
-    }
-  };
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Detalhes da visita</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold">{visita.nomeCliente}</h3>
-              <a
-                href={whatsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 flex items-center gap-1 text-sm text-primary hover:underline"
+        <TabsContent value="timeline" className="space-y-6 pt-2">
+          <div className="flex flex-wrap gap-2">
+            {visibleFilters.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setFilter(option.value)}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
+                  effectiveFilter === option.value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80",
+                )}
               >
-                <Phone className="h-3.5 w-3.5" />
-                {visita.telefone}
-              </a>
-            </div>
-            <Badge variant="outline" className={cn("shrink-0", cfg.color)}>
-              {cfg.label}
-            </Badge>
+                {option.label}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-2 text-sm">
-            <div className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <span>{visita.enderecoCompleto}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {new Date(visita.dataVisita + "T00:00:00").toLocaleDateString("pt-BR")} às{" "}
-                {visita.horaVisita.slice(0, 5)}
-              </span>
-            </div>
-            {visita.tipoServico && <p className="text-muted-foreground">Tipo: {visita.tipoServico}</p>}
-            {visita.responsavelNome && <p className="text-muted-foreground">Responsável: {visita.responsavelNome}</p>}
-            {visita.observacoes && (
-              <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">Observações</p>
-                <p className="mt-1 whitespace-pre-wrap">{visita.observacoes}</p>
-              </div>
-            )}
-          </div>
-
-          {(visita.status === "agendada" || visita.status === "reagendada") && (
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-emerald-500/30 text-emerald-700 hover:bg-emerald-50"
-                onClick={() => handleStatus("realizada")}
-              >
-                <Check className="mr-1.5 h-3.5 w-3.5" />
-                Realizada
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-red-500/30 text-red-600 hover:bg-red-50"
-                onClick={() => handleStatus("cancelada")}
-              >
-                <X className="mr-1.5 h-3.5 w-3.5" />
-                Cancelar
-              </Button>
+          {isTimelineLoading && (
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 animate-spin" />
+              Carregando agenda...
             </div>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+
+          {!isTimelineLoading && sections.length === 0 && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <CalendarDays className="mb-3 h-10 w-10 text-muted-foreground/40" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos proximos dias</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Quando houver visitas, retornos comerciais, execucoes previstas ou registros financeiros, eles
+                  aparecerao aqui.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.map((section) => (
+            <div key={section.key} className="space-y-2">
+              <div className="flex items-center gap-2">
+                {section.isOverdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                <h3
+                  className={cn(
+                    "text-sm font-semibold",
+                    section.isOverdue
+                      ? "text-destructive"
+                      : section.isHistory
+                        ? "text-muted-foreground"
+                        : "text-foreground",
+                  )}
+                >
+                  {section.label}
+                </h3>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "px-1.5 py-0 text-[10px]",
+                    section.isOverdue && "border-destructive/20 bg-destructive/10 text-destructive",
+                    section.isHistory && "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {section.eventos.length}
+                </Badge>
+              </div>
+
+              <div className="space-y-1.5">
+                {section.eventos.map((evento) => {
+                  const config = areaConfig[evento.area];
+                  const Icon = config.icon;
+
+                  return (
+                    <button
+                      key={evento.id}
+                      onClick={() => handleClick(evento)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-3 text-left transition-colors hover:bg-muted/50",
+                        section.isOverdue && evento.area !== "financeiro" && "border-destructive/20",
+                      )}
+                    >
+                      <div
+                        className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}
+                      >
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {evento.area === "visita"
+                              ? evento.nomeCliente
+                              : `#${evento.numero} - ${evento.nomeCliente}`}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn("border-0 px-1.5 py-0 text-[10px]", config.bgColor, config.color)}
+                          >
+                            {config.label}
+                          </Badge>
+                          <span className="text-[11px] text-muted-foreground">{evento.subtype}</span>
+                          {evento.horaVisita && (
+                            <>
+                              <span className="text-[11px] text-muted-foreground/50">•</span>
+                              <span className="text-[11px] text-muted-foreground">{evento.horaVisita}</span>
+                            </>
+                          )}
+                          {section.showItemDate && (
+                            <>
+                              <span className="text-[11px] text-muted-foreground/50">•</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {formatDateLabel(evento.date, hoje, amanha)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {evento.area === "financeiro" ? (
+                        <Banknote className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="visitas" className="pt-2">
+          <VisitasManager openNewRequest={openNewVisitaRequest} editRequest={editRequest} />
+        </TabsContent>
+      </Tabs>
+
+      <VisitaDetailDialog
+        visita={selectedVisita}
+        open={!!selectedVisita}
+        onOpenChange={(open) => {
+          if (!open) setSelectedVisita(null);
+        }}
+        onEdit={selectedVisita ? () => handleTimelineEdit("edit") : undefined}
+        onReschedule={selectedVisita ? () => handleTimelineEdit("reschedule") : undefined}
+      />
+    </div>
   );
 }
