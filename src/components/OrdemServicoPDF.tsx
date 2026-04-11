@@ -33,6 +33,7 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
   const cnpjCpf = empresa?.cnpjCpf || "";
   const telefone = empresa?.telefoneWhatsApp || "";
   const email = empresa?.emailContato || "";
+  const hasLogo = Boolean(logoBase64);
 
   const s = StyleSheet.create({
     page: {
@@ -53,7 +54,7 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
       borderBottomColor: corPrimaria,
       paddingBottom: 10,
     },
-    logo: { width: 50, height: 50, marginRight: 10, objectFit: "contain" as const },
+    logo: { width: hasLogo ? 150 : 50, height: 50, marginRight: 10, objectFit: "contain" as const },
     headerLeft: { flex: 1 },
     companyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: corPrimaria },
     headerContact: { fontSize: 6.5, color: "#555", marginTop: 2 },
@@ -202,7 +203,7 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
         <View style={s.header}>
           {logoBase64 && <Image src={logoBase64} style={s.logo} />}
           <View style={s.headerLeft}>
-            <Text style={s.companyName}>{nomeEmpresa}</Text>
+            {!hasLogo ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
             {cnpjCpf ? <Text style={s.headerContact}>{cnpjCpf}</Text> : null}
             <Text style={s.headerContact}>{[telefone, email].filter(Boolean).join(" · ")}</Text>
           </View>

@@ -43,6 +43,7 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
 
   const isPJ = cliente?.tipo === "PJ";
   const displayValue = (orcamento.desconto ?? 0) > 0 ? orcamento.valorFinal : orcamento.valorVenda;
+  const hasLogo = Boolean(logoBase64);
 
   const s = StyleSheet.create({
     page: {
@@ -63,7 +64,7 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
       borderBottomColor: corPrimaria,
       paddingBottom: 10,
     },
-    logo: { width: 54, height: 54, marginRight: 10, objectFit: "contain" as const },
+    logo: { width: hasLogo ? 150 : 54, height: 54, marginRight: 10, objectFit: "contain" as const },
     headerLeft: { flex: 1 },
     companyName: { fontSize: 15, fontFamily: "Helvetica-Bold", color: corPrimaria },
     razaoSocial: { fontSize: 7, color: "#555", marginTop: 1 },
@@ -236,9 +237,9 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
         <View style={s.header}>
           {logoBase64 && <Image src={logoBase64} style={s.logo} />}
           <View style={s.headerLeft}>
-            <Text style={s.companyName}>{nomeEmpresa}</Text>
-            {razaoSocial ? <Text style={s.razaoSocial}>{razaoSocial}</Text> : null}
-            {slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
+            {!hasLogo ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
+            {!hasLogo && razaoSocial ? <Text style={s.razaoSocial}>{razaoSocial}</Text> : null}
+            {!hasLogo && slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
           </View>
           <View style={s.headerRight}>
             {cnpjCpf ? <Text style={s.headerContactLine}>{cnpjCpf}</Text> : null}
