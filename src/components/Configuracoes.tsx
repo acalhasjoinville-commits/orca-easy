@@ -1640,11 +1640,6 @@ export function Configuracoes() {
 
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4">
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-foreground">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Gerencie os dados base do seu sistema</p>
-      </div>
-
       <Tabs value={tab} onValueChange={(value) => setTab(value as ConfigTab)}>
         <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-5">
           <TabsTrigger value="empresa" className="text-[11px] px-2 py-2.5 gap-1 flex-col sm:flex-row">

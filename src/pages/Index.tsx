@@ -536,7 +536,7 @@ const Index = () => {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
             OC
           </div>
-          <span className="ml-3 text-sm font-semibold text-foreground flex-1">{headerMeta.title}</span>
+          <h1 className="ml-3 flex-1 text-sm font-semibold text-foreground">{headerMeta.title}</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -595,7 +595,7 @@ const Index = () => {
               </Button>
 
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">{headerMeta.title}</p>
+                <h1 className="text-sm font-semibold text-foreground">{headerMeta.title}</h1>
                 <p className="hidden text-xs text-muted-foreground sm:block">{headerMeta.helper}</p>
               </div>
 

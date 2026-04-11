@@ -208,9 +208,8 @@ export function Dashboard({ onNewOrcamento, onViewOrcamento, onNavigate }: Dashb
   return (
     <div className="mx-auto max-w-[1400px] space-y-6 px-4 pb-24 pt-5 lg:px-6 lg:pb-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+        <div className="max-w-2xl">
+          <p className="text-sm text-muted-foreground">
             Acompanhe o ritmo da operação, os orçamentos em andamento e os números mais importantes do mês.
           </p>
         </div>

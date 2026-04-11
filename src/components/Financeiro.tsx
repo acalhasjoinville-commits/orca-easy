@@ -688,8 +688,7 @@ export function Financeiro({ openNewLancamentoRequest = 0 }: FinanceiroProps) {
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Financeiro</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Análise financeira e gestão de lançamentos</p>
+        <p className="text-sm text-muted-foreground">Análise financeira e gestão de lançamentos</p>
       </div>
 
       <Tabs

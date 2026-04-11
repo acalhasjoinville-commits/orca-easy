@@ -305,8 +305,7 @@ export function Usuarios() {
   return (
     <div className="px-4 lg:px-6 pb-24 lg:pb-8 pt-4 space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Usuários</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Convide, aprove e organize os acessos da equipe.</p>
+        <p className="text-sm text-muted-foreground">Convide, aprove e organize os acessos da equipe.</p>
       </div>
 
       <Card className="border-dashed bg-muted/20">
