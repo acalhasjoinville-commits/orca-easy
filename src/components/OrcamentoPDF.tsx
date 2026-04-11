@@ -1,11 +1,12 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { type PdfLogoAsset } from "@/lib/fetchLogoBase64";
 
 interface OrcamentoPDFProps {
   orcamento: Orcamento;
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
-  logoBase64?: string | null;
+  logo?: PdfLogoAsset | null;
 }
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -28,7 +29,7 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: OrcamentoPDFProps) {
+export function OrcamentoPDF({ orcamento, cliente, empresa, logo }: OrcamentoPDFProps) {
   const corPrimaria = empresa?.corPrimaria || "#0B1B32";
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
@@ -43,7 +44,8 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
 
   const isPJ = cliente?.tipo === "PJ";
   const displayValue = (orcamento.desconto ?? 0) > 0 ? orcamento.valorFinal : orcamento.valorVenda;
-  const hasLogo = Boolean(logoBase64);
+  const hasLogo = Boolean(logo?.dataUrl);
+  const showBrandText = !hasLogo || logo?.kind === "icon";
 
   const s = StyleSheet.create({
     page: {
@@ -64,7 +66,8 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
       borderBottomColor: corPrimaria,
       paddingBottom: 10,
     },
-    logo: { width: hasLogo ? 150 : 54, height: 54, marginRight: 10, objectFit: "contain" as const },
+    logoLockup: { width: 150, height: 54, marginRight: 10, objectFit: "contain" as const },
+    logoIcon: { width: 54, height: 54, marginRight: 10, objectFit: "contain" as const },
     headerLeft: { flex: 1 },
     companyName: { fontSize: 15, fontFamily: "Helvetica-Bold", color: corPrimaria },
     razaoSocial: { fontSize: 7, color: "#555", marginTop: 1 },
@@ -235,11 +238,11 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logoBase64 }: Orcame
       <Page size="A4" style={s.page}>
         {/* ═══ HEADER ═══ */}
         <View style={s.header}>
-          {logoBase64 && <Image src={logoBase64} style={s.logo} />}
+          {logo?.dataUrl && <Image src={logo.dataUrl} style={logo.kind === "icon" ? s.logoIcon : s.logoLockup} />}
           <View style={s.headerLeft}>
-            {!hasLogo ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
-            {!hasLogo && razaoSocial ? <Text style={s.razaoSocial}>{razaoSocial}</Text> : null}
-            {!hasLogo && slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
+            {showBrandText ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
+            {showBrandText && razaoSocial ? <Text style={s.razaoSocial}>{razaoSocial}</Text> : null}
+            {showBrandText && slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
           </View>
           <View style={s.headerRight}>
             {cnpjCpf ? <Text style={s.headerContactLine}>{cnpjCpf}</Text> : null}

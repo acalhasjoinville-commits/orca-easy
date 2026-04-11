@@ -1,11 +1,12 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import { Orcamento, Cliente, MinhaEmpresa } from "@/lib/types";
+import { type PdfLogoAsset } from "@/lib/fetchLogoBase64";
 
 interface OrdemServicoPDFProps {
   orcamento: Orcamento;
   cliente?: Cliente | null;
   empresa?: MinhaEmpresa | null;
-  logoBase64?: string | null;
+  logo?: PdfLogoAsset | null;
   termoRecebimento?: string | null;
 }
 
@@ -26,14 +27,16 @@ const statusLabel: Record<string, string> = {
   executado: "Executado",
 };
 
-export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termoRecebimento }: OrdemServicoPDFProps) {
+export function OrdemServicoPDF({ orcamento, cliente, empresa, logo, termoRecebimento }: OrdemServicoPDFProps) {
   const corPrimaria = empresa?.corPrimaria || "#0B1B32";
   const corDestaque = empresa?.corDestaque || "#5866D6";
   const nomeEmpresa = empresa?.nomeFantasia || "Minha Empresa";
+  const slogan = empresa?.slogan || "";
   const cnpjCpf = empresa?.cnpjCpf || "";
   const telefone = empresa?.telefoneWhatsApp || "";
   const email = empresa?.emailContato || "";
-  const hasLogo = Boolean(logoBase64);
+  const hasLogo = Boolean(logo?.dataUrl);
+  const showBrandText = !hasLogo || logo?.kind === "icon";
 
   const s = StyleSheet.create({
     page: {
@@ -54,9 +57,11 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
       borderBottomColor: corPrimaria,
       paddingBottom: 10,
     },
-    logo: { width: hasLogo ? 150 : 50, height: 50, marginRight: 10, objectFit: "contain" as const },
+    logoLockup: { width: 150, height: 50, marginRight: 10, objectFit: "contain" as const },
+    logoIcon: { width: 50, height: 50, marginRight: 10, objectFit: "contain" as const },
     headerLeft: { flex: 1 },
     companyName: { fontSize: 14, fontFamily: "Helvetica-Bold", color: corPrimaria },
+    sloganText: { fontSize: 7, color: corDestaque, marginTop: 2, textTransform: "uppercase" as const },
     headerContact: { fontSize: 6.5, color: "#555", marginTop: 2 },
     headerBadge: {
       backgroundColor: corDestaque,
@@ -201,9 +206,10 @@ export function OrdemServicoPDF({ orcamento, cliente, empresa, logoBase64, termo
       <Page size="A4" style={s.page}>
         {/* ═══ HEADER ═══ */}
         <View style={s.header}>
-          {logoBase64 && <Image src={logoBase64} style={s.logo} />}
+          {logo?.dataUrl && <Image src={logo.dataUrl} style={logo.kind === "icon" ? s.logoIcon : s.logoLockup} />}
           <View style={s.headerLeft}>
-            {!hasLogo ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
+            {showBrandText ? <Text style={s.companyName}>{nomeEmpresa}</Text> : null}
+            {showBrandText && slogan ? <Text style={s.sloganText}>{slogan}</Text> : null}
             {cnpjCpf ? <Text style={s.headerContact}>{cnpjCpf}</Text> : null}
             <Text style={s.headerContact}>{[telefone, email].filter(Boolean).join(" · ")}</Text>
           </View>
