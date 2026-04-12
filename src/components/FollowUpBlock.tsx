@@ -28,6 +28,7 @@ import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 interface FollowUpBlockProps {
   orcamentoId: string;
+  readOnly?: boolean;
 }
 
 const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
@@ -47,7 +48,7 @@ function formatShortDate(value: string | null | undefined) {
   return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
 }
 
-export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
+export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
   const { data: teamMembers = [] } = useTeamMembers();
 
@@ -156,22 +157,24 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
               <MessageCircle className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Acompanhamento Comercial</h2>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => setShowLogDialog(true)}
-              >
-                <MessageSquarePlus className="h-3.5 w-3.5" />
-                Registrar Interacao
-              </Button>
-              {!editing && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
-                  <Pencil className="h-3.5 w-3.5" />
+            {!readOnly && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => setShowLogDialog(true)}
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  Registrar Interacao
                 </Button>
-              )}
-            </div>
+                {!editing && (
+                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {!editing ? (
