@@ -97,7 +97,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
 
   const handleAddLog = async () => {
     if (!logDescricao.trim()) {
-      toast.error("Preencha a descricao");
+      toast.error("Preencha a descrição");
       return;
     }
 
@@ -164,7 +164,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
                 onClick={() => setShowLogDialog(true)}
               >
                 <MessageSquarePlus className="h-3.5 w-3.5" />
-                Registrar Interacao
+                Registrar Interação
               </Button>
               {!editing && (
                 <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>

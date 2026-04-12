@@ -249,7 +249,7 @@ export function SuperAdminEmpresas({ onSelectEmpresa }: Props) {
         <MetricCard
           label="Ativas"
           value={stats.ativas}
-          helper="Operacao liberada"
+          helper="Operação liberada"
           icon={Shield}
           iconClassName="bg-emerald-500/10 text-emerald-600"
         />
