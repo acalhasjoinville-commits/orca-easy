@@ -602,6 +602,25 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         onEdit={selectedVisita ? () => handleTimelineEdit("edit") : undefined}
         onReschedule={selectedVisita ? () => handleTimelineEdit("reschedule") : undefined}
       />
+
+      <RetornoDetailDialog
+        retorno={selectedRetorno}
+        open={!!selectedRetorno}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRetorno(null);
+        }}
+        onOpenOrcamento={
+          selectedRetorno
+            ? () => {
+                const orc = orcamentosMap.get(selectedRetorno.orcamentoId);
+                if (orc) {
+                  setSelectedRetorno(null);
+                  onViewOrcamento(orc);
+                }
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
