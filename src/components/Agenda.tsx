@@ -141,7 +141,8 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         storedFilter === "comercial" ||
         storedFilter === "operacao" ||
         storedFilter === "financeiro" ||
-        storedFilter === "visita"
+        storedFilter === "visita" ||
+        storedFilter === "retorno"
       ) {
         setFilter(storedFilter);
       }
@@ -185,11 +186,15 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
 
   const visitasMap = useMemo(() => {
     const map = new Map<string, Visita>();
-    for (const visita of visitas) {
-      map.set(visita.id, visita);
-    }
+    for (const visita of visitas) map.set(visita.id, visita);
     return map;
   }, [visitas]);
+
+  const retornosMap = useMemo(() => {
+    const map = new Map<string, RetornoServico>();
+    for (const r of retornosServico ?? []) map.set(r.id, r);
+    return map;
+  }, [retornosServico]);
 
   const eventos = useMemo(() => {
     const result: AgendaEvento[] = [];
@@ -284,8 +289,28 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       });
     }
 
+    // Retornos do serviço
+    for (const retorno of retornosServico ?? []) {
+      if (retorno.status === "encerrado" || retorno.status === "cancelado") continue;
+      if (!retorno.dataRetorno) continue;
+      if (retorno.dataRetorno > limiteMax) continue;
+
+      const orc = orcamentosMap.get(retorno.orcamentoId);
+      result.push({
+        id: `ret-${retorno.id}`,
+        date: retorno.dataRetorno,
+        area: "retorno",
+        subtype: retorno.dataRetorno < hoje ? "Retorno atrasado" : "Retorno agendado",
+        orcamentoId: retorno.orcamentoId,
+        visitaId: null,
+        numero: orc?.numeroOrcamento ?? 0,
+        nomeCliente: orc?.nomeCliente ?? "—",
+        horaVisita: retorno.horaRetorno?.slice(0, 5),
+      });
+    }
+
     return result;
-  }, [canViewFinanceiro, filaComercial, hoje, limiteMax, limitePassado, orcamentos, visitas]);
+  }, [canViewFinanceiro, filaComercial, hoje, limiteMax, limitePassado, orcamentos, retornosServico, orcamentosMap, visitas]);
 
   const visibleFilters = canViewFinanceiro
     ? filterOptions
@@ -370,6 +395,16 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       const visita = visitasMap.get(evento.visitaId);
       if (visita) setSelectedVisita(visita);
       return;
+    }
+
+    // Retorno do serviço — open contextual detail
+    if (evento.area === "retorno") {
+      const retornoId = evento.id.replace("ret-", "");
+      const retorno = retornosMap.get(retornoId);
+      if (retorno) {
+        setSelectedRetorno(retorno);
+        return;
+      }
     }
 
     if (evento.orcamentoId) {
