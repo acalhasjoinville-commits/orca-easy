@@ -87,7 +87,7 @@ export function useAddRetorno() {
 
   return useMutation({
     mutationFn: async (input: AddRetornoInput) => {
-      const { error } = await supabase.from("retornos_servico").insert({
+      const row = {
         empresa_id: empresaId,
         orcamento_id: input.orcamentoId,
         tipo: input.tipo,
@@ -98,7 +98,8 @@ export function useAddRetorno() {
         responsavel_id: input.responsavelId || null,
         observacoes: input.observacoes || "",
         resolucao: input.resolucao || "",
-      } as Record<string, unknown>);
+      };
+      const { error } = await supabase.from("retornos_servico").insert(row);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {
