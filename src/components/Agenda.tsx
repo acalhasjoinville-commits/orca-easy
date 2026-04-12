@@ -26,7 +26,7 @@ import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
 import { RetornoDetailDialog } from "@/components/RetornoDetailDialog";
 import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
 
-type AreaType = "comercial" | "operacao" | "financeiro" | "visita";
+type AreaType = "comercial" | "operacao" | "financeiro" | "visita" | "retorno";
 type FilterType = "todos" | AreaType;
 type AgendaView = "timeline" | "visitas";
 
