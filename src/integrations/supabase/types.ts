@@ -815,6 +815,65 @@ export type Database = {
           },
         ]
       }
+      retornos_servico: {
+        Row: {
+          created_at: string
+          data_retorno: string | null
+          descricao: string
+          empresa_id: string
+          hora_retorno: string | null
+          id: string
+          observacoes: string
+          orcamento_id: string
+          resolucao: string
+          responsavel_id: string | null
+          responsavel_nome: string
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_retorno?: string | null
+          descricao: string
+          empresa_id: string
+          hora_retorno?: string | null
+          id?: string
+          observacoes?: string
+          orcamento_id: string
+          resolucao?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_retorno?: string | null
+          descricao?: string
+          empresa_id?: string
+          hora_retorno?: string | null
+          id?: string
+          observacoes?: string
+          orcamento_id?: string
+          resolucao?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retornos_servico_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seed_control: {
         Row: {
           empresa_id: string
