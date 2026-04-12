@@ -280,3 +280,43 @@ export const STATUS_VISITA_CONFIG: Record<StatusVisita, { label: string; color: 
   cancelada: { label: "Cancelada", color: "bg-red-500/15 text-red-600 border-red-500/30" },
   reagendada: { label: "Reagendada", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
 };
+
+// RETORNOS DO SERVIÇO (pós-execução)
+
+export type StatusRetorno = "aberto" | "agendado" | "em_atendimento" | "resolvido" | "encerrado" | "cancelado";
+export type TipoRetorno = "garantia" | "ajuste" | "reclamacao" | "vistoria" | "manutencao" | "outro";
+
+export interface RetornoServico {
+  id: string;
+  empresaId: string;
+  orcamentoId: string;
+  tipo: TipoRetorno;
+  status: StatusRetorno;
+  descricao: string;
+  dataRetorno: string | null;
+  horaRetorno: string | null;
+  responsavelId: string | null;
+  responsavelNome: string;
+  observacoes: string;
+  resolucao: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const STATUS_RETORNO_CONFIG: Record<StatusRetorno, { label: string; color: string }> = {
+  aberto: { label: "Aberto", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+  agendado: { label: "Agendado", color: "bg-blue-500/15 text-blue-700 border-blue-500/30" },
+  em_atendimento: { label: "Em atendimento", color: "bg-purple-500/15 text-purple-700 border-purple-500/30" },
+  resolvido: { label: "Resolvido", color: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+  encerrado: { label: "Encerrado", color: "bg-gray-500/15 text-gray-600 border-gray-500/30" },
+  cancelado: { label: "Cancelado", color: "bg-red-500/15 text-red-600 border-red-500/30" },
+};
+
+export const TIPO_RETORNO_CONFIG: Record<TipoRetorno, { label: string }> = {
+  garantia: { label: "Garantia" },
+  ajuste: { label: "Ajuste" },
+  reclamacao: { label: "Reclamação" },
+  vistoria: { label: "Vistoria" },
+  manutencao: { label: "Manutenção" },
+  outro: { label: "Outro" },
+};
