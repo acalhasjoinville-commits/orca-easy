@@ -41,6 +41,29 @@ const statusByInteractionType: Partial<Record<TipoInteracao, StatusFollowUp>> = 
   encerrado: "concluido",
 };
 
+const FOLLOWUP_STATUS_UI: Record<StatusFollowUp, { label: string; description: string }> = {
+  sem_retorno: {
+    label: "Sem retorno",
+    description: "Ainda nao foi definida a proxima acao nem uma data combinada para retornar ao cliente.",
+  },
+  agendado: {
+    label: "Agendado",
+    description: "Ja existe um retorno combinado com data definida para falar com o cliente.",
+  },
+  em_negociacao: {
+    label: "Em negociacao",
+    description: "A proposta esta sendo tratada, ajustada ou discutida com o cliente.",
+  },
+  aguardando_cliente: {
+    label: "Aguardando cliente",
+    description: "A equipe ja fez a parte dela e agora depende de uma resposta do cliente.",
+  },
+  concluido: {
+    label: "Comercial encerrado",
+    description: "O acompanhamento comercial foi encerrado. Isso nao significa que o servico foi executado.",
+  },
+};
+
 function formatShortDate(value: string | null | undefined) {
   const localDate = toLocalDateStr(value);
   if (!localDate) return null;
@@ -142,6 +165,7 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
   }
 
   const stConfig = STATUS_FOLLOWUP_CONFIG[followUp.statusFollowUp];
+  const stUi = FOLLOWUP_STATUS_UI[followUp.statusFollowUp];
   const displayedLogs = showAllLogs ? logs : logs.slice(0, 5);
   const retornoLocal = toLocalDateStr(followUp.dataRetorno);
   const todayLocal = getTodayLocal();
@@ -177,15 +201,26 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
             )}
           </div>
 
+          <div className="mb-4 rounded-lg border bg-muted/20 p-3">
+            <p className="text-xs font-medium text-foreground">
+              Este status se refere ao andamento do contato comercial com o cliente.
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Ele nao representa o status do servico. Aprovado, executado, faturado e pago continuam sendo controlados
+              separadamente no orcamento.
+            </p>
+          </div>
+
           {!editing ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Status:</span>
                   <Badge variant="outline" className={cn("text-[11px]", stConfig.color)}>
-                    {stConfig.label}
+                    {stUi.label}
                   </Badge>
                 </div>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">{stUi.description}</p>
                 {followUp.proximaAcao && (
                   <div className="flex items-start gap-2">
                     <span className="shrink-0 text-xs text-muted-foreground">Proxima acao:</span>
@@ -249,11 +284,14 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
                     <SelectContent>
                       {allStatuses.map((s) => (
                         <SelectItem key={s} value={s} className="text-xs">
-                          {STATUS_FOLLOWUP_CONFIG[s].label}
+                          {FOLLOWUP_STATUS_UI[s].label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    {FOLLOWUP_STATUS_UI[editStatus].description}
+                  </p>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">Data de Retorno</label>
@@ -263,6 +301,9 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
                     onChange={(e) => setEditDataRetorno(e.target.value)}
                     className="h-9 text-xs"
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Preencha apenas quando ja existir um dia combinado para o proximo contato.
+                  </p>
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">Responsavel</label>
@@ -294,6 +335,9 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
                   placeholder="Ex: Ligar para confirmar aprovacao"
                   className="h-9 text-xs"
                 />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Descreva a proxima acao pratica da equipe, como ligar, enviar proposta ajustada ou cobrar retorno.
+                </p>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Observacoes</label>
