@@ -170,14 +170,26 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     [editingOrcamento, isEditing],
   );
 
-  const [draft, setDraft, clearDraft, wasRestored] = useDraft<WizardDraft>(draftKey, defaultDraft);
+  const [draft, setDraft, clearDraft, wasRestored] = useDraft<WizardDraft>(
+    draftKey,
+    defaultDraft,
+    400,
+    "session",
+    !isEditing,
+  );
 
   useEffect(() => {
-    if (wasRestored) {
+    if (!isEditing && wasRestored) {
       toast.info("Rascunho restaurado.", { duration: 2500 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditing, wasRestored]);
+
+  useEffect(() => {
+    if (isEditing) {
+      clearDraft();
+    }
+  }, [isEditing, clearDraft]);
 
   const phase = draft.phase;
   const selectedClienteId = draft.selectedClienteId;

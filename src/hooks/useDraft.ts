@@ -19,14 +19,17 @@ export function useDraft<T>(
   initialValue: T,
   debounceMs = 400,
   storageType: DraftStorageType = "session",
+  enabled = true,
 ): [T, React.Dispatch<React.SetStateAction<T>>, () => void, boolean] {
+  const restoredRef = useRef(false);
   const [wasRestored, setWasRestored] = useState(false);
 
   const [state, setState] = useState<T>(() => {
+    if (!enabled) return initialValue;
     try {
       const stored = getStorage(storageType).getItem(key);
       if (stored) {
-        setWasRestored(true);
+        restoredRef.current = true;
         return JSON.parse(stored) as T;
       }
     } catch {
@@ -39,11 +42,18 @@ export function useDraft<T>(
   const keyRef = useRef(key);
   const stateRef = useRef(state);
   const storageTypeRef = useRef(storageType);
+  const enabledRef = useRef(enabled);
   keyRef.current = key;
   stateRef.current = state;
   storageTypeRef.current = storageType;
+  enabledRef.current = enabled;
+
+  useEffect(() => {
+    setWasRestored(restoredRef.current);
+  }, []);
 
   const persistDraft = useCallback(() => {
+    if (!enabledRef.current) return;
     try {
       getStorage(storageTypeRef.current).setItem(keyRef.current, JSON.stringify(stateRef.current));
     } catch {
@@ -53,6 +63,7 @@ export function useDraft<T>(
 
   // Debounced write to sessionStorage
   useEffect(() => {
+    if (!enabled) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       persistDraft();
@@ -61,9 +72,10 @@ export function useDraft<T>(
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state, debounceMs, persistDraft]);
+  }, [state, debounceMs, persistDraft, enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         persistDraft();
@@ -82,7 +94,7 @@ export function useDraft<T>(
       window.removeEventListener("pagehide", handlePageHide);
       persistDraft();
     };
-  }, [persistDraft]);
+  }, [persistDraft, enabled]);
 
   const clearDraft = useCallback(() => {
     try {
