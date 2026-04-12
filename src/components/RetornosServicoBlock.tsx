@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { useRetornosByOrcamento, useAddRetorno, useUpdateRetorno } from "@/hooks/useRetornosServico";
 import { useTeamMembers } from "@/hooks/useFollowUp";
-import {
-  RetornoServico,
-  StatusRetorno,
-  TipoRetorno,
-  STATUS_RETORNO_CONFIG,
-  TIPO_RETORNO_CONFIG,
-} from "@/lib/types";
+import { RetornoServico, StatusRetorno, TipoRetorno, STATUS_RETORNO_CONFIG, TIPO_RETORNO_CONFIG } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,16 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import {
-  RotateCcw,
-  Plus,
-  Clock,
-  User,
-  CalendarDays,
-  Loader2,
-  CheckCircle2,
-  AlertTriangle,
-} from "lucide-react";
+import { RotateCcw, Plus, Clock, User, CalendarDays, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { toLocalDateStr, getTodayLocal } from "@/lib/dateUtils";
@@ -261,12 +246,15 @@ export function RetornosServicoBlock({ orcamentoId }: RetornosServicoBlockProps)
                           </div>
                           <div>
                             <label className="text-[11px] text-muted-foreground">Responsável</label>
-                            <Select value={editResponsavelId} onValueChange={setEditResponsavelId}>
+                            <Select
+                              value={editResponsavelId || "_none"}
+                              onValueChange={(value) => setEditResponsavelId(value === "_none" ? "" : value)}
+                            >
                               <SelectTrigger className="h-8 text-xs">
                                 <SelectValue placeholder="Selecionar" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">Nenhum</SelectItem>
+                                <SelectItem value="_none">Nenhum</SelectItem>
                                 {(teamMembers ?? []).map((m) => (
                                   <SelectItem key={m.id} value={m.id}>
                                     {m.name}
@@ -450,12 +438,15 @@ export function RetornosServicoBlock({ orcamentoId }: RetornosServicoBlockProps)
 
             <div>
               <label className="text-xs text-muted-foreground">Responsável</label>
-              <Select value={addResponsavelId} onValueChange={setAddResponsavelId}>
+              <Select
+                value={addResponsavelId || "_none"}
+                onValueChange={(value) => setAddResponsavelId(value === "_none" ? "" : value)}
+              >
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue placeholder="Selecionar responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="_none">Nenhum</SelectItem>
                   {(teamMembers ?? []).map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.name}
@@ -477,7 +468,14 @@ export function RetornosServicoBlock({ orcamentoId }: RetornosServicoBlockProps)
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => { setShowAddDialog(false); resetAddForm(); }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowAddDialog(false);
+                resetAddForm();
+              }}
+            >
               Cancelar
             </Button>
             <Button size="sm" onClick={handleAdd} disabled={addRetorno.isPending}>

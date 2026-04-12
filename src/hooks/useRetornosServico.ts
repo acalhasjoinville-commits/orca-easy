@@ -55,7 +55,7 @@ export function useRetornosByOrcamento(orcamentoId: string) {
   });
 }
 
-export function useAllRetornos() {
+export function useAllRetornos(enabled = true) {
   return useQuery({
     queryKey: ["retornos_servico"],
     queryFn: async () => {
@@ -66,6 +66,7 @@ export function useAllRetornos() {
       if (error) throw error;
       return (data as unknown as RetornoRow[]).map(rowToRetorno);
     },
+    enabled,
   });
 }
 
@@ -137,10 +138,7 @@ export function useUpdateRetorno() {
       if (input.resolucao !== undefined) updates.resolucao = input.resolucao;
       if (input.tipo !== undefined) updates.tipo = input.tipo;
 
-      const { error } = await supabase
-        .from("retornos_servico")
-        .update(updates)
-        .eq("id", input.id);
+      const { error } = await supabase.from("retornos_servico").update(updates).eq("id", input.id);
       if (error) throw error;
     },
     onSuccess: (_data, variables) => {

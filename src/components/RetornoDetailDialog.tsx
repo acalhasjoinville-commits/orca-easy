@@ -20,7 +20,14 @@ interface RetornoDetailDialogProps {
   onOpenOrcamento?: () => void;
 }
 
-const editableStatuses: StatusRetorno[] = ["aberto", "agendado", "em_atendimento", "resolvido", "encerrado", "cancelado"];
+const editableStatuses: StatusRetorno[] = [
+  "aberto",
+  "agendado",
+  "em_atendimento",
+  "resolvido",
+  "encerrado",
+  "cancelado",
+];
 
 export function RetornoDetailDialog({ retorno, open, onOpenChange, onOpenOrcamento }: RetornoDetailDialogProps) {
   const updateRetorno = useUpdateRetorno();
@@ -193,12 +200,15 @@ export function RetornoDetailDialog({ retorno, open, onOpenChange, onOpenOrcamen
                 </div>
                 <div>
                   <label className="text-[11px] text-muted-foreground">Responsável</label>
-                  <Select value={editResponsavelId} onValueChange={setEditResponsavelId}>
+                  <Select
+                    value={editResponsavelId || "_none"}
+                    onValueChange={(value) => setEditResponsavelId(value === "_none" ? "" : value)}
+                  >
                     <SelectTrigger className="h-8 text-xs">
                       <SelectValue placeholder="Selecionar" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
+                      <SelectItem value="_none">Nenhum</SelectItem>
                       {(teamMembers ?? []).map((m) => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.name}

@@ -10,6 +10,7 @@ import {
   MapPin,
   MessageCircle,
   PhoneCall,
+  RotateCcw,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,35 +40,43 @@ export function PendenciasOperacionais({
     operacao,
     financeiro,
     visitas,
+    retornos,
     proximos,
     totalComercial,
     totalOperacao,
     totalFinanceiro,
     totalVisitas,
-    totalProximos,
+    totalRetornos,
     isComercialLoading,
+    isRetornosLoading,
     isVisitasLoading,
   } = pendencias;
 
   const totalAtencao =
-    totalComercial + totalOperacao + (canManageAgenda ? totalVisitas : 0) + (canViewFinanceiro ? totalFinanceiro : 0);
+    totalComercial +
+    totalOperacao +
+    (canManageAgenda ? totalVisitas + totalRetornos : 0) +
+    (canViewFinanceiro ? totalFinanceiro : 0);
 
   const totalProximosVisible =
-    (canManageAgenda ? proximos.visitasProximas.length : 0) +
     proximos.retornosProximos.length +
-    proximos.execucoesProximas.length;
+    proximos.execucoesProximas.length +
+    (canManageAgenda ? proximos.visitasProximas.length + proximos.retornosServicoProximos.length : 0);
+
+  const allClear =
+    totalAtencao === 0 && totalProximosVisible === 0 && !isComercialLoading && !isVisitasLoading && !isRetornosLoading;
 
   const handleView = (item: PendenciaItem) => {
     if (item.visitaId && canManageAgenda) {
       onOpenAgenda();
       return;
     }
+
     if (!item.orcamentoId) return;
+
     const orcamento = orcamentosMap.get(item.orcamentoId);
     if (orcamento) onViewOrcamento(orcamento);
   };
-
-  const allClear = totalAtencao === 0 && totalProximosVisible === 0 && !isComercialLoading && !isVisitasLoading;
 
   if (allClear) {
     return (
@@ -87,15 +96,24 @@ export function PendenciasOperacionais({
 
   const fmtDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "";
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const date = new Date(y, m - 1, d);
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
   };
 
+  const attentionGridClass = canManageAgenda
+    ? canViewFinanceiro
+      ? "md:grid-cols-5"
+      : "md:grid-cols-4"
+    : canViewFinanceiro
+      ? "md:grid-cols-3"
+      : "md:grid-cols-2";
+
+  const proximosGridClass = canManageAgenda ? "md:grid-cols-4" : "md:grid-cols-2";
+
   return (
     <div className="space-y-4">
-      {/* ═══ ATENÇÃO AGORA ═══ */}
-      {(totalAtencao > 0 || isComercialLoading || isVisitasLoading) && (
+      {(totalAtencao > 0 || isComercialLoading || isVisitasLoading || isRetornosLoading) && (
         <Card className="border shadow-sm">
           <CardContent className="p-5">
             <div className="mb-4">
@@ -109,20 +127,11 @@ export function PendenciasOperacionais({
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Itens atrasados, vencendo hoje ou que precisam de ação imediata.
+                Itens atrasados, vencendo hoje ou que ainda estão sem definição.
               </p>
             </div>
 
-            <div
-              className={cn(
-                "grid gap-4",
-                canManageAgenda && canViewFinanceiro
-                  ? "md:grid-cols-4"
-                  : canManageAgenda || canViewFinanceiro
-                    ? "md:grid-cols-3"
-                    : "md:grid-cols-2",
-              )}
-            >
+            <div className={cn("grid gap-4", attentionGridClass)}>
               <PendenciaColumn
                 title="Comercial"
                 icon={PhoneCall}
@@ -145,7 +154,7 @@ export function PendenciasOperacionais({
                   onClick={handleView}
                 />
                 <PendenciaGroup
-                  label="Sem retorno"
+                  label="Sem próxima ação"
                   items={comercial.semRetorno}
                   tone="text-muted-foreground"
                   icon={MessageCircle}
@@ -178,6 +187,38 @@ export function PendenciasOperacionais({
                 </PendenciaColumn>
               )}
 
+              {canManageAgenda && (
+                <PendenciaColumn
+                  title="Retornos do serviço"
+                  icon={RotateCcw}
+                  total={totalRetornos}
+                  iconBg="bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                  isLoading={isRetornosLoading}
+                >
+                  <PendenciaGroup
+                    label="Retornos para hoje"
+                    items={retornos.retornosHoje}
+                    tone="text-amber-600 dark:text-amber-400"
+                    icon={CalendarClock}
+                    onClick={handleView}
+                  />
+                  <PendenciaGroup
+                    label="Retornos atrasados"
+                    items={retornos.retornosAtrasados}
+                    tone="text-red-500"
+                    icon={AlertTriangle}
+                    onClick={handleView}
+                  />
+                  <PendenciaGroup
+                    label="Retornos sem agenda"
+                    items={retornos.retornosSemAgenda}
+                    tone="text-muted-foreground"
+                    icon={Clock}
+                    onClick={handleView}
+                  />
+                </PendenciaColumn>
+              )}
+
               <PendenciaColumn
                 title="Operação"
                 icon={Hammer}
@@ -192,14 +233,14 @@ export function PendenciasOperacionais({
                   onClick={handleView}
                 />
                 <PendenciaGroup
-                  label="Execução prevista para hoje"
+                  label="Execuções para hoje"
                   items={operacao.execucaoHoje}
                   tone="text-amber-600 dark:text-amber-400"
                   icon={CalendarClock}
                   onClick={handleView}
                 />
                 <PendenciaGroup
-                  label="Execução atrasada"
+                  label="Execuções atrasadas"
                   items={operacao.execucaoAtrasada}
                   tone="text-red-500"
                   icon={AlertTriangle}
@@ -235,7 +276,6 @@ export function PendenciasOperacionais({
         </Card>
       )}
 
-      {/* ═══ PRÓXIMOS COMPROMISSOS ═══ */}
       {totalProximosVisible > 0 && (
         <Card className="border shadow-sm">
           <CardContent className="p-5">
@@ -247,39 +287,96 @@ export function PendenciasOperacionais({
                   {totalProximosVisible}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Visitas, retornos comerciais e execuções nos próximos 7 dias.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Visitas, retornos e execuções previstas para os próximos 7 dias.
+              </p>
             </div>
 
-            <div className={cn("grid gap-4", "md:grid-cols-3")}>
+            <div className={cn("grid gap-4", proximosGridClass)}>
               {canManageAgenda && proximos.visitasProximas.length > 0 && (
-                <ProximoColumn title="Visitas" icon={MapPin} iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400">
+                <ProximoColumn
+                  title="Visitas"
+                  icon={MapPin}
+                  iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                >
                   {proximos.visitasProximas.slice(0, 5).map((item) => (
-                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                    <ProximoItem
+                      key={item.id}
+                      item={item}
+                      dateLabel={fmtDate(item.date)}
+                      onClick={() => handleView(item)}
+                    />
                   ))}
                   {proximos.visitasProximas.length > 5 && (
-                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.visitasProximas.length - 5} mais</p>
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">
+                      +{proximos.visitasProximas.length - 5} mais
+                    </p>
                   )}
                 </ProximoColumn>
               )}
 
               {proximos.retornosProximos.length > 0 && (
-                <ProximoColumn title="Retornos comerciais" icon={PhoneCall} iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                <ProximoColumn
+                  title="Comercial"
+                  icon={PhoneCall}
+                  iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                >
                   {proximos.retornosProximos.slice(0, 5).map((item) => (
-                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                    <ProximoItem
+                      key={item.id}
+                      item={item}
+                      dateLabel={fmtDate(item.date)}
+                      onClick={() => handleView(item)}
+                    />
                   ))}
                   {proximos.retornosProximos.length > 5 && (
-                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.retornosProximos.length - 5} mais</p>
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">
+                      +{proximos.retornosProximos.length - 5} mais
+                    </p>
                   )}
                 </ProximoColumn>
               )}
 
               {proximos.execucoesProximas.length > 0 && (
-                <ProximoColumn title="Execuções" icon={Hammer} iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <ProximoColumn
+                  title="Operação"
+                  icon={Hammer}
+                  iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                >
                   {proximos.execucoesProximas.slice(0, 5).map((item) => (
-                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                    <ProximoItem
+                      key={item.id}
+                      item={item}
+                      dateLabel={fmtDate(item.date)}
+                      onClick={() => handleView(item)}
+                    />
                   ))}
                   {proximos.execucoesProximas.length > 5 && (
-                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.execucoesProximas.length - 5} mais</p>
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">
+                      +{proximos.execucoesProximas.length - 5} mais
+                    </p>
+                  )}
+                </ProximoColumn>
+              )}
+
+              {canManageAgenda && proximos.retornosServicoProximos.length > 0 && (
+                <ProximoColumn
+                  title="Retornos do serviço"
+                  icon={RotateCcw}
+                  iconBg="bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                >
+                  {proximos.retornosServicoProximos.slice(0, 5).map((item) => (
+                    <ProximoItem
+                      key={item.id}
+                      item={item}
+                      dateLabel={fmtDate(item.date)}
+                      onClick={() => handleView(item)}
+                    />
+                  ))}
+                  {proximos.retornosServicoProximos.length > 5 && (
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">
+                      +{proximos.retornosServicoProximos.length - 5} mais
+                    </p>
                   )}
                 </ProximoColumn>
               )}
@@ -290,8 +387,6 @@ export function PendenciasOperacionais({
     </div>
   );
 }
-
-/* ═══ Sub-components ═══ */
 
 function PendenciaColumn({
   title,
@@ -414,21 +509,13 @@ function ProximoColumn({
   );
 }
 
-function ProximoItem({
-  item,
-  dateLabel,
-  onClick,
-}: {
-  item: PendenciaItem;
-  dateLabel: string;
-  onClick: () => void;
-}) {
+function ProximoItem({ item, dateLabel, onClick }: { item: PendenciaItem; dateLabel: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-background/60"
     >
-      <span className="shrink-0 text-[10px] text-muted-foreground w-16">{dateLabel}</span>
+      <span className="w-16 shrink-0 text-[10px] text-muted-foreground">{dateLabel}</span>
       {item.numero ? (
         <>
           <span className="font-bold text-primary">#{item.numero}</span>
