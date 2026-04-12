@@ -155,24 +155,28 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Acompanhamento Comercial</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                {readOnly ? "Histórico comercial" : "Acompanhamento Comercial"}
+              </h2>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 text-xs"
-                onClick={() => setShowLogDialog(true)}
-              >
-                <MessageSquarePlus className="h-3.5 w-3.5" />
-                Registrar Interação
-              </Button>
-              {!editing && (
-                <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
-                  <Pencil className="h-3.5 w-3.5" />
+            {!readOnly && (
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => setShowLogDialog(true)}
+                >
+                  <MessageSquarePlus className="h-3.5 w-3.5" />
+                  Registrar Interação
                 </Button>
-              )}
-            </div>
+                {!editing && (
+                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {!editing ? (
