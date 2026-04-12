@@ -64,7 +64,7 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
 
   return useMemo(() => {
     const hoje = getTodayLocal();
-    const limite7 = addDaysLocal(hoje, 7);
+    const limite7 = addDaysLocal(7);
     const fila = filaComercial ?? [];
 
     const followUpsHoje: PendenciaItem[] = [];
