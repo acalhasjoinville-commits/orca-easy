@@ -9,18 +9,21 @@ import {
   MapPin,
   Phone,
   Receipt,
+  RotateCcw,
 } from "lucide-react";
 
 import { useFilaComercial } from "@/hooks/useFollowUp";
 import { useVisitas } from "@/hooks/useVisitas";
+import { useAllRetornos } from "@/hooks/useRetornosServico";
 import { useAuth } from "@/hooks/useAuth";
-import { Orcamento, Visita } from "@/lib/types";
+import { Orcamento, Visita, RetornoServico } from "@/lib/types";
 import { addDaysLocal, formatDateLabel, getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
+import { RetornoDetailDialog } from "@/components/RetornoDetailDialog";
 import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
 
 type AreaType = "comercial" | "operacao" | "financeiro" | "visita";
