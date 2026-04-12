@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useFilaComercial, FilaComercialItem } from "@/hooks/useFollowUp";
 import { useVisitas } from "@/hooks/useVisitas";
 import { Orcamento, Visita } from "@/lib/types";
-import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
+import { addDaysLocal, getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 export interface PendenciaItem {
   id: string;
@@ -11,6 +11,8 @@ export interface PendenciaItem {
   numero?: number | null;
   nomeCliente: string;
   horaVisita?: string | null;
+  /** date for "próximos" display */
+  date?: string | null;
 }
 
 export interface PendenciasComercial {
@@ -35,15 +37,23 @@ export interface PendenciasVisitas {
   visitasAtrasadas: PendenciaItem[];
 }
 
+export interface ProximosCompromissos {
+  visitasProximas: PendenciaItem[];
+  retornosProximos: PendenciaItem[];
+  execucoesProximas: PendenciaItem[];
+}
+
 export interface Pendencias {
   comercial: PendenciasComercial;
   operacao: PendenciasOperacao;
   financeiro: PendenciasFinanceiro;
   visitas: PendenciasVisitas;
+  proximos: ProximosCompromissos;
   totalComercial: number;
   totalOperacao: number;
   totalFinanceiro: number;
   totalVisitas: number;
+  totalProximos: number;
   isComercialLoading: boolean;
   isVisitasLoading: boolean;
 }
@@ -54,11 +64,13 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
 
   return useMemo(() => {
     const hoje = getTodayLocal();
+    const limite7 = addDaysLocal(hoje, 7);
     const fila = filaComercial ?? [];
 
     const followUpsHoje: PendenciaItem[] = [];
     const followUpsAtrasados: PendenciaItem[] = [];
     const semRetorno: PendenciaItem[] = [];
+    const retornosProximos: PendenciaItem[] = [];
 
     for (const item of fila) {
       if (item.statusFollowUp === "concluido") continue;
@@ -70,6 +82,8 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
         followUpsHoje.push(toItem(item));
       } else if (retornoLocal && retornoLocal < hoje) {
         followUpsAtrasados.push(toItem(item));
+      } else if (retornoLocal && retornoLocal > hoje && retornoLocal <= limite7) {
+        retornosProximos.push({ ...toItem(item), date: retornoLocal });
       }
 
       if (item.statusFollowUp === "sem_retorno" && item.statusOrcamento === "pendente") {
@@ -80,11 +94,13 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
     const aprovadosSemDataPrevista: PendenciaItem[] = [];
     const execucaoHoje: PendenciaItem[] = [];
     const execucaoAtrasada: PendenciaItem[] = [];
+    const execucoesProximas: PendenciaItem[] = [];
 
     const executadosSemFaturamento: PendenciaItem[] = [];
     const faturadosSemPagamento: PendenciaItem[] = [];
     const visitasHoje: PendenciaItem[] = [];
     const visitasAtrasadas: PendenciaItem[] = [];
+    const visitasProximas: PendenciaItem[] = [];
 
     for (const orcamento of orcamentos) {
       if (orcamento.status === "aprovado") {
@@ -97,6 +113,8 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
             execucaoHoje.push(toItemOrc(orcamento));
           } else if (previstaLocal && previstaLocal < hoje) {
             execucaoAtrasada.push(toItemOrc(orcamento));
+          } else if (previstaLocal && previstaLocal > hoje && previstaLocal <= limite7) {
+            execucoesProximas.push({ ...toItemOrc(orcamento), date: previstaLocal });
           }
         }
       }
@@ -119,8 +137,18 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
         visitasHoje.push(toItemVisita(visita));
       } else if (visita.dataVisita < hoje) {
         visitasAtrasadas.push(toItemVisita(visita));
+      } else if (visita.dataVisita > hoje && visita.dataVisita <= limite7) {
+        visitasProximas.push({ ...toItemVisita(visita), date: visita.dataVisita });
       }
     }
+
+    // Sort próximos by date
+    const sortByDate = (a: PendenciaItem, b: PendenciaItem) => (a.date ?? "").localeCompare(b.date ?? "");
+    visitasProximas.sort(sortByDate);
+    retornosProximos.sort(sortByDate);
+    execucoesProximas.sort(sortByDate);
+
+    const totalProximos = visitasProximas.length + retornosProximos.length + execucoesProximas.length;
 
     return {
       comercial: {
@@ -141,10 +169,16 @@ export function usePendencias(orcamentos: Orcamento[]): Pendencias {
         visitasHoje,
         visitasAtrasadas,
       },
+      proximos: {
+        visitasProximas,
+        retornosProximos,
+        execucoesProximas,
+      },
       totalComercial: followUpsHoje.length + followUpsAtrasados.length + semRetorno.length,
       totalOperacao: aprovadosSemDataPrevista.length + execucaoHoje.length + execucaoAtrasada.length,
       totalFinanceiro: executadosSemFaturamento.length + faturadosSemPagamento.length,
       totalVisitas: visitasHoje.length + visitasAtrasadas.length,
+      totalProximos,
       isComercialLoading,
       isVisitasLoading,
     };
