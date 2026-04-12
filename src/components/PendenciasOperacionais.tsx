@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   Clock,
   DollarSign,
@@ -38,18 +39,37 @@ export function PendenciasOperacionais({
     operacao,
     financeiro,
     visitas,
+    proximos,
     totalComercial,
     totalOperacao,
     totalFinanceiro,
     totalVisitas,
+    totalProximos,
     isComercialLoading,
     isVisitasLoading,
   } = pendencias;
 
-  const totalGeral =
+  const totalAtencao =
     totalComercial + totalOperacao + (canManageAgenda ? totalVisitas : 0) + (canViewFinanceiro ? totalFinanceiro : 0);
 
-  if (totalGeral === 0 && !isComercialLoading && !isVisitasLoading) {
+  const totalProximosVisible =
+    (canManageAgenda ? proximos.visitasProximas.length : 0) +
+    proximos.retornosProximos.length +
+    proximos.execucoesProximas.length;
+
+  const handleView = (item: PendenciaItem) => {
+    if (item.visitaId && canManageAgenda) {
+      onOpenAgenda();
+      return;
+    }
+    if (!item.orcamentoId) return;
+    const orcamento = orcamentosMap.get(item.orcamentoId);
+    if (orcamento) onViewOrcamento(orcamento);
+  };
+
+  const allClear = totalAtencao === 0 && totalProximosVisible === 0 && !isComercialLoading && !isVisitasLoading;
+
+  if (allClear) {
     return (
       <Card className="border-dashed bg-muted/20">
         <CardContent className="flex items-center gap-3 p-5">
@@ -65,158 +85,213 @@ export function PendenciasOperacionais({
     );
   }
 
-  const handleView = (item: PendenciaItem) => {
-    if (item.visitaId && canManageAgenda) {
-      onOpenAgenda();
-      return;
-    }
-
-    if (!item.orcamentoId) return;
-    const orcamento = orcamentosMap.get(item.orcamentoId);
-    if (orcamento) onViewOrcamento(orcamento);
+  const fmtDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "";
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
   };
 
   return (
-    <Card className="border shadow-sm">
-      <CardContent className="p-5">
-        <div className="mb-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-foreground">Pendências operacionais</h2>
-            {totalGeral > 0 && (
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                {totalGeral}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            O que exige atenção imediata nas áreas comercial{canManageAgenda ? ", visitas" : ""}, operação
-            {canViewFinanceiro ? " e financeiro" : ""}.
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* ═══ ATENÇÃO AGORA ═══ */}
+      {(totalAtencao > 0 || isComercialLoading || isVisitasLoading) && (
+        <Card className="border shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <h2 className="text-sm font-semibold text-foreground">Atenção agora</h2>
+                {totalAtencao > 0 && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                    {totalAtencao}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Itens atrasados, vencendo hoje ou que precisam de ação imediata.
+              </p>
+            </div>
 
-        <div
-          className={cn(
-            "grid gap-4",
-            canManageAgenda && canViewFinanceiro
-              ? "md:grid-cols-4"
-              : canManageAgenda || canViewFinanceiro
-                ? "md:grid-cols-3"
-                : "md:grid-cols-2",
-          )}
-        >
-          <PendenciaColumn
-            title="Comercial"
-            icon={PhoneCall}
-            total={totalComercial}
-            iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400"
-            isLoading={isComercialLoading}
-          >
-            <PendenciaGroup
-              label="Retornos comerciais para hoje"
-              items={comercial.followUpsHoje}
-              tone="text-amber-600 dark:text-amber-400"
-              icon={CalendarClock}
-              onClick={handleView}
-            />
-            <PendenciaGroup
-              label="Retornos comerciais atrasados"
-              items={comercial.followUpsAtrasados}
-              tone="text-red-500"
-              icon={AlertTriangle}
-              onClick={handleView}
-            />
-            <PendenciaGroup
-              label="Sem retorno"
-              items={comercial.semRetorno}
-              tone="text-muted-foreground"
-              icon={MessageCircle}
-              onClick={handleView}
-            />
-          </PendenciaColumn>
-
-          {canManageAgenda && (
-            <PendenciaColumn
-              title="Visitas"
-              icon={MapPin}
-              total={totalVisitas}
-              iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
-              isLoading={isVisitasLoading}
+            <div
+              className={cn(
+                "grid gap-4",
+                canManageAgenda && canViewFinanceiro
+                  ? "md:grid-cols-4"
+                  : canManageAgenda || canViewFinanceiro
+                    ? "md:grid-cols-3"
+                    : "md:grid-cols-2",
+              )}
             >
-              <PendenciaGroup
-                label="Visitas para hoje"
-                items={visitas.visitasHoje}
-                tone="text-amber-600 dark:text-amber-400"
-                icon={CalendarClock}
-                onClick={handleView}
-              />
-              <PendenciaGroup
-                label="Visitas atrasadas"
-                items={visitas.visitasAtrasadas}
-                tone="text-red-500"
-                icon={AlertTriangle}
-                onClick={handleView}
-              />
-            </PendenciaColumn>
-          )}
+              <PendenciaColumn
+                title="Comercial"
+                icon={PhoneCall}
+                total={totalComercial}
+                iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                isLoading={isComercialLoading}
+              >
+                <PendenciaGroup
+                  label="Retornos comerciais para hoje"
+                  items={comercial.followUpsHoje}
+                  tone="text-amber-600 dark:text-amber-400"
+                  icon={CalendarClock}
+                  onClick={handleView}
+                />
+                <PendenciaGroup
+                  label="Retornos comerciais atrasados"
+                  items={comercial.followUpsAtrasados}
+                  tone="text-red-500"
+                  icon={AlertTriangle}
+                  onClick={handleView}
+                />
+                <PendenciaGroup
+                  label="Sem retorno"
+                  items={comercial.semRetorno}
+                  tone="text-muted-foreground"
+                  icon={MessageCircle}
+                  onClick={handleView}
+                />
+              </PendenciaColumn>
 
-          <PendenciaColumn
-            title="Operação"
-            icon={Hammer}
-            total={totalOperacao}
-            iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-          >
-            <PendenciaGroup
-              label="Aprovados sem data prevista"
-              items={operacao.aprovadosSemDataPrevista}
-              tone="text-muted-foreground"
-              icon={Clock}
-              onClick={handleView}
-            />
-            <PendenciaGroup
-              label="Execução prevista para hoje"
-              items={operacao.execucaoHoje}
-              tone="text-amber-600 dark:text-amber-400"
-              icon={CalendarClock}
-              onClick={handleView}
-            />
-            <PendenciaGroup
-              label="Execução atrasada"
-              items={operacao.execucaoAtrasada}
-              tone="text-red-500"
-              icon={AlertTriangle}
-              onClick={handleView}
-            />
-          </PendenciaColumn>
+              {canManageAgenda && (
+                <PendenciaColumn
+                  title="Visitas"
+                  icon={MapPin}
+                  total={totalVisitas}
+                  iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                  isLoading={isVisitasLoading}
+                >
+                  <PendenciaGroup
+                    label="Visitas para hoje"
+                    items={visitas.visitasHoje}
+                    tone="text-amber-600 dark:text-amber-400"
+                    icon={CalendarClock}
+                    onClick={handleView}
+                  />
+                  <PendenciaGroup
+                    label="Visitas atrasadas"
+                    items={visitas.visitasAtrasadas}
+                    tone="text-red-500"
+                    icon={AlertTriangle}
+                    onClick={handleView}
+                  />
+                </PendenciaColumn>
+              )}
 
-          {canViewFinanceiro && (
-            <PendenciaColumn
-              title="Financeiro"
-              icon={DollarSign}
-              total={totalFinanceiro}
-              iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
-            >
-              <PendenciaGroup
-                label="Executados sem faturamento"
-                items={financeiro.executadosSemFaturamento}
-                tone="text-amber-600 dark:text-amber-400"
-                icon={Clock}
-                onClick={handleView}
-              />
-              <PendenciaGroup
-                label="Faturados sem pagamento"
-                items={financeiro.faturadosSemPagamento}
-                tone="text-red-500"
-                icon={AlertTriangle}
-                onClick={handleView}
-              />
-            </PendenciaColumn>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+              <PendenciaColumn
+                title="Operação"
+                icon={Hammer}
+                total={totalOperacao}
+                iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+              >
+                <PendenciaGroup
+                  label="Aprovados sem data prevista"
+                  items={operacao.aprovadosSemDataPrevista}
+                  tone="text-muted-foreground"
+                  icon={Clock}
+                  onClick={handleView}
+                />
+                <PendenciaGroup
+                  label="Execução prevista para hoje"
+                  items={operacao.execucaoHoje}
+                  tone="text-amber-600 dark:text-amber-400"
+                  icon={CalendarClock}
+                  onClick={handleView}
+                />
+                <PendenciaGroup
+                  label="Execução atrasada"
+                  items={operacao.execucaoAtrasada}
+                  tone="text-red-500"
+                  icon={AlertTriangle}
+                  onClick={handleView}
+                />
+              </PendenciaColumn>
+
+              {canViewFinanceiro && (
+                <PendenciaColumn
+                  title="Financeiro"
+                  icon={DollarSign}
+                  total={totalFinanceiro}
+                  iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                >
+                  <PendenciaGroup
+                    label="Executados sem faturamento"
+                    items={financeiro.executadosSemFaturamento}
+                    tone="text-amber-600 dark:text-amber-400"
+                    icon={Clock}
+                    onClick={handleView}
+                  />
+                  <PendenciaGroup
+                    label="Faturados sem pagamento"
+                    items={financeiro.faturadosSemPagamento}
+                    tone="text-red-500"
+                    icon={AlertTriangle}
+                    onClick={handleView}
+                  />
+                </PendenciaColumn>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ═══ PRÓXIMOS COMPROMISSOS ═══ */}
+      {totalProximosVisible > 0 && (
+        <Card className="border shadow-sm">
+          <CardContent className="p-5">
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Próximos compromissos</h2>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+                  {totalProximosVisible}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Visitas, retornos comerciais e execuções nos próximos 7 dias.</p>
+            </div>
+
+            <div className={cn("grid gap-4", "md:grid-cols-3")}>
+              {canManageAgenda && proximos.visitasProximas.length > 0 && (
+                <ProximoColumn title="Visitas" icon={MapPin} iconBg="bg-violet-500/15 text-violet-600 dark:text-violet-400">
+                  {proximos.visitasProximas.slice(0, 5).map((item) => (
+                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                  ))}
+                  {proximos.visitasProximas.length > 5 && (
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.visitasProximas.length - 5} mais</p>
+                  )}
+                </ProximoColumn>
+              )}
+
+              {proximos.retornosProximos.length > 0 && (
+                <ProximoColumn title="Retornos comerciais" icon={PhoneCall} iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                  {proximos.retornosProximos.slice(0, 5).map((item) => (
+                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                  ))}
+                  {proximos.retornosProximos.length > 5 && (
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.retornosProximos.length - 5} mais</p>
+                  )}
+                </ProximoColumn>
+              )}
+
+              {proximos.execucoesProximas.length > 0 && (
+                <ProximoColumn title="Execuções" icon={Hammer} iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  {proximos.execucoesProximas.slice(0, 5).map((item) => (
+                    <ProximoItem key={item.id} item={item} dateLabel={fmtDate(item.date)} onClick={() => handleView(item)} />
+                  ))}
+                  {proximos.execucoesProximas.length > 5 && (
+                    <p className="pl-1.5 text-[10px] text-muted-foreground">+{proximos.execucoesProximas.length - 5} mais</p>
+                  )}
+                </ProximoColumn>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
+
+/* ═══ Sub-components ═══ */
 
 function PendenciaColumn({
   title,
@@ -312,5 +387,59 @@ function PendenciaGroup({
         {items.length > 5 && <p className="pl-1.5 text-[10px] text-muted-foreground">+{items.length - 5} mais</p>}
       </div>
     </div>
+  );
+}
+
+function ProximoColumn({
+  title,
+  icon: Icon,
+  iconBg,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  iconBg: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg bg-muted/30 p-3">
+      <div className="mb-3 flex items-center gap-2">
+        <div className={cn("flex h-7 w-7 items-center justify-center rounded-full", iconBg)}>
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+      </div>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+function ProximoItem({
+  item,
+  dateLabel,
+  onClick,
+}: {
+  item: PendenciaItem;
+  dateLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-background/60"
+    >
+      <span className="shrink-0 text-[10px] text-muted-foreground w-16">{dateLabel}</span>
+      {item.numero ? (
+        <>
+          <span className="font-bold text-primary">#{item.numero}</span>
+          <span className="truncate text-muted-foreground">- {item.nomeCliente}</span>
+        </>
+      ) : (
+        <>
+          <span className="truncate font-medium text-foreground">{item.nomeCliente}</span>
+          {item.horaVisita && <span className="shrink-0 text-muted-foreground">{item.horaVisita}</span>}
+        </>
+      )}
+    </button>
   );
 }
