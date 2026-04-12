@@ -82,6 +82,12 @@ const areaConfig: Record<AreaType, { label: string; color: string; bgColor: stri
     bgColor: "bg-violet-100 dark:bg-violet-950",
     icon: MapPin,
   },
+  retorno: {
+    label: "Retorno",
+    color: "text-rose-600",
+    bgColor: "bg-rose-100 dark:bg-rose-950",
+    icon: RotateCcw,
+  },
 };
 
 const filterOptions: { value: FilterType; label: string }[] = [
@@ -89,6 +95,7 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "visita", label: "Visitas" },
   { value: "comercial", label: "Comercial" },
   { value: "operacao", label: "Operação" },
+  { value: "retorno", label: "Retornos" },
   { value: "financeiro", label: "Financeiro" },
 ];
 
