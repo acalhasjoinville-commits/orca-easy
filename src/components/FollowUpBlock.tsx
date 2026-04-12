@@ -28,7 +28,6 @@ import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 interface FollowUpBlockProps {
   orcamentoId: string;
-  readOnly?: boolean;
 }
 
 const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
@@ -48,7 +47,7 @@ function formatShortDate(value: string | null | undefined) {
   return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
 }
 
-export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockProps) {
+export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
   const { data: teamMembers = [] } = useTeamMembers();
 
@@ -98,7 +97,7 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
 
   const handleAddLog = async () => {
     if (!logDescricao.trim()) {
-      toast.error("Preencha a descrição");
+      toast.error("Preencha a descricao");
       return;
     }
 
@@ -123,11 +122,11 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
       }
 
       await addLog.mutateAsync({ tipo: logTipo, descricao: logDescricao.trim() });
-      toast.success(nextStatus ? "Interação registrada e acompanhamento atualizado" : "Interação registrada");
+      toast.success(nextStatus ? "Interacao registrada e acompanhamento atualizado" : "Interacao registrada");
       setShowLogDialog(false);
       resetLogForm();
     } catch {
-      toast.error("Erro ao registrar interação");
+      toast.error("Erro ao registrar interacao");
     }
   };
 
@@ -155,28 +154,24 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">
-                {readOnly ? "Histórico comercial" : "Acompanhamento Comercial"}
-              </h2>
+              <h2 className="text-sm font-semibold text-foreground">Acompanhamento Comercial</h2>
             </div>
-            {!readOnly && (
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={() => setShowLogDialog(true)}
-                >
-                  <MessageSquarePlus className="h-3.5 w-3.5" />
-                  Registrar Interação
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setShowLogDialog(true)}
+              >
+                <MessageSquarePlus className="h-3.5 w-3.5" />
+                Registrar Interacao
+              </Button>
+              {!editing && (
+                <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
+                  <Pencil className="h-3.5 w-3.5" />
                 </Button>
-                {!editing && (
-                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={startEdit}>
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {!editing ? (
@@ -241,7 +236,9 @@ export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockPr
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Status do Follow-up</label>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                    Status do acompanhamento
+                  </label>
                   <Select value={editStatus} onValueChange={(v) => setEditStatus(v as StatusFollowUp)}>
                     <SelectTrigger className="h-9 text-xs">
                       <SelectValue />

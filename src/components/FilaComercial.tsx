@@ -263,7 +263,7 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
 
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="h-9 w-full text-xs sm:w-[180px]">
-                <SelectValue placeholder="Status follow-up" />
+                <SelectValue placeholder="Status do acompanhamento" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-xs">
@@ -311,9 +311,14 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
           </div>
 
           {sortBy === "prioridade" && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              A ordem padrao destaca atrasados, retornos de hoje e orcamentos que ainda nao receberam acompanhamento.
-            </p>
+            <div className="mt-2 space-y-1">
+              <p className="text-[11px] text-muted-foreground">
+                A ordem padrao destaca atrasados, retornos de hoje e orcamentos que ainda nao receberam acompanhamento.
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                A fila comercial mostra somente orcamentos pendentes que ainda estao em negociacao.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -322,8 +327,10 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Search className="mb-3 h-8 w-8 text-muted-foreground/30" />
-            <p className="text-sm font-medium text-muted-foreground">Nenhum orcamento na fila</p>
-            <p className="mt-1 text-xs text-muted-foreground/70">Ajuste os filtros para ver mais resultados.</p>
+            <p className="text-sm font-medium text-muted-foreground">Nenhum orcamento pendente na fila</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              Ajuste os filtros ou registre um novo acompanhamento.
+            </p>
           </CardContent>
         </Card>
       ) : !isMobile ? (
@@ -334,7 +341,7 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
                 <tr className="border-b bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                   <th className="w-16 px-3 py-2.5 font-semibold">#</th>
                   <th className="px-3 py-2.5 font-semibold">Cliente</th>
-                  <th className="w-32 px-3 py-2.5 font-semibold">Follow-up</th>
+                  <th className="w-32 px-3 py-2.5 font-semibold">Acompanhamento</th>
                   <th className="w-28 px-3 py-2.5 text-right font-semibold">Valor</th>
                   <th className="w-28 px-3 py-2.5 font-semibold">Retorno</th>
                   <th className="w-32 px-3 py-2.5 font-semibold">Responsavel</th>
