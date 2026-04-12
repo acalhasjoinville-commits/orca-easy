@@ -396,6 +396,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
       garantiaSnapshot: garantia,
       tempoGarantiaSnapshot: tempoGarantia,
       termoRecebimentoOsSnapshot: termoRecebimentoOs,
+      dataPrevista: status === "pendente" ? null : (editingOrcamento?.dataPrevista ?? null),
     };
     try {
       if (isEditing && editingOrcamento) {

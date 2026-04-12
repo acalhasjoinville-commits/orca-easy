@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from "@/lib/types";
 import { FollowUpBlock } from "./FollowUpBlock";
-import { RetornosServicoBlock } from "./RetornosServicoBlock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -174,7 +173,7 @@ function getOperationalTimeline(orcamento: Orcamento): TimelineEvent[] {
     });
   }
 
-  if (orcamento.dataPrevista) {
+  if (orcamento.dataPrevista && orcamento.status !== "pendente") {
     events.push({
       id: "scheduled",
       label: "Data prevista definida",
@@ -398,6 +397,7 @@ export function OrcamentoDetails({
     (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? (1 - orcamento.custoTotalObra / displayValue) * 100 : 0;
   const dataPrevistaSelecionada = parseDateValue(orcamento.dataPrevista) ?? undefined;
+  const showDataPrevista = Boolean(orcamento.dataPrevista && orcamento.status !== "pendente");
 
   const showPipeline = orcamento.status !== "rejeitado" && orcamento.status !== "cancelado";
 
@@ -425,14 +425,8 @@ export function OrcamentoDetails({
       {/* Pipeline */}
       {showPipeline && <PipelineBar orcamento={orcamento} />}
 
-      {/* Phase-aware blocks */}
-      {orcamento.status === "pendente" && <FollowUpBlock orcamentoId={orcamento.id} />}
-      {orcamento.status === "aprovado" && <FollowUpBlock orcamentoId={orcamento.id} readOnly />}
-      {(orcamento.status === "executado" || orcamento.dataFaturamento || orcamento.dataPagamento) &&
-        orcamento.status !== "pendente" &&
-        orcamento.status !== "aprovado" && (
-          <RetornosServicoBlock orcamentoId={orcamento.id} />
-        )}
+      {/* Follow-up Comercial */}
+      <FollowUpBlock orcamentoId={orcamento.id} />
 
       {/* Header Card */}
       <Card className="mb-6">
@@ -466,7 +460,7 @@ export function OrcamentoDetails({
               <CalendarDays className="h-3 w-3" />
               Criado em {formatDateValue(orcamento.dataCriacao) ?? "—"}
             </span>
-            {orcamento.dataPrevista && (
+            {showDataPrevista && (
               <span className="flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
                 Previsto {formatDateValue(orcamento.dataPrevista)}

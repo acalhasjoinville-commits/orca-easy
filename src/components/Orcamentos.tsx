@@ -326,7 +326,11 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
     if (updatingId) return;
     setUpdatingId(orc.id);
     try {
-      await updateOrcamento.mutateAsync({ ...orc, status: newStatus });
+      await updateOrcamento.mutateAsync({
+        ...orc,
+        status: newStatus,
+        dataPrevista: newStatus === "pendente" ? null : orc.dataPrevista,
+      });
       toast.success(`Status alterado para ${statusConfig[newStatus].label}.`, { duration: 2500 });
     } catch {
       toast.error("Erro ao alterar status.", { duration: 5000 });
@@ -511,7 +515,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           )}
         >
           <MessageCircle className="h-3.5 w-3.5 inline mr-1.5" />
-          Acompanhamento comercial
+          Follow-up
         </button>
       </div>
 
