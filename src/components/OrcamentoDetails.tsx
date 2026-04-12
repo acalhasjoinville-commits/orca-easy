@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Orcamento, StatusOrcamento, Cliente, MinhaEmpresa } from "@/lib/types";
 import { FollowUpBlock } from "./FollowUpBlock";
+import { RetornosServicoBlock } from "./RetornosServicoBlock";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -424,8 +425,14 @@ export function OrcamentoDetails({
       {/* Pipeline */}
       {showPipeline && <PipelineBar orcamento={orcamento} />}
 
-      {/* Follow-up Comercial */}
-      <FollowUpBlock orcamentoId={orcamento.id} />
+      {/* Phase-aware blocks */}
+      {orcamento.status === "pendente" && <FollowUpBlock orcamentoId={orcamento.id} />}
+      {orcamento.status === "aprovado" && <FollowUpBlock orcamentoId={orcamento.id} readOnly />}
+      {(orcamento.status === "executado" || orcamento.dataFaturamento || orcamento.dataPagamento) &&
+        orcamento.status !== "pendente" &&
+        orcamento.status !== "aprovado" && (
+          <RetornosServicoBlock orcamentoId={orcamento.id} />
+        )}
 
       {/* Header Card */}
       <Card className="mb-6">
