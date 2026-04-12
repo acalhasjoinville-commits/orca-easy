@@ -28,6 +28,7 @@ import { getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 
 interface FollowUpBlockProps {
   orcamentoId: string;
+  readOnly?: boolean;
 }
 
 const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
@@ -47,7 +48,7 @@ function formatShortDate(value: string | null | undefined) {
   return new Date(year, month - 1, day).toLocaleDateString("pt-BR");
 }
 
-export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
+export function FollowUpBlock({ orcamentoId, readOnly = false }: FollowUpBlockProps) {
   const { followUp, isLoading, upsertFollowUp, logs, logsLoading, addLog } = useFollowUp(orcamentoId);
   const { data: teamMembers = [] } = useTeamMembers();
 
