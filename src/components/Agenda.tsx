@@ -62,7 +62,7 @@ const areaConfig: Record<AreaType, { label: string; color: string; bgColor: stri
     icon: Phone,
   },
   operacao: {
-    label: "Operacao",
+    label: "Operação",
     color: "text-blue-600",
     bgColor: "bg-blue-100 dark:bg-blue-950",
     icon: Hammer,
@@ -85,7 +85,7 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "visita", label: "Visitas" },
   { value: "comercial", label: "Comercial" },
-  { value: "operacao", label: "Operacao" },
+  { value: "operacao", label: "Operação" },
   { value: "financeiro", label: "Financeiro" },
 ];
 
@@ -263,7 +263,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             ? "Visita atrasada"
             : visita.status === "reagendada"
               ? "Visita reagendada"
-              : "Visita tecnica",
+              : "Visita técnica",
         orcamentoId: null,
         visitaId: visita.id,
         numero: 0,
@@ -389,9 +389,9 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
               <CalendarDays className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Agenda da operacao</p>
+              <p className="text-sm font-semibold text-foreground">Agenda da operação</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Veja visitas tecnicas, retornos comerciais, execucoes previstas e registros recentes em uma linha do
+                Veja visitas técnicas, retornos comerciais, execuções previstas e registros recentes em uma linha do
                 tempo simples para a semana.
               </p>
             </div>
@@ -405,7 +405,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             Linha do tempo
           </TabsTrigger>
           <TabsTrigger value="visitas" className="flex-1 sm:flex-initial">
-            Gestao de visitas
+            Gestão de visitas
           </TabsTrigger>
         </TabsList>
 
@@ -438,10 +438,10 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <CalendarDays className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos proximos dias</p>
+                <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos próximos dias</p>
                 <p className="mt-1 text-xs text-muted-foreground/70">
-                  Quando houver visitas, retornos comerciais, execucoes previstas ou registros financeiros, eles
-                  aparecerao aqui.
+                  Quando houver visitas, retornos comerciais, execuções previstas ou registros financeiros, eles
+                  aparecerão aqui.
                 </p>
               </CardContent>
             </Card>

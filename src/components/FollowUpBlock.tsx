@@ -88,10 +88,10 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
         observacoes: editObservacoes,
         responsavelId: editResponsavelId,
       });
-      toast.success("Follow-up atualizado");
+      toast.success("Acompanhamento atualizado");
       setEditing(false);
     } catch {
-      toast.error("Erro ao salvar follow-up");
+      toast.error("Erro ao salvar acompanhamento");
     }
   };
 
@@ -106,7 +106,7 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
       logTipo === "retorno_agendado" ? logDataRetorno || followUp.dataRetorno : followUp.dataRetorno;
 
     if (logTipo === "retorno_agendado" && !nextDataRetorno) {
-      toast.error("Defina a data do retorno para agendar o follow-up.");
+      toast.error("Defina a data do retorno para agendar o acompanhamento.");
       return;
     }
 
@@ -122,11 +122,11 @@ export function FollowUpBlock({ orcamentoId }: FollowUpBlockProps) {
       }
 
       await addLog.mutateAsync({ tipo: logTipo, descricao: logDescricao.trim() });
-      toast.success(nextStatus ? "Interacao registrada e follow-up atualizado" : "Interacao registrada");
+      toast.success(nextStatus ? "Interação registrada e acompanhamento atualizado" : "Interação registrada");
       setShowLogDialog(false);
       resetLogForm();
     } catch {
-      toast.error("Erro ao registrar interacao");
+      toast.error("Erro ao registrar interação");
     }
   };
 

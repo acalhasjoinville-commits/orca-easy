@@ -113,14 +113,14 @@ export function PendenciasOperacionais({
             isLoading={isComercialLoading}
           >
             <PendenciaGroup
-              label="Follow-ups para hoje"
+              label="Retornos comerciais para hoje"
               items={comercial.followUpsHoje}
               tone="text-amber-600 dark:text-amber-400"
               icon={CalendarClock}
               onClick={handleView}
             />
             <PendenciaGroup
-              label="Follow-ups atrasados"
+              label="Retornos comerciais atrasados"
               items={comercial.followUpsAtrasados}
               tone="text-red-500"
               icon={AlertTriangle}
