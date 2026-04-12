@@ -118,10 +118,12 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
   const { canViewFinanceiro, user } = useAuth();
   const { data: filaComercial, isLoading: filaLoading } = useFilaComercial();
   const { visitas, isLoading: visitasLoading } = useVisitas();
+  const { data: retornosServico } = useAllRetornos();
 
   const [filter, setFilter] = useState<FilterType>("todos");
   const [activeView, setActiveView] = useState<AgendaView>("timeline");
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null);
+  const [selectedRetorno, setSelectedRetorno] = useState<RetornoServico | null>(null);
   const [editRequest, setEditRequest] = useState<EditVisitaRequest | null>(null);
 
   const hoje = getTodayLocal();
