@@ -20,7 +20,15 @@ interface FilaComercialProps {
 type QueueSort = "prioridade" | "data_criacao";
 const FILA_COMERCIAL_VIEW_STORAGE_KEY = "orcacalhas:fila-comercial-view:v1";
 
-const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
+const allStatuses: StatusFollowUp[] = ["sem_retorno", "em_negociacao", "aguardando_cliente", "agendado", "concluido"];
+
+const STATUS_FILA_LABELS: Record<StatusFollowUp, string> = {
+  sem_retorno: "Sem retorno",
+  em_negociacao: "Em negociacao",
+  aguardando_cliente: "Aguardando cliente",
+  agendado: "Retorno agendado",
+  concluido: "Comercial encerrado",
+};
 
 interface StoredFilaComercialViewState {
   search?: string;
@@ -271,7 +279,7 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
                 </SelectItem>
                 {allStatuses.map((status) => (
                   <SelectItem key={status} value={status} className="text-xs">
-                    {STATUS_FOLLOWUP_CONFIG[status].label}
+                    {STATUS_FILA_LABELS[status]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -369,7 +377,7 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className={cn("text-[10px]", statusConfig.color)}>
-                          {statusConfig.label}
+                          {STATUS_FILA_LABELS[item.statusFollowUp]}
                         </Badge>
                       </td>
                       <td className="px-3 py-3 text-right font-bold tabular-nums">{formatCurrency(item.valorFinal)}</td>
@@ -433,7 +441,7 @@ export function FilaComercial({ onViewOrcamento, orcamentos }: FilaComercialProp
                   <div className="mb-2 flex items-center gap-2">
                     <span className="text-sm font-bold text-primary">#{item.numeroOrcamento}</span>
                     <Badge variant="outline" className={cn("text-[10px]", statusConfig.color)}>
-                      {statusConfig.label}
+                      {STATUS_FILA_LABELS[item.statusFollowUp]}
                     </Badge>
                     <span className="flex-1" />
                     <span className="text-sm font-bold tabular-nums text-foreground">

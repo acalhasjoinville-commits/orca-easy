@@ -31,7 +31,7 @@ interface FollowUpBlockProps {
   readOnly?: boolean;
 }
 
-const allStatuses = Object.keys(STATUS_FOLLOWUP_CONFIG) as StatusFollowUp[];
+const allStatuses: StatusFollowUp[] = ["sem_retorno", "em_negociacao", "aguardando_cliente", "agendado", "concluido"];
 const allTipos = Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[];
 const statusByInteractionType: Partial<Record<TipoInteracao, StatusFollowUp>> = {
   retorno_agendado: "agendado",
@@ -47,7 +47,7 @@ const FOLLOWUP_STATUS_UI: Record<StatusFollowUp, { label: string; description: s
     description: "Ainda nao foi definida a proxima acao nem uma data combinada para retornar ao cliente.",
   },
   agendado: {
-    label: "Agendado",
+    label: "Retorno agendado",
     description: "Ja existe um retorno combinado com data definida para falar com o cliente.",
   },
   em_negociacao: {
