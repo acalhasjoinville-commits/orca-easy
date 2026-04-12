@@ -9,21 +9,24 @@ import {
   MapPin,
   Phone,
   Receipt,
+  RotateCcw,
 } from "lucide-react";
 
 import { useFilaComercial } from "@/hooks/useFollowUp";
 import { useVisitas } from "@/hooks/useVisitas";
+import { useAllRetornos } from "@/hooks/useRetornosServico";
 import { useAuth } from "@/hooks/useAuth";
-import { Orcamento, Visita } from "@/lib/types";
+import { Orcamento, Visita, RetornoServico } from "@/lib/types";
 import { addDaysLocal, formatDateLabel, getTodayLocal, toLocalDateStr } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
+import { RetornoDetailDialog } from "@/components/RetornoDetailDialog";
 import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
 
-type AreaType = "comercial" | "operacao" | "financeiro" | "visita";
+type AreaType = "comercial" | "operacao" | "financeiro" | "visita" | "retorno";
 type FilterType = "todos" | AreaType;
 type AgendaView = "timeline" | "visitas";
 
@@ -62,7 +65,7 @@ const areaConfig: Record<AreaType, { label: string; color: string; bgColor: stri
     icon: Phone,
   },
   operacao: {
-    label: "Operacao",
+    label: "Operação",
     color: "text-blue-600",
     bgColor: "bg-blue-100 dark:bg-blue-950",
     icon: Hammer,
@@ -79,13 +82,20 @@ const areaConfig: Record<AreaType, { label: string; color: string; bgColor: stri
     bgColor: "bg-violet-100 dark:bg-violet-950",
     icon: MapPin,
   },
+  retorno: {
+    label: "Retorno",
+    color: "text-rose-600",
+    bgColor: "bg-rose-100 dark:bg-rose-950",
+    icon: RotateCcw,
+  },
 };
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "visita", label: "Visitas" },
   { value: "comercial", label: "Comercial" },
-  { value: "operacao", label: "Operacao" },
+  { value: "operacao", label: "Operação" },
+  { value: "retorno", label: "Retornos" },
   { value: "financeiro", label: "Financeiro" },
 ];
 
@@ -108,10 +118,12 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
   const { canViewFinanceiro, user } = useAuth();
   const { data: filaComercial, isLoading: filaLoading } = useFilaComercial();
   const { visitas, isLoading: visitasLoading } = useVisitas();
+  const { data: retornosServico } = useAllRetornos();
 
   const [filter, setFilter] = useState<FilterType>("todos");
   const [activeView, setActiveView] = useState<AgendaView>("timeline");
   const [selectedVisita, setSelectedVisita] = useState<Visita | null>(null);
+  const [selectedRetorno, setSelectedRetorno] = useState<RetornoServico | null>(null);
   const [editRequest, setEditRequest] = useState<EditVisitaRequest | null>(null);
 
   const hoje = getTodayLocal();
@@ -129,7 +141,8 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         storedFilter === "comercial" ||
         storedFilter === "operacao" ||
         storedFilter === "financeiro" ||
-        storedFilter === "visita"
+        storedFilter === "visita" ||
+        storedFilter === "retorno"
       ) {
         setFilter(storedFilter);
       }
@@ -173,11 +186,15 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
 
   const visitasMap = useMemo(() => {
     const map = new Map<string, Visita>();
-    for (const visita of visitas) {
-      map.set(visita.id, visita);
-    }
+    for (const visita of visitas) map.set(visita.id, visita);
     return map;
   }, [visitas]);
+
+  const retornosMap = useMemo(() => {
+    const map = new Map<string, RetornoServico>();
+    for (const r of retornosServico ?? []) map.set(r.id, r);
+    return map;
+  }, [retornosServico]);
 
   const eventos = useMemo(() => {
     const result: AgendaEvento[] = [];
@@ -263,7 +280,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             ? "Visita atrasada"
             : visita.status === "reagendada"
               ? "Visita reagendada"
-              : "Visita tecnica",
+              : "Visita técnica",
         orcamentoId: null,
         visitaId: visita.id,
         numero: 0,
@@ -272,8 +289,28 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       });
     }
 
+    // Retornos do serviço
+    for (const retorno of retornosServico ?? []) {
+      if (retorno.status === "encerrado" || retorno.status === "cancelado") continue;
+      if (!retorno.dataRetorno) continue;
+      if (retorno.dataRetorno > limiteMax) continue;
+
+      const orc = orcamentosMap.get(retorno.orcamentoId);
+      result.push({
+        id: `ret-${retorno.id}`,
+        date: retorno.dataRetorno,
+        area: "retorno",
+        subtype: retorno.dataRetorno < hoje ? "Retorno atrasado" : "Retorno agendado",
+        orcamentoId: retorno.orcamentoId,
+        visitaId: null,
+        numero: orc?.numeroOrcamento ?? 0,
+        nomeCliente: orc?.nomeCliente ?? "—",
+        horaVisita: retorno.horaRetorno?.slice(0, 5),
+      });
+    }
+
     return result;
-  }, [canViewFinanceiro, filaComercial, hoje, limiteMax, limitePassado, orcamentos, visitas]);
+  }, [canViewFinanceiro, filaComercial, hoje, limiteMax, limitePassado, orcamentos, retornosServico, orcamentosMap, visitas]);
 
   const visibleFilters = canViewFinanceiro
     ? filterOptions
@@ -360,6 +397,16 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
       return;
     }
 
+    // Retorno do serviço — open contextual detail
+    if (evento.area === "retorno") {
+      const retornoId = evento.id.replace("ret-", "");
+      const retorno = retornosMap.get(retornoId);
+      if (retorno) {
+        setSelectedRetorno(retorno);
+        return;
+      }
+    }
+
     if (evento.orcamentoId) {
       const orcamento = orcamentosMap.get(evento.orcamentoId);
       if (orcamento) onViewOrcamento(orcamento);
@@ -389,9 +436,9 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
               <CalendarDays className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Agenda da operacao</p>
+              <p className="text-sm font-semibold text-foreground">Agenda da operação</p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Veja visitas tecnicas, retornos comerciais, execucoes previstas e registros recentes em uma linha do
+                Veja visitas técnicas, retornos comerciais, execuções previstas e registros recentes em uma linha do
                 tempo simples para a semana.
               </p>
             </div>
@@ -405,7 +452,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             Linha do tempo
           </TabsTrigger>
           <TabsTrigger value="visitas" className="flex-1 sm:flex-initial">
-            Gestao de visitas
+            Gestão de visitas
           </TabsTrigger>
         </TabsList>
 
@@ -438,10 +485,10 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <CalendarDays className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos proximos dias</p>
+                <p className="text-sm font-medium text-muted-foreground">Nenhum evento nos próximos dias</p>
                 <p className="mt-1 text-xs text-muted-foreground/70">
-                  Quando houver visitas, retornos comerciais, execucoes previstas ou registros financeiros, eles
-                  aparecerao aqui.
+                  Quando houver visitas, retornos comerciais, execuções previstas ou registros financeiros, eles
+                  aparecerão aqui.
                 </p>
               </CardContent>
             </Card>
@@ -554,6 +601,25 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         }}
         onEdit={selectedVisita ? () => handleTimelineEdit("edit") : undefined}
         onReschedule={selectedVisita ? () => handleTimelineEdit("reschedule") : undefined}
+      />
+
+      <RetornoDetailDialog
+        retorno={selectedRetorno}
+        open={!!selectedRetorno}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRetorno(null);
+        }}
+        onOpenOrcamento={
+          selectedRetorno
+            ? () => {
+                const orc = orcamentosMap.get(selectedRetorno.orcamentoId);
+                if (orc) {
+                  setSelectedRetorno(null);
+                  onViewOrcamento(orc);
+                }
+              }
+            : undefined
+        }
       />
     </div>
   );

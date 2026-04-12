@@ -511,7 +511,7 @@ export function Orcamentos({ onNewOrcamento, onViewOrcamento, onEditOrcamento }:
           )}
         >
           <MessageCircle className="h-3.5 w-3.5 inline mr-1.5" />
-          Follow-up
+          Acompanhamento comercial
         </button>
       </div>
 
