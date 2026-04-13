@@ -1724,27 +1724,51 @@ export function Configuracoes() {
             Nenhum resultado para "{searchCatalogo}"
           </p>
         ) : (
-          filteredCatalogo.map((e) => (
-            <ItemRow
-              key={e.id}
-              item={e}
-              section="catalogo"
-              onEdit={openEdit}
-              onDelete={handleDelete}
-              deletingId={deletingId}
-            >
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{e.nomeServico}</p>
-                <Badge variant={e.motorType === "motor1" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                  {e.motorType === "motor1" ? "M1" : "M2"}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
-              </p>
-              <p className="text-[11px] text-muted-foreground/70">Regra: {regraName(e.regraId)}</p>
-            </ItemRow>
-          ))
+          filteredCatalogo.map((e) => {
+            const modoLabel = e.tipoServico === 'avulso'
+              ? e.modoCobranca === 'valor_fechado' ? 'Fechado'
+                : e.modoCobranca === 'por_unidade' ? `Unidade${e.unidadeCobranca ? ` (${e.unidadeCobranca})` : ''}`
+                : 'Metro'
+              : null;
+            return (
+              <ItemRow
+                key={e.id}
+                item={e}
+                section="catalogo"
+                onEdit={openEdit}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              >
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-medium">{e.nomeServico}</p>
+                  {e.tipoServico === 'motor' ? (
+                    <Badge variant={e.motorType === "motor1" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
+                      {e.motorType === "motor1" ? "M1" : "M2"}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                      Avulso — {modoLabel}
+                    </Badge>
+                  )}
+                </div>
+                {e.tipoServico === 'motor' ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/70">Regra: {regraName(e.regraId)}</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {e.modoCobranca === 'valor_fechado' ? `Valor: ${fmt(e.valorBase)}` :
+                     e.modoCobranca === 'por_unidade' ? `${fmt(e.valorBase)} / ${e.unidadeCobranca || 'un'}` :
+                     `${fmt(e.valorBase)}/m · Regra: ${regraName(e.regraId)}`}
+                    {e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}
+                  </p>
+                )}
+              </ItemRow>
+            );
+          })
         )}
       </SubSection>
     </div>
