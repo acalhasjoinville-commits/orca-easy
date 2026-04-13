@@ -101,24 +101,28 @@ export const seedServicos: ServicoTemplate[] = [
     regraId: REGRA_IDS.beiral, motorType: 'motor1',
     materialPadrao: 'Alumínio', espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.6, dificuldadeMedia: 3.5, dificuldadeDificil: 4.6,
+    tipoServico: 'motor', modoCobranca: 'motor', valorBase: 0, unidadeCobranca: '', custoBaseInterno: null,
   },
   {
     id: SERVICO_IDS.rufoPingadeira, nomeServico: 'Rufo Pingadeira Alumínio 0.5mm',
     regraId: REGRA_IDS.rufoPingadeira, motorType: 'motor1',
     materialPadrao: 'Alumínio', espessuraPadrao: 0.5, cortePadrao: 200,
     dificuldadeFacil: 2.4, dificuldadeMedia: 3.2, dificuldadeDificil: 4.2,
+    tipoServico: 'motor', modoCobranca: 'motor', valorBase: 0, unidadeCobranca: '', custoBaseInterno: null,
   },
   {
     id: SERVICO_IDS.rufoEncosto, nomeServico: 'Rufo Encosto Galvanizado 0.5mm',
     regraId: REGRA_IDS.rufoEncosto, motorType: 'motor2',
     materialPadrao: 'Aço Galvanizado', espessuraPadrao: 0.5, cortePadrao: 300,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.6, dificuldadeDificil: 4.8,
+    tipoServico: 'motor', modoCobranca: 'motor', valorBase: 0, unidadeCobranca: '', custoBaseInterno: null,
   },
   {
     id: SERVICO_IDS.calhaAmericana, nomeServico: 'Calha Americana Alumínio 0.7mm',
     regraId: REGRA_IDS.americana, motorType: 'motor1',
     materialPadrao: 'Alumínio', espessuraPadrao: 0.7, cortePadrao: 500,
     dificuldadeFacil: 2.8, dificuldadeMedia: 3.8, dificuldadeDificil: 5.0,
+    tipoServico: 'motor', modoCobranca: 'motor', valorBase: 0, unidadeCobranca: '', custoBaseInterno: null,
   },
 ];
 
