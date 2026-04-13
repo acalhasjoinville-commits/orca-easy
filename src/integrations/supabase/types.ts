@@ -899,6 +899,7 @@ export type Database = {
         Row: {
           corte_padrao: number
           created_at: string
+          custo_base_interno: number | null
           dificuldade_dificil: number
           dificuldade_facil: number
           dificuldade_media: number
@@ -906,14 +907,19 @@ export type Database = {
           espessura_padrao: number
           id: string
           material_padrao: string
+          modo_cobranca: string
           motor_type: string
           nome_servico: string
           regra_id: string
+          tipo_servico: string
+          unidade_cobranca: string
           updated_at: string
+          valor_base: number
         }
         Insert: {
           corte_padrao?: number
           created_at?: string
+          custo_base_interno?: number | null
           dificuldade_dificil?: number
           dificuldade_facil?: number
           dificuldade_media?: number
@@ -921,14 +927,19 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
+          modo_cobranca?: string
           motor_type?: string
           nome_servico: string
           regra_id?: string
+          tipo_servico?: string
+          unidade_cobranca?: string
           updated_at?: string
+          valor_base?: number
         }
         Update: {
           corte_padrao?: number
           created_at?: string
+          custo_base_interno?: number | null
           dificuldade_dificil?: number
           dificuldade_facil?: number
           dificuldade_media?: number
@@ -936,10 +947,14 @@ export type Database = {
           espessura_padrao?: number
           id?: string
           material_padrao?: string
+          modo_cobranca?: string
           motor_type?: string
           nome_servico?: string
           regra_id?: string
+          tipo_servico?: string
+          unidade_cobranca?: string
           updated_at?: string
+          valor_base?: number
         }
         Relationships: [
           {

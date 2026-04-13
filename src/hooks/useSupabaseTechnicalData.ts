@@ -8,6 +8,8 @@ import {
   ServicoTemplate,
   ItemRegra,
   MotorType,
+  TipoServico,
+  ModoCobranca,
 } from "@/lib/types";
 import { seedMotor1, seedMotor2, seedInsumos, seedRegras, seedServicos } from "@/lib/seedData";
 import { Json, Tables, TablesInsert } from "@/integrations/supabase/types";
@@ -98,6 +100,11 @@ function dbToServico(row: ServicoRow): ServicoTemplate {
     dificuldadeFacil: Number(row.dificuldade_facil),
     dificuldadeMedia: Number(row.dificuldade_media),
     dificuldadeDificil: Number(row.dificuldade_dificil),
+    tipoServico: ((row as any).tipo_servico || "motor") as TipoServico,
+    modoCobranca: ((row as any).modo_cobranca || "motor") as ModoCobranca,
+    valorBase: Number((row as any).valor_base ?? 0),
+    unidadeCobranca: (row as any).unidade_cobranca || "",
+    custoBaseInterno: (row as any).custo_base_interno != null ? Number((row as any).custo_base_interno) : null,
   };
 }
 function servicoToDb(e: ServicoTemplate, empresaId: string): ServicoInsert {
@@ -113,7 +120,12 @@ function servicoToDb(e: ServicoTemplate, empresaId: string): ServicoInsert {
     dificuldade_media: e.dificuldadeMedia,
     dificuldade_dificil: e.dificuldadeDificil,
     empresa_id: empresaId,
-  };
+    tipo_servico: e.tipoServico,
+    modo_cobranca: e.modoCobranca,
+    valor_base: e.valorBase,
+    unidade_cobranca: e.unidadeCobranca,
+    custo_base_interno: e.custoBaseInterno,
+  } as any;
 }
 
 // ─── SEED HELPER ───

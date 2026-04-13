@@ -298,10 +298,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
     return servico ? (regraMap.get(servico.regraId) ?? null) : null;
   };
 
-  const getMaterialResumo = (item: ItemServico) => `${item.materialId} · ${item.espessura}mm · ${item.corte}mm`;
+  const getMaterialResumo = (item: ItemServico) => {
+    if (item.tipoServico === 'avulso') {
+      if (item.modoCobranca === 'valor_fechado') return 'Valor fechado';
+      if (item.modoCobranca === 'por_unidade') return `${item.quantidade ?? 0} ${item.unidadeCobranca || 'un'} × ${fmt(item.valorUnitario ?? 0)}`;
+      return `${item.metragem}m × ${fmt(item.valorUnitario ?? 0)}/m`;
+    }
+    return `${item.materialId} · ${item.espessura}mm · ${item.corte}mm`;
+  };
 
   const getAjustesCount = (item: ItemServico) =>
     item.insumosOverrides ? Object.keys(item.insumosOverrides).length : 0;
+
+  const hasAnyCustoIncompleto = itens.some(i => i.custoIncompleto === true);
 
   const handleBackFromCart = () => {
     if (isEditing) {
@@ -918,12 +927,26 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">{getMaterialResumo(item)}</p>
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                              {item.metragem}m
-                            </span>
-                            <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                              {dificuldadeLabel[item.dificuldade]}
-                            </span>
+                            {item.tipoServico !== 'avulso' && (
+                              <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                {item.metragem}m
+                              </span>
+                            )}
+                            {(item.tipoServico !== 'avulso' || item.modoCobranca === 'por_metro') && (
+                              <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                {dificuldadeLabel[item.dificuldade]}
+                              </span>
+                            )}
+                            {item.tipoServico === 'avulso' && (
+                              <span className="inline-flex items-center bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                                Avulso
+                              </span>
+                            )}
+                            {item.custoIncompleto && (
+                              <span className="inline-flex items-center bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                                Custo incompleto
+                              </span>
+                            )}
                             <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                               {item.insumosCalculados.length}{" "}
                               {item.insumosCalculados.length === 1 ? "insumo" : "insumos"}

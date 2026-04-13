@@ -6,6 +6,7 @@ import {
   calcInsumosDinamicos,
   getFatorDificuldade,
 } from "@/lib/calcEngine";
+import { calcServicoAvulso, buildItemServicoAvulso } from "@/lib/calcServicoAvulso";
 import { Dificuldade, ItemServico, InsumoCalculado, MotorType } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Loader2, Factory, Truck, Check, ChevronsUpDown, Ruler, Gauge, Package, Calculator, Info } from "lucide-react";
+import { Loader2, Factory, Truck, Check, ChevronsUpDown, Ruler, Gauge, Package, Calculator, Info, AlertTriangle, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -41,14 +42,21 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
   const { motor2: motor2List } = useMotor2();
   const { insumos: insumosList } = useInsumos();
 
-  // Filter services by the budget's motor
-  const servicosList = useMemo(() => allServicos.filter((s) => s.motorType === motorType), [allServicos, motorType]);
+  // Filter services: motor services matching the budget's motor + ALL avulso services
+  const servicosList = useMemo(
+    () => allServicos.filter((s) => s.tipoServico === "avulso" || s.motorType === motorType),
+    [allServicos, motorType],
+  );
 
   const [servicoId, setServicoId] = useState("");
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [metragem, setMetragem] = useState("");
   const [dificuldade, setDificuldade] = useState<Dificuldade>("facil");
   const [editQtds, setEditQtds] = useState<Record<string, number>>({});
+  // Avulso-specific state
+  const [avulsoValor, setAvulsoValor] = useState("");
+  const [avulsoQuantidade, setAvulsoQuantidade] = useState("");
+  const [avulsoCustoInterno, setAvulsoCustoInterno] = useState("");
 
   // Pre-populate when editing an existing item
   useEffect(() => {
@@ -57,15 +65,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       setMetragem(String(editingItem.metragem));
       setDificuldade(editingItem.dificuldade);
       setEditQtds(editingItem.insumosOverrides ?? {});
+      if (editingItem.valorUnitario != null) setAvulsoValor(String(editingItem.valorUnitario));
+      if (editingItem.quantidade != null) setAvulsoQuantidade(String(editingItem.quantidade));
     }
   }, [open, editingItem]);
 
   const servico = servicosList.find((s) => s.id === servicoId);
+  const isAvulso = servico?.tipoServico === "avulso";
+  const modoCobranca = servico?.modoCobranca ?? "motor";
   const regra = servico ? regrasList.find((r) => r.id === servico.regraId) : null;
 
-  // Validation for motor data availability
+  // Validation for motor data availability (only for motor services)
   const motorValidationError = useMemo(() => {
-    if (!servico) return null;
+    if (!servico || isAvulso) return null;
     if (motorType === "motor1") {
       const found = motor1List.find((e) => e.material === servico.materialPadrao);
       if (!found) return `Material "${servico.materialPadrao}" não encontrado na base do Motor 1.`;
@@ -80,10 +92,11 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
         return `Combinação ${servico.materialPadrao} ${servico.espessuraPadrao}mm ${servico.cortePadrao}mm não encontrada no Motor 2.`;
     }
     return null;
-  }, [servico, motorType, motor1List, motor2List]);
+  }, [servico, isAvulso, motorType, motor1List, motor2List]);
 
-  const calc = useMemo(() => {
-    if (!servico || !regra || !metragem || motorValidationError) return null;
+  // ─── Motor service calculation (existing logic) ───
+  const calcMotor = useMemo(() => {
+    if (!servico || isAvulso || !regra || !metragem || motorValidationError) return null;
     const m = parseFloat(metragem);
     if (isNaN(m) || m <= 0) return null;
 
@@ -93,12 +106,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       if (!motor1) return null;
       custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
     } else {
-      const resultado = calcCustoMetroMotor2(
-        servico.materialPadrao,
-        servico.espessuraPadrao,
-        servico.cortePadrao,
-        motor2List,
-      );
+      const resultado = calcCustoMetroMotor2(servico.materialPadrao, servico.espessuraPadrao, servico.cortePadrao, motor2List);
       if (resultado === null) return null;
       custoMetroLinear = resultado;
     }
@@ -108,9 +116,33 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     const fator = getFatorDificuldade(servico, dificuldade);
 
     return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
-  }, [servico, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
+  }, [servico, isAvulso, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
 
-  // Build real overrides: only entries where manual qty differs from calculated base
+  // ─── Avulso calculation ───
+  const calcAvulsoResult = useMemo(() => {
+    if (!servico || !isAvulso) return null;
+    const valorNum = parseFloat(avulsoValor) || servico.valorBase;
+    const qtdNum = parseFloat(avulsoQuantidade) || 0;
+    const custoNum = avulsoCustoInterno ? parseFloat(avulsoCustoInterno) : servico.custoBaseInterno;
+    const metNum = parseFloat(metragem) || 0;
+
+    if (modoCobranca === "valor_fechado" && valorNum <= 0) return null;
+    if (modoCobranca === "por_unidade" && (valorNum <= 0 || qtdNum <= 0)) return null;
+    if (modoCobranca === "por_metro" && (valorNum <= 0 || metNum <= 0)) return null;
+
+    return calcServicoAvulso(servico, {
+      modo: modoCobranca,
+      valorInformado: valorNum,
+      quantidade: modoCobranca === "por_metro" ? metNum : qtdNum,
+      custoInternoInformado: custoNum,
+      dificuldade: modoCobranca === "por_metro" ? dificuldade : undefined,
+      regra: modoCobranca === "por_metro" ? regra : null,
+      insumosList: modoCobranca === "por_metro" ? insumosList : [],
+    });
+  }, [servico, isAvulso, avulsoValor, avulsoQuantidade, avulsoCustoInterno, metragem, dificuldade, modoCobranca, regra, insumosList]);
+
+  // Build real overrides for motor services
+  const calc = calcMotor;
   const realOverrides = useMemo(() => {
     if (!calc) return {};
     const result: Record<string, number> = {};
@@ -161,15 +193,35 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
   const overrideCount = Object.keys(realOverrides).length;
   const metragemNumero = parseFloat(metragem);
   const hasValidMetragem = !Number.isNaN(metragemNumero) && metragemNumero > 0;
-  const selectedServiceResumo = servico
+  const selectedServiceResumo = servico && !isAvulso
     ? `${servico.materialPadrao} · ${servico.espessuraPadrao}mm · ${servico.cortePadrao}mm`
     : null;
   const selectedServiceRule = regra?.nomeRegra ?? null;
 
-  const canSave = !!finalCalc && !!servicoId && !motorValidationError;
+  // Can save?
+  const canSave = isAvulso ? !!calcAvulsoResult && !!servicoId : !!finalCalc && !!servicoId && !motorValidationError;
 
   const handleSave = () => {
-    if (!finalCalc || !servico) return;
+    if (!servico) return;
+
+    if (isAvulso && calcAvulsoResult) {
+      const valorNum = parseFloat(avulsoValor) || servico.valorBase;
+      const qtdNum = parseFloat(avulsoQuantidade) || 0;
+      const metNum = parseFloat(metragem) || 0;
+      const item = buildItemServicoAvulso(servico, calcAvulsoResult, {
+        id: editingItem?.id,
+        motorType,
+        dificuldade,
+        metragem: modoCobranca === "por_metro" ? metNum : 0,
+        quantidade: modoCobranca === "por_unidade" ? qtdNum : (modoCobranca === "valor_fechado" ? 1 : metNum),
+        valorUnitario: valorNum,
+      });
+      onSave(item);
+      resetForm();
+      return;
+    }
+
+    if (!finalCalc) return;
     const item: ItemServico = {
       id: editingItem?.id ?? crypto.randomUUID(),
       servicoTemplateId: servico.id,
@@ -188,6 +240,8 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       custoTotalObra: finalCalc.custoTotalObra,
       valorVenda: finalCalc.valorVenda,
       insumosOverrides: Object.keys(realOverrides).length > 0 ? realOverrides : undefined,
+      tipoServico: "motor",
+      modoCobranca: "motor",
     };
     onSave(item);
     resetForm();
@@ -199,6 +253,234 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     setDificuldade("facil");
     setEditQtds({});
     setPopoverOpen(false);
+    setAvulsoValor("");
+    setAvulsoQuantidade("");
+    setAvulsoCustoInterno("");
+  };
+
+  // Pre-fill avulso valor from template when service changes
+  useEffect(() => {
+    if (servico && isAvulso && !editingItem) {
+      setAvulsoValor(servico.valorBase > 0 ? String(servico.valorBase) : "");
+      setAvulsoCustoInterno(servico.custoBaseInterno != null ? String(servico.custoBaseInterno) : "");
+    }
+  }, [servicoId, servico, isAvulso, editingItem]);
+
+  // ─── Render ───
+  const renderAvulsoForm = () => {
+    if (!servico || !isAvulso) return null;
+
+    return (
+      <div className="space-y-4">
+        {/* Mode indicator */}
+        <div className="rounded-xl border bg-muted/20 p-3">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-primary" />
+            <p className="text-xs font-semibold text-foreground">
+              {modoCobranca === "valor_fechado" ? "Valor fechado" :
+               modoCobranca === "por_unidade" ? `Por ${servico.unidadeCobranca || "unidade"}` :
+               "Por metro"}
+            </p>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {modoCobranca === "valor_fechado" ? "Informe ou ajuste o valor total deste serviço." :
+             modoCobranca === "por_unidade" ? `Informe a quantidade de ${servico.unidadeCobranca || "unidades"} e o valor por ${servico.unidadeCobranca || "unidade"}.` :
+             "Informe a metragem. O cálculo considera insumos pela regra e fator de dificuldade."}
+          </p>
+        </div>
+
+        {/* valor_fechado */}
+        {modoCobranca === "valor_fechado" && (
+          <div className="rounded-xl border bg-background/80 p-4">
+            <Label className="text-xs font-medium">Valor do serviço (R$)</Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              placeholder="Ex: 350"
+              value={avulsoValor}
+              onChange={(e) => setAvulsoValor(e.target.value)}
+              className="h-11 mt-2"
+            />
+          </div>
+        )}
+
+        {/* por_unidade */}
+        {modoCobranca === "por_unidade" && (
+          <div className="rounded-xl border bg-background/80 p-4 space-y-3">
+            <div>
+              <Label className="text-xs font-medium">Quantidade de {servico.unidadeCobranca || "unidades"}</Label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                placeholder="Ex: 3"
+                value={avulsoQuantidade}
+                onChange={(e) => setAvulsoQuantidade(e.target.value)}
+                className="h-11 mt-2"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-medium">Valor por {servico.unidadeCobranca || "unidade"} (R$)</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                placeholder="Ex: 80"
+                value={avulsoValor}
+                onChange={(e) => setAvulsoValor(e.target.value)}
+                className="h-11 mt-2"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* por_metro */}
+        {modoCobranca === "por_metro" && (
+          <>
+            <div className="rounded-xl border bg-background/80 p-4 space-y-3">
+              <div>
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Metragem
+                </Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="Ex: 12.5"
+                  value={metragem}
+                  onChange={(e) => setMetragem(e.target.value)}
+                  className="h-11 mt-2"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Valor por metro (R$)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="Ex: 25"
+                  value={avulsoValor}
+                  onChange={(e) => setAvulsoValor(e.target.value)}
+                  className="h-11 mt-2"
+                />
+              </div>
+            </div>
+
+            {/* Dificuldade selector */}
+            <div className="rounded-xl border bg-background/80 p-4">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Gauge className="h-3.5 w-3.5 text-muted-foreground" /> Dificuldade
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+                {(["facil", "medio", "dificil"] as Dificuldade[]).map((level) => {
+                  const fator = getFatorDificuldade(servico, level);
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => setDificuldade(level)}
+                      className={cn(
+                        "flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all",
+                        dificuldade === level
+                          ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                          : "border-border text-muted-foreground hover:border-primary/30",
+                      )}
+                    >
+                      <span className="text-sm font-semibold">{dificuldadeLabel[level]}</span>
+                      <span className="text-[10px] text-muted-foreground">{dificuldadeHint[level]}</span>
+                      <span className="text-xs font-bold mt-1">×{fator}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Custo interno warning for valor_fechado and por_unidade */}
+        {(modoCobranca === "valor_fechado" || modoCobranca === "por_unidade") && servico.custoBaseInterno == null && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium text-amber-700">Custo interno não informado</p>
+              <p className="text-[11px] text-amber-600 mt-0.5">
+                Este item pode ser orçado normalmente, mas o financeiro ficará com custo e margem incompletos.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderAvulsoPreview = () => {
+    if (!servico || !isAvulso) return null;
+
+    if (!calcAvulsoResult) {
+      return (
+        <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
+          <Calculator className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-sm font-medium text-foreground">
+            {modoCobranca === "valor_fechado" ? "Informe o valor para ver a prévia" :
+             modoCobranca === "por_unidade" ? "Informe quantidade e valor" :
+             "Informe metragem e valor por metro"}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-xl border bg-muted/20 p-4 space-y-4">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prévia do cálculo</p>
+          <p className="text-sm font-semibold text-foreground mt-1">
+            {modoCobranca === "valor_fechado" ? "Valor fechado" :
+             modoCobranca === "por_unidade" ? `${avulsoQuantidade || 0} ${servico.unidadeCobranca || "un"} × ${fmt(parseFloat(avulsoValor) || 0)}` :
+             `${metragem || 0}m × ${fmt(parseFloat(avulsoValor) || 0)}/m`}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border bg-background/80 p-3">
+            <p className="text-[11px] text-muted-foreground">Custo interno</p>
+            <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
+              {calcAvulsoResult.custoIncompleto ? (
+                <span className="text-amber-600">Não informado</span>
+              ) : (
+                fmt(calcAvulsoResult.custoTotalObra)
+              )}
+            </p>
+          </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <p className="text-[11px] text-muted-foreground">Valor de venda</p>
+            <p className="text-sm font-semibold text-primary mt-1 tabular-nums">
+              {fmt(calcAvulsoResult.valorVenda)}
+            </p>
+          </div>
+        </div>
+
+        {modoCobranca === "por_metro" && calcAvulsoResult.insumosCalc.length > 0 && (
+          <div className="rounded-lg border bg-background/80 p-3 space-y-2">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Insumos calculados
+            </p>
+            {calcAvulsoResult.insumosCalc.map((insumo) => (
+              <div key={insumo.insumoId} className="flex items-center justify-between text-xs">
+                <span className="text-foreground truncate">{insumo.nomeInsumo}</span>
+                <span className="text-muted-foreground">{insumo.quantidade} × {fmt(insumo.custoUnitario)}</span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between text-xs pt-1 border-t">
+              <span className="text-muted-foreground">Multiplicador</span>
+              <span className="font-medium text-foreground">×{calcAvulsoResult.fatorDificuldade}</span>
+            </div>
+          </div>
+        )}
+
+        {calcAvulsoResult.custoIncompleto && (
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
+            <p className="text-[10px] text-amber-700">
+              ⚠ Custo interno ausente — margem e lucro ficarão marcados como parciais no financeiro.
+            </p>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -217,7 +499,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           <DialogDescription className="text-xs">
             {editingItem
               ? "Altere serviço, metragem ou dificuldade. O cálculo será atualizado automaticamente."
-              : "Escolha o serviço, informe a metragem e deixe o sistema calcular material, insumos e valor de venda."}
+              : "Escolha o serviço, informe os dados e deixe o sistema calcular."}
           </DialogDescription>
           <Badge variant="outline" className="w-fit text-[10px] mt-1">
             {motorType === "motor1" ? (
@@ -243,24 +525,24 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                 <div>
                   <p className="text-xs font-semibold text-foreground">Monte um serviço por vez</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Escolha o serviço, informe a metragem e ajuste os insumos apenas se precisar sair da regra padrão.
+                    Escolha o serviço e configure os parâmetros. Serviços avulsos e do motor estão disponíveis.
                   </p>
                 </div>
                 <Badge variant="outline" className="text-[10px] whitespace-nowrap">
                   {motorLabel}
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">{motorHelper}</p>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-4">
+                {/* Service selector */}
                 <div className="rounded-xl border bg-background/80 p-4">
                   <Label className="text-xs font-medium flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5 text-muted-foreground" /> Qual serviço será realizado?
                   </Label>
                   <p className="text-[11px] text-muted-foreground mt-1 mb-2">
-                    Busque pelo nome, material, espessura ou corte para encontrar o serviço certo.
+                    Busque pelo nome. Serviços do motor e avulsos aparecem juntos.
                   </p>
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
@@ -273,10 +555,14 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                         {servico ? (
                           <div className="flex flex-col items-start text-left">
                             <span className="text-sm font-medium">{servico.nomeServico}</span>
-                            <span className="text-[11px] text-muted-foreground">{selectedServiceResumo}</span>
+                            <span className="text-[11px] text-muted-foreground">
+                              {isAvulso
+                                ? `Avulso — ${modoCobranca === "valor_fechado" ? "Valor fechado" : modoCobranca === "por_unidade" ? `Por ${servico.unidadeCobranca || "unidade"}` : "Por metro"}`
+                                : selectedServiceResumo}
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">Buscar por nome, material ou espessura...</span>
+                          <span className="text-muted-foreground">Buscar por nome...</span>
                         )}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -290,11 +576,11 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                           return target.includes(norm) ? 1 : 0;
                         }}
                       >
-                        <CommandInput placeholder="Nome, material, espessura, corte..." />
+                        <CommandInput placeholder="Nome do serviço..." />
                         <CommandList className="max-h-[220px]">
                           <CommandEmpty>
                             {servicosList.length === 0
-                              ? `Nenhum serviço cadastrado para ${motorType === "motor1" ? "Motor 1" : "Motor 2"}. Cadastre na aba Configurações.`
+                              ? "Nenhum serviço disponível. Cadastre na aba Configurações."
                               : "Nenhum serviço encontrado com este termo."}
                           </CommandEmpty>
                           <CommandGroup>
@@ -305,6 +591,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                                 keywords={[
                                   service.nomeServico,
                                   service.materialPadrao,
+                                  service.tipoServico === "avulso" ? "avulso" : "",
                                   String(service.espessuraPadrao),
                                   String(service.cortePadrao),
                                 ]}
@@ -321,9 +608,20 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                                   )}
                                 />
                                 <div className="flex flex-col">
-                                  <span className="text-sm font-medium">{service.nomeServico}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{service.nomeServico}</span>
+                                    {service.tipoServico === "avulso" && (
+                                      <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                        Avulso
+                                      </Badge>
+                                    )}
+                                  </div>
                                   <span className="text-[11px] text-muted-foreground">
-                                    {service.materialPadrao} · {service.espessuraPadrao}mm · {service.cortePadrao}mm
+                                    {service.tipoServico === "avulso"
+                                      ? service.modoCobranca === "valor_fechado" ? `Valor fechado · ${fmt(service.valorBase)}`
+                                        : service.modoCobranca === "por_unidade" ? `Por ${service.unidadeCobranca || "un"} · ${fmt(service.valorBase)}`
+                                        : `Por metro · ${fmt(service.valorBase)}/m`
+                                      : `${service.materialPadrao} · ${service.espessuraPadrao}mm · ${service.cortePadrao}mm`}
                                   </span>
                                 </div>
                               </CommandItem>
@@ -335,54 +633,60 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                   </Popover>
                 </div>
 
-                <div className="rounded-xl border bg-background/80 p-4">
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Quantos metros serão executados?
-                  </Label>
-                  <p className="text-[11px] text-muted-foreground mt-1 mb-2">
-                    Informe a metragem total em metros lineares para este serviço.
-                  </p>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="Ex: 12.5"
-                    value={metragem}
-                    onChange={(event) => setMetragem(event.target.value)}
-                    className="h-11"
-                  />
-                </div>
-
-                {servico && (
-                  <div className="rounded-xl border bg-background/80 p-4">
-                    <Label className="text-xs font-medium flex items-center gap-1.5">
-                      <Gauge className="h-3.5 w-3.5 text-muted-foreground" /> Nível de dificuldade da instalação
-                    </Label>
-                    <p className="text-[11px] text-muted-foreground mt-1 mb-3">
-                      Quanto maior a dificuldade, maior o multiplicador sobre o custo final do serviço.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {(["facil", "medio", "dificil"] as Dificuldade[]).map((level) => {
-                        const fator = getFatorDificuldade(servico, level);
-                        return (
-                          <button
-                            key={level}
-                            onClick={() => setDificuldade(level)}
-                            className={cn(
-                              "flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all",
-                              dificuldade === level
-                                ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                                : "border-border text-muted-foreground hover:border-primary/30",
-                            )}
-                          >
-                            <span className="text-sm font-semibold">{dificuldadeLabel[level]}</span>
-                            <span className="text-[10px] text-muted-foreground">{dificuldadeHint[level]}</span>
-                            <span className="text-xs font-bold mt-1">×{fator}</span>
-                          </button>
-                        );
-                      })}
+                {/* Motor-specific fields */}
+                {servico && !isAvulso && (
+                  <>
+                    <div className="rounded-xl border bg-background/80 p-4">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <Ruler className="h-3.5 w-3.5 text-muted-foreground" /> Quantos metros serão executados?
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-1 mb-2">
+                        Informe a metragem total em metros lineares para este serviço.
+                      </p>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="Ex: 12.5"
+                        value={metragem}
+                        onChange={(event) => setMetragem(event.target.value)}
+                        className="h-11"
+                      />
                     </div>
-                  </div>
+
+                    <div className="rounded-xl border bg-background/80 p-4">
+                      <Label className="text-xs font-medium flex items-center gap-1.5">
+                        <Gauge className="h-3.5 w-3.5 text-muted-foreground" /> Nível de dificuldade da instalação
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-1 mb-3">
+                        Quanto maior a dificuldade, maior o multiplicador sobre o custo final do serviço.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {(["facil", "medio", "dificil"] as Dificuldade[]).map((level) => {
+                          const fator = getFatorDificuldade(servico, level);
+                          return (
+                            <button
+                              key={level}
+                              onClick={() => setDificuldade(level)}
+                              className={cn(
+                                "flex flex-col items-start gap-1 rounded-xl border-2 p-3 text-left transition-all",
+                                dificuldade === level
+                                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                                  : "border-border text-muted-foreground hover:border-primary/30",
+                              )}
+                            >
+                              <span className="text-sm font-semibold">{dificuldadeLabel[level]}</span>
+                              <span className="text-[10px] text-muted-foreground">{dificuldadeHint[level]}</span>
+                              <span className="text-xs font-bold mt-1">×{fator}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
                 )}
+
+                {/* Avulso-specific form */}
+                {isAvulso && renderAvulsoForm()}
 
                 {motorValidationError && (
                   <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
@@ -391,6 +695,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                 )}
               </div>
 
+              {/* Right panel: preview */}
               <div className="space-y-4">
                 {servico ? (
                   <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
@@ -400,33 +705,36 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                       </p>
                       <p className="text-sm font-semibold text-foreground mt-1">{servico.nomeServico}</p>
                     </div>
-                    <div className="rounded-lg border bg-background/80 p-3">
-                      <p className="text-[11px] font-medium text-muted-foreground">Base do cálculo</p>
-                      <p className="text-sm text-foreground mt-1">{selectedServiceResumo}</p>
-                      <p className="text-[11px] text-muted-foreground mt-2">
-                        {selectedServiceRule
-                          ? `Regra aplicada: ${selectedServiceRule}`
-                          : "Este serviço ainda não tem regra de cálculo vinculada."}
-                      </p>
-                    </div>
+                    {!isAvulso && (
+                      <div className="rounded-lg border bg-background/80 p-3">
+                        <p className="text-[11px] font-medium text-muted-foreground">Base do cálculo</p>
+                        <p className="text-sm text-foreground mt-1">{selectedServiceResumo}</p>
+                        <p className="text-[11px] text-muted-foreground mt-2">
+                          {selectedServiceRule
+                            ? `Regra aplicada: ${selectedServiceRule}`
+                            : "Este serviço ainda não tem regra de cálculo vinculada."}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
                     <Info className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm font-medium text-foreground">Selecione um serviço para começar</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Quando você escolher um serviço, mostramos material, regra e a prévia do cálculo aqui ao lado.
+                      Quando você escolher um serviço, mostramos a prévia do cálculo aqui ao lado.
                     </p>
                   </div>
                 )}
 
-                {servico && !regra && (
+                {servico && !isAvulso && !regra && (
                   <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive">
                     Este serviço está sem regra vinculada. Ajuste isso em Configurações antes de continuar.
                   </div>
                 )}
 
-                {finalCalc ? (
+                {/* Motor preview */}
+                {!isAvulso && finalCalc ? (
                   <div className="rounded-xl border bg-muted/20 p-4 space-y-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -536,7 +844,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                       <span className="font-medium text-foreground">×{finalCalc.fatorDificuldade}</span>
                     </div>
                   </div>
-                ) : (
+                ) : !isAvulso ? (
                   <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
                     <Calculator className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm font-medium text-foreground">
@@ -558,13 +866,18 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                             : "Revise o serviço e a regra para continuar."}
                     </p>
                   </div>
-                )}
+                ) : null}
+
+                {/* Avulso preview */}
+                {isAvulso && renderAvulsoPreview()}
               </div>
             </div>
 
             {!canSave && (
               <p className="text-[11px] text-muted-foreground text-center">
-                Selecione um serviço válido e informe a metragem para habilitar o salvamento.
+                {isAvulso
+                  ? "Preencha os valores necessários para habilitar o salvamento."
+                  : "Selecione um serviço válido e informe a metragem para habilitar o salvamento."}
               </p>
             )}
 
