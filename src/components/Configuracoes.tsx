@@ -786,17 +786,24 @@ export function Configuracoes() {
         if (editItem) await updateRegra.mutateAsync(entry);
         else await addRegra.mutateAsync(entry);
       } else if (activeSection === "catalogo") {
+      const tipoServico = (form.tipoServico || 'motor') as import("@/lib/types").TipoServico;
+        const modoCobranca = (form.modoCobranca || 'motor') as import("@/lib/types").ModoCobranca;
         const entry: ServicoTemplate = {
           id,
           nomeServico: form.nomeServico || "",
-          regraId: form.regraId || "",
-          motorType: (form.motorType as MotorType) || "motor1",
-          materialPadrao: form.materialPadrao || "",
-          espessuraPadrao: parseFloat(form.espessuraPadrao) || 0,
-          cortePadrao: parseFloat(form.cortePadrao) || 0,
-          dificuldadeFacil: parseFloat(form.dificuldadeFacil) || 2.6,
-          dificuldadeMedia: parseFloat(form.dificuldadeMedia) || 3.5,
-          dificuldadeDificil: parseFloat(form.dificuldadeDificil) || 4.6,
+          regraId: modoCobranca === 'por_metro' ? (form.regraId || "") : (tipoServico === 'motor' ? (form.regraId || "") : ""),
+          motorType: tipoServico === 'motor' ? ((form.motorType as MotorType) || "motor1") : "motor1",
+          materialPadrao: tipoServico === 'motor' ? (form.materialPadrao || "") : "",
+          espessuraPadrao: tipoServico === 'motor' ? (parseFloat(form.espessuraPadrao) || 0) : 0,
+          cortePadrao: tipoServico === 'motor' ? (parseFloat(form.cortePadrao) || 0) : 0,
+          dificuldadeFacil: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeFacil) || 2.6) : 1,
+          dificuldadeMedia: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeMedia) || 3.5) : 1,
+          dificuldadeDificil: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeDificil) || 4.6) : 1,
+          tipoServico,
+          modoCobranca,
+          valorBase: parseFloat(form.valorBase) || 0,
+          unidadeCobranca: form.unidadeCobranca || "",
+          custoBaseInterno: form.custoBaseInterno ? parseFloat(form.custoBaseInterno) : null,
         };
         if (editItem) await updateServico.mutateAsync(entry);
         else await addServico.mutateAsync(entry);
