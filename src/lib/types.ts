@@ -67,9 +67,16 @@ export interface ServicoTemplate {
   dificuldadeFacil: number;
   dificuldadeMedia: number;
   dificuldadeDificil: number;
+  tipoServico: TipoServico;
+  modoCobranca: ModoCobranca;
+  valorBase: number;
+  unidadeCobranca: string;
+  custoBaseInterno: number | null;
 }
 
 export type MotorType = "motor1" | "motor2";
+export type TipoServico = "motor" | "avulso";
+export type ModoCobranca = "motor" | "valor_fechado" | "por_unidade" | "por_metro";
 export type Dificuldade = "facil" | "medio" | "dificil";
 
 export interface InsumoCalculado {
@@ -99,6 +106,13 @@ export interface ItemServico {
   valorVenda: number;
   /** Manual overrides: insumoId → quantidade. Only present when user explicitly changed a quantity. */
   insumosOverrides?: Record<string, number>;
+  // Avulso fields
+  tipoServico?: TipoServico;
+  modoCobranca?: ModoCobranca;
+  quantidade?: number;
+  valorUnitario?: number;
+  unidadeCobranca?: string;
+  custoIncompleto?: boolean;
 }
 
 export type StatusOrcamento = "pendente" | "aprovado" | "rejeitado" | "executado" | "cancelado";
