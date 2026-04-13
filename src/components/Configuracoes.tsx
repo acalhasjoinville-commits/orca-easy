@@ -999,121 +999,286 @@ export function Configuracoes() {
     </div>
   );
 
-  const renderCatalogoForm = () => (
-    <div className="space-y-3">
-      <div className="rounded-lg border bg-muted/20 p-3">
-        <p className="text-xs font-medium text-foreground">O catálogo conecta serviço, material e regra.</p>
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos
-          automaticamente.
-        </p>
-      </div>
-      <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Nome do Serviço</Label>
-        <Input
-          value={form.nomeServico || ""}
-          onChange={(e) => setField("nomeServico", e.target.value)}
-          className="mt-1"
-        />
-      </div>
-      <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Regra de Cálculo</Label>
-        <Select value={form.regraId || ""} onValueChange={(v) => setField("regraId", v)}>
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {regras.map((r) => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.nomeRegra}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Motor</Label>
-        <Select value={form.motorType || "motor1"} onValueChange={(v) => setField("motorType", v)}>
-          <SelectTrigger className="mt-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
-            <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label className="text-[11px] font-medium text-muted-foreground">Material Padrão</Label>
-        <Select value={form.materialPadrao || ""} onValueChange={(v) => setField("materialPadrao", v)}>
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Selecione" />
-          </SelectTrigger>
-          <SelectContent>
-            {materiaisUnicos.map((m) => (
-              <SelectItem key={m} value={m}>
-                {m}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+  const renderCatalogoForm = () => {
+    const tipoServico = form.tipoServico || 'motor';
+    const modoCobranca = form.modoCobranca || 'motor';
+    const isMotor = tipoServico === 'motor';
+    const isAvulso = tipoServico === 'avulso';
+    const showRegra = isMotor || modoCobranca === 'por_metro';
+    const showDificuldade = isMotor || modoCobranca === 'por_metro';
+    const showMotorFields = isMotor;
+
+    const handleTipoChange = (newTipo: string) => {
+      if (newTipo === 'motor') {
+        setForm(prev => ({
+          ...prev,
+          tipoServico: 'motor',
+          modoCobranca: 'motor',
+          valorBase: '',
+          unidadeCobranca: '',
+          custoBaseInterno: '',
+        }));
+      } else {
+        setForm(prev => ({
+          ...prev,
+          tipoServico: 'avulso',
+          modoCobranca: 'valor_fechado',
+          motorType: '',
+          materialPadrao: '',
+          espessuraPadrao: '',
+          cortePadrao: '',
+          regraId: '',
+          dificuldadeFacil: '1',
+          dificuldadeMedia: '1',
+          dificuldadeDificil: '1',
+        }));
+      }
+    };
+
+    const handleModoChange = (newModo: string) => {
+      const updates: Record<string, string> = { modoCobranca: newModo };
+      if (newModo !== 'por_metro') {
+        updates.regraId = '';
+        updates.dificuldadeFacil = '1';
+        updates.dificuldadeMedia = '1';
+        updates.dificuldadeDificil = '1';
+      } else {
+        updates.dificuldadeFacil = form.dificuldadeFacil === '1' ? '2.6' : (form.dificuldadeFacil || '2.6');
+        updates.dificuldadeMedia = form.dificuldadeMedia === '1' ? '3.5' : (form.dificuldadeMedia || '3.5');
+        updates.dificuldadeDificil = form.dificuldadeDificil === '1' ? '4.6' : (form.dificuldadeDificil || '4.6');
+      }
+      if (newModo === 'valor_fechado' || newModo === 'por_unidade') {
+        updates.custoBaseInterno = form.custoBaseInterno || '';
+      }
+      setForm(prev => ({ ...prev, ...updates }));
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border bg-muted/20 p-3">
+          <p className="text-xs font-medium text-foreground">O catálogo conecta serviço, material e regra.</p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {isMotor
+              ? 'Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos automaticamente.'
+              : 'Serviços avulsos não dependem do motor. Defina o modo de cobrança e o valor base.'}
+          </p>
+        </div>
+
         <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Espessura (mm)</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground">Nome do Serviço</Label>
           <Input
-            type="number"
-            inputMode="decimal"
-            value={form.espessuraPadrao || ""}
-            onChange={(e) => setField("espessuraPadrao", e.target.value)}
+            value={form.nomeServico || ""}
+            onChange={(e) => setField("nomeServico", e.target.value)}
             className="mt-1"
           />
         </div>
+
         <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Corte (mm)</Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={form.cortePadrao || ""}
-            onChange={(e) => setField("cortePadrao", e.target.value)}
-            className="mt-1"
-          />
+          <Label className="text-[11px] font-medium text-muted-foreground">Tipo do Serviço</Label>
+          <Select value={tipoServico} onValueChange={handleTipoChange}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="motor">Serviço do motor</SelectItem>
+              <SelectItem value="avulso">Serviço avulso</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        {isAvulso && (
+          <div>
+            <Label className="text-[11px] font-medium text-muted-foreground">Modo de Cobrança</Label>
+            <Select value={modoCobranca} onValueChange={handleModoChange}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="valor_fechado">Valor fechado</SelectItem>
+                <SelectItem value="por_unidade">Por unidade</SelectItem>
+                <SelectItem value="por_metro">Por metro</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {modoCobranca === 'valor_fechado' && 'O preço é definido por serviço. Ex: manutenção, reparo pontual.'}
+              {modoCobranca === 'por_unidade' && 'O preço é multiplicado pela quantidade. Ex: ponto de PVC, peça.'}
+              {modoCobranca === 'por_metro' && 'O preço é multiplicado pela metragem, com regra de insumos e dificuldade.'}
+            </p>
+          </div>
+        )}
+
+        {/* Valor base — for avulso modes */}
+        {isAvulso && (
+          <div>
+            <Label className="text-[11px] font-medium text-muted-foreground">
+              {modoCobranca === 'valor_fechado' ? 'Valor do serviço (R$)' :
+               modoCobranca === 'por_unidade' ? 'Valor por unidade (R$)' :
+               'Valor por metro (R$)'}
+            </Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={form.valorBase || ""}
+              onChange={(e) => setField("valorBase", e.target.value)}
+              placeholder="0.00"
+              className="mt-1"
+            />
+          </div>
+        )}
+
+        {/* Unidade de cobrança — only for por_unidade */}
+        {isAvulso && modoCobranca === 'por_unidade' && (
+          <div>
+            <Label className="text-[11px] font-medium text-muted-foreground">Unidade de cobrança</Label>
+            <Input
+              value={form.unidadeCobranca || ""}
+              onChange={(e) => setField("unidadeCobranca", e.target.value)}
+              placeholder="Ex: ponto, peça, descida"
+              className="mt-1"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Esse texto aparece no orçamento. Ex: "3 pontos × R$ 80"
+            </p>
+          </div>
+        )}
+
+        {/* Custo interno — for valor_fechado and por_unidade */}
+        {isAvulso && (modoCobranca === 'valor_fechado' || modoCobranca === 'por_unidade') && (
+          <div>
+            <Label className="text-[11px] font-medium text-muted-foreground">
+              {modoCobranca === 'valor_fechado' ? 'Custo interno do serviço (R$)' : 'Custo interno por unidade (R$)'}
+            </Label>
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={form.custoBaseInterno || ""}
+              onChange={(e) => setField("custoBaseInterno", e.target.value)}
+              placeholder="Opcional"
+              className="mt-1"
+            />
+            <div className="mt-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
+              <p className="text-[10px] text-amber-700">
+                ⚠ Sem o custo interno, o financeiro não conseguirá calcular margem e lucro corretamente para este serviço.
+                O orçamento será salvo normalmente, mas os indicadores financeiros ficarão marcados como parciais.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {showRegra && (
+          <div>
+            <Label className="text-[11px] font-medium text-muted-foreground">Regra de Cálculo</Label>
+            <Select value={form.regraId || ""} onValueChange={(v) => setField("regraId", v)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {regras.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.nomeRegra}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isAvulso && modoCobranca === 'por_metro' && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Obrigatória para serviços por metro. Define o consumo de insumos pela metragem.
+              </p>
+            )}
+          </div>
+        )}
+
+        {showMotorFields && (
+          <>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Motor</Label>
+              <Select value={form.motorType || "motor1"} onValueChange={(v) => setField("motorType", v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="motor1">Fabricar (Motor 1)</SelectItem>
+                  <SelectItem value="motor2">Comprar Dobrado (Motor 2)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Material Padrão</Label>
+              <Select value={form.materialPadrao || ""} onValueChange={(v) => setField("materialPadrao", v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {materiaisUnicos.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Espessura (mm)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.espessuraPadrao || ""}
+                  onChange={(e) => setField("espessuraPadrao", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-[11px] font-medium text-muted-foreground">Corte (mm)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.cortePadrao || ""}
+                  onChange={(e) => setField("cortePadrao", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {showDificuldade && (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Fator Fácil</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={form.dificuldadeFacil || ""}
+                onChange={(e) => setField("dificuldadeFacil", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Fator Médio</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={form.dificuldadeMedia || ""}
+                onChange={(e) => setField("dificuldadeMedia", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-[11px] font-medium text-muted-foreground">Fator Difícil</Label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={form.dificuldadeDificil || ""}
+                onChange={(e) => setField("dificuldadeDificil", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+        )}
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator Fácil</Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={form.dificuldadeFacil || ""}
-            onChange={(e) => setField("dificuldadeFacil", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator Médio</Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={form.dificuldadeMedia || ""}
-            onChange={(e) => setField("dificuldadeMedia", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-        <div>
-          <Label className="text-[11px] font-medium text-muted-foreground">Fator Difícil</Label>
-          <Input
-            type="number"
-            inputMode="decimal"
-            value={form.dificuldadeDificil || ""}
-            onChange={(e) => setField("dificuldadeDificil", e.target.value)}
-            className="mt-1"
-          />
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const TEMPO_GARANTIA_OPTIONS = ["3 meses", "6 meses", "1 ano", "2 anos", "3 anos", "5 anos"];
 
