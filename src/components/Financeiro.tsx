@@ -217,16 +217,16 @@ function OrcamentosTab() {
           color="text-muted-foreground"
         />
         <KpiCard
-          title="Lucro Bruto"
-          value={fmt(kpis.lucro)}
+          title={kpis.hasIncomplete ? "Lucro Bruto (parcial)" : "Lucro Bruto"}
+          value={kpis.lucro != null ? fmt(kpis.lucro) : "—"}
           icon={TrendingUp}
           iconBg="bg-emerald-500/10"
-          color="text-emerald-600 dark:text-emerald-400"
-          highlight
+          color={kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
+          highlight={!kpis.hasIncomplete}
         />
         <KpiCard
           title={kpis.hasIncomplete ? "Margem Média (parcial)" : "Margem Média"}
-          value={fmtPct(kpis.margem)}
+          value={kpis.margem != null ? fmtPct(kpis.margem) : "—"}
           icon={Percent}
           iconBg={kpis.hasIncomplete ? "bg-amber-500/10" : "bg-amber-500/10"}
           color={kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-amber-600 dark:text-amber-400"}
