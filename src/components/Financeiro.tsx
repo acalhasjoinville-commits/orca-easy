@@ -297,10 +297,10 @@ function OrcamentosTab() {
               </div>
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
-                  Lucro por Orçamento
+                  {kpis.hasIncomplete ? "Lucro por Orçamento (parcial)" : "Lucro por Orçamento"}
                 </p>
-                <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
-                  {filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : "R$ 0,00"}
+                <p className={`text-xl font-semibold ${kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {kpis.lucro != null && filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : "—"}
                 </p>
               </div>
             </div>
@@ -331,8 +331,8 @@ function OrcamentosTab() {
                         {new Date(o.dataCriacao).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
-                    <Badge variant={o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
-                      {fmtPct(o.margem)}
+                    <Badge variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                      {o.margem != null ? fmtPct(o.margem) : "—"}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
@@ -346,7 +346,7 @@ function OrcamentosTab() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Lucro</p>
-                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">{fmt(o.lucro)}</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">{o.lucro != null ? fmt(o.lucro) : "—"}</p>
                     </div>
                   </div>
                 </div>
@@ -375,11 +375,11 @@ function OrcamentosTab() {
                       <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.valorFinal)}</td>
                       <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.custoTotalObra)}</td>
                       <td className="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        {fmt(o.lucro)}
+                        {o.lucro != null ? fmt(o.lucro) : "—"}
                       </td>
                       <td className="py-2.5 px-3 text-right">
-                        <Badge variant={o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
-                          {fmtPct(o.margem)}
+                        <Badge variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                          {o.margem != null ? fmtPct(o.margem) : "—"}
                         </Badge>
                       </td>
                     </tr>
