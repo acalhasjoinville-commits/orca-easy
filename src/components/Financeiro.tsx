@@ -123,7 +123,8 @@ function OrcamentosTab() {
     const custo = filtered.reduce((s, o) => s + o.custoTotalObra, 0);
     const lucro = faturamento - custo;
     const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0;
-    return { faturamento, custo, lucro, margem };
+    const hasIncomplete = filtered.some(o => o.itensServico.some(i => i.custoIncompleto === true));
+    return { faturamento, custo, lucro, margem, hasIncomplete };
   }, [filtered]);
 
   const chartData = useMemo(() => {
@@ -222,13 +223,18 @@ function OrcamentosTab() {
           highlight
         />
         <KpiCard
-          title="Margem Média"
+          title={kpis.hasIncomplete ? "Margem Média (parcial)" : "Margem Média"}
           value={fmtPct(kpis.margem)}
           icon={Percent}
-          iconBg="bg-amber-500/10"
-          color="text-amber-600 dark:text-amber-400"
+          iconBg={kpis.hasIncomplete ? "bg-amber-500/10" : "bg-amber-500/10"}
+          color={kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-amber-600 dark:text-amber-400"}
         />
       </div>
+      {kpis.hasIncomplete && (
+        <p className="text-xs text-amber-600 -mt-3 px-1">
+          Alguns orçamentos possuem serviços sem custo interno informado. Lucro e margem exibidos são parciais.
+        </p>
+      )}
 
       {/* Chart + Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

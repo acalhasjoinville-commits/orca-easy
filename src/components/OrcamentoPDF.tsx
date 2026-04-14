@@ -343,12 +343,17 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logo }: OrcamentoPDF
           <Text style={[s.tableHeaderText, s.colTotal]}>Vlr. Total</Text>
         </View>
         {orcamento.itensServico.map((item, idx) => {
-          const unitPrice = item.metragem > 0 ? item.valorVenda / item.metragem : item.valorVenda;
+          const isAvulso = item.tipoServico === 'avulso';
+          const qty = isAvulso
+            ? (item.modoCobranca === 'valor_fechado' ? 1 : (item.quantidade ?? item.metragem))
+            : item.metragem;
+          const unitLabel = isAvulso && item.modoCobranca === 'por_unidade' ? (item.unidadeCobranca || 'un') : 'm';
+          const unitPrice = qty > 0 ? item.valorVenda / qty : item.valorVenda;
           return (
             <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
               <Text style={[s.tableCell, s.colItem]}>{String(idx + 1).padStart(2, "0")}</Text>
               <Text style={[s.tableCell, s.colDesc]}>{item.nomeServico}</Text>
-              <Text style={[s.tableCell, s.colQtd]}>{fmtNum(item.metragem)}</Text>
+              <Text style={[s.tableCell, s.colQtd]}>{fmtNum(qty)} {unitLabel}</Text>
               <Text style={[s.tableCell, s.colUnit]}>{fmt(unitPrice)}</Text>
               <Text style={[s.tableCell, s.colTotal, { fontFamily: "Helvetica-Bold" }]}>{fmt(item.valorVenda)}</Text>
             </View>
