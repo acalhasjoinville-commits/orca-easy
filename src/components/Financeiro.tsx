@@ -123,7 +123,8 @@ function OrcamentosTab() {
     const custo = filtered.reduce((s, o) => s + o.custoTotalObra, 0);
     const lucro = faturamento - custo;
     const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0;
-    return { faturamento, custo, lucro, margem };
+    const hasIncomplete = filtered.some(o => o.itensServico.some(i => i.custoIncompleto === true));
+    return { faturamento, custo, lucro, margem, hasIncomplete };
   }, [filtered]);
 
   const chartData = useMemo(() => {
