@@ -535,7 +535,7 @@ export function OrcamentoDetails({
               {orcamento.itensServico.length} {orcamento.itensServico.length === 1 ? "item" : "itens"}
             </span>
           </div>
-          {orcamento.itensServico.length === 0 ? (
+           {orcamento.itensServico.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum item adicionado.</p>
           ) : (
             <div className="space-y-0">
@@ -549,10 +549,27 @@ export function OrcamentoDetails({
                       <div>
                         <p className="font-medium text-sm">{item.nomeServico}</p>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                          <span>{item.materialId}</span>
-                          <span>{item.espessura}mm</span>
-                          <span>{item.metragem}m</span>
-                          <span>{dificuldadeLabels[item.dificuldade] ?? item.dificuldade}</span>
+                          {item.tipoServico === 'avulso' ? (
+                            <>
+                              {item.modoCobranca === 'valor_fechado' && <span>Valor fechado</span>}
+                              {item.modoCobranca === 'por_unidade' && <span>{item.quantidade ?? 0} {item.unidadeCobranca || 'un'}</span>}
+                              {item.modoCobranca === 'por_metro' && (
+                                <>
+                                  <span>{item.metragem}m</span>
+                                  <span>{dificuldadeLabels[item.dificuldade] ?? item.dificuldade}</span>
+                                </>
+                              )}
+                              <span className="text-primary font-medium">Avulso</span>
+                              {item.custoIncompleto && <span className="text-amber-600 font-medium">Custo incompleto</span>}
+                            </>
+                          ) : (
+                            <>
+                              <span>{item.materialId}</span>
+                              <span>{item.espessura}mm</span>
+                              <span>{item.metragem}m</span>
+                              <span>{dificuldadeLabels[item.dificuldade] ?? item.dificuldade}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -608,10 +625,15 @@ export function OrcamentoDetails({
             </div>
             <div className="flex justify-between text-xs pt-1">
               <span className="text-muted-foreground">Margem</span>
-              <Badge variant={margem >= 30 ? "default" : "secondary"} className="text-[10px] px-2">
-                {margem.toFixed(1)}%
+              <Badge variant={hasAnyCustoIncompleto ? "secondary" : margem >= 30 ? "default" : "secondary"} className="text-[10px] px-2">
+                {hasAnyCustoIncompleto ? `${margem.toFixed(1)}% (parcial)` : `${margem.toFixed(1)}%`}
               </Badge>
             </div>
+            {hasAnyCustoIncompleto && (
+              <p className="text-[11px] text-amber-600 mt-1">
+                Custo incompleto: um ou mais serviços avulsos não possuem custo interno. Margem e lucro podem estar parciais.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
