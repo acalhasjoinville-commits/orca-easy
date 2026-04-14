@@ -396,6 +396,7 @@ export function OrcamentoDetails({
   const displayValue =
     (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
   const margem = displayValue > 0 ? (1 - orcamento.custoTotalObra / displayValue) * 100 : 0;
+  const hasAnyCustoIncompleto = orcamento.itensServico.some(i => i.custoIncompleto === true);
   const dataPrevistaSelecionada = parseDateValue(orcamento.dataPrevista) ?? undefined;
   const showDataPrevista = Boolean(orcamento.dataPrevista && orcamento.status !== "pendente");
 
