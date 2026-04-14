@@ -113,6 +113,8 @@ export interface ItemServico {
   valorUnitario?: number;
   unidadeCobranca?: string;
   custoIncompleto?: boolean;
+  /** Snapshot of the internal cost applied to this item (null = not informed) */
+  custoInternoAplicado?: number | null;
 }
 
 export type StatusOrcamento = "pendente" | "aprovado" | "rejeitado" | "executado" | "cancelado";

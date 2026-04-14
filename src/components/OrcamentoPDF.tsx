@@ -344,10 +344,13 @@ export function OrcamentoPDF({ orcamento, cliente, empresa, logo }: OrcamentoPDF
         </View>
         {orcamento.itensServico.map((item, idx) => {
           const isAvulso = item.tipoServico === 'avulso';
+          const modo = item.modoCobranca;
           const qty = isAvulso
-            ? (item.modoCobranca === 'valor_fechado' ? 1 : (item.quantidade ?? item.metragem))
+            ? (modo === 'valor_fechado' ? 1 : (item.quantidade ?? item.metragem))
             : item.metragem;
-          const unitLabel = isAvulso && item.modoCobranca === 'por_unidade' ? (item.unidadeCobranca || 'un') : 'm';
+          const unitLabel = isAvulso
+            ? (modo === 'valor_fechado' ? 'serviço' : modo === 'por_unidade' ? (item.unidadeCobranca || 'un') : 'm')
+            : 'm';
           const unitPrice = qty > 0 ? item.valorVenda / qty : item.valorVenda;
           return (
             <View key={item.id} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>

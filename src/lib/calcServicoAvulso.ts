@@ -100,6 +100,7 @@ export function buildItemServicoAvulso(
     metragem: number;
     quantidade: number;
     valorUnitario: number;
+    custoInternoAplicado?: number | null;
     insumosOverrides?: Record<string, number>;
   },
 ): ItemServico {
@@ -127,6 +128,7 @@ export function buildItemServicoAvulso(
     valorUnitario: opts.valorUnitario,
     unidadeCobranca: servico.unidadeCobranca,
     custoIncompleto: result.custoIncompleto,
+    custoInternoAplicado: opts.custoInternoAplicado ?? null,
   };
 }
 

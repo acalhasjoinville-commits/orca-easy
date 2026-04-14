@@ -67,6 +67,12 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       setEditQtds(editingItem.insumosOverrides ?? {});
       if (editingItem.valorUnitario != null) setAvulsoValor(String(editingItem.valorUnitario));
       if (editingItem.quantidade != null) setAvulsoQuantidade(String(editingItem.quantidade));
+      // Restore persisted internal cost snapshot
+      if (editingItem.custoInternoAplicado != null) {
+        setAvulsoCustoInterno(String(editingItem.custoInternoAplicado));
+      } else {
+        setAvulsoCustoInterno("");
+      }
     }
   }, [open, editingItem]);
 
@@ -208,6 +214,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       const valorNum = parseFloat(avulsoValor) || servico.valorBase;
       const qtdNum = parseFloat(avulsoQuantidade) || 0;
       const metNum = parseFloat(metragem) || 0;
+      const custoNum = avulsoCustoInterno ? parseFloat(avulsoCustoInterno) : null;
       const item = buildItemServicoAvulso(servico, calcAvulsoResult, {
         id: editingItem?.id,
         motorType,
@@ -215,6 +222,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
         metragem: modoCobranca === "por_metro" ? metNum : 0,
         quantidade: modoCobranca === "por_unidade" ? qtdNum : (modoCobranca === "valor_fechado" ? 1 : metNum),
         valorUnitario: valorNum,
+        custoInternoAplicado: custoNum,
       });
       onSave(item);
       resetForm();
