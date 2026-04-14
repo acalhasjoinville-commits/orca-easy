@@ -154,12 +154,17 @@ function OrcamentosTab() {
 
   const top5 = useMemo(() => {
     return [...filtered]
-      .map((o) => ({
-        ...o,
-        lucro: o.valorFinal - o.custoTotalObra,
-        margem: o.valorFinal > 0 ? ((o.valorFinal - o.custoTotalObra) / o.valorFinal) * 100 : 0,
-      }))
-      .sort((a, b) => b.lucro - a.lucro)
+      .map((o) => {
+        const hasInc = o.itensServico.some(i => i.custoIncompleto === true);
+        const custoReal = o.itensServico.reduce((s, i) => s + (i.custoIncompleto ? 0 : i.custoTotalObra), 0);
+        return {
+          ...o,
+          lucro: hasInc ? null : o.valorFinal - custoReal,
+          margem: hasInc ? null : (o.valorFinal > 0 ? ((o.valorFinal - custoReal) / o.valorFinal) * 100 : 0),
+          hasIncomplete: hasInc,
+        };
+      })
+      .sort((a, b) => (b.lucro ?? 0) - (a.lucro ?? 0))
       .slice(0, 5);
   }, [filtered]);
 
