@@ -120,11 +120,13 @@ function OrcamentosTab() {
 
   const kpis = useMemo(() => {
     const faturamento = filtered.reduce((s, o) => s + o.valorFinal, 0);
-    const custo = filtered.reduce((s, o) => s + o.custoTotalObra, 0);
-    const lucro = faturamento - custo;
-    const margem = faturamento > 0 ? (lucro / faturamento) * 100 : 0;
     const hasIncomplete = filtered.some(o => o.itensServico.some(i => i.custoIncompleto === true));
-    return { faturamento, custo, lucro, margem, hasIncomplete };
+    // Only sum cost from items that have real cost data; incomplete items contribute 0 but we flag it
+    const custo = filtered.reduce((s, o) => s + o.itensServico.reduce((si, i) => si + (i.custoIncompleto ? 0 : i.custoTotalObra), 0), 0);
+    const custoIncompleteTotal = filtered.reduce((s, o) => s + o.itensServico.filter(i => i.custoIncompleto).reduce((si, i) => si + i.valorVenda, 0), 0);
+    const lucro = hasIncomplete ? null : faturamento - custo;
+    const margem = hasIncomplete ? null : (faturamento > 0 ? ((faturamento - custo) / faturamento) * 100 : 0);
+    return { faturamento, custo, lucro, margem, hasIncomplete, custoIncompleteTotal };
   }, [filtered]);
 
   const chartData = useMemo(() => {
