@@ -277,9 +277,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const descontoNum = parseFloat(desconto) || 0;
   const valorFinal = Math.max(totalVenda - descontoNum, 0);
   const hasItems = itens.length > 0;
-  const margemPercentual = hasAnyCustoIncompleto
-    ? (valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null)
-    : (valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null);
+  const hasAnyCustoIncompleto = itens.some(i => i.custoIncompleto === true);
+  const margemPercentual = valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null;
   const servicoTemplateMap = useMemo(
     () => new Map<string, (typeof servicosList)[number]>(servicosList.map((servico) => [servico.id, servico] as const)),
     [servicosList],
@@ -317,7 +316,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const getAjustesCount = (item: ItemServico) =>
     item.insumosOverrides ? Object.keys(item.insumosOverrides).length : 0;
 
-  const hasAnyCustoIncompleto = itens.some(i => i.custoIncompleto === true);
 
   const handleBackFromCart = () => {
     if (isEditing) {
