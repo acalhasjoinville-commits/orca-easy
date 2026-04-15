@@ -316,7 +316,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const getAjustesCount = (item: ItemServico) =>
     item.insumosOverrides ? Object.keys(item.insumosOverrides).length : 0;
 
-  const hasAnyCustoIncompleto = itens.some(i => i.custoIncompleto === true);
 
   const handleBackFromCart = () => {
     if (isEditing) {
