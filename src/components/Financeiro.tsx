@@ -120,14 +120,19 @@ function OrcamentosTab() {
 
   const kpis = useMemo(() => {
     const faturamento = filtered.reduce((s, o) => s + o.valorFinal, 0);
-    const hasIncomplete = filtered.some(o => o.itensServico.some(i => i.custoIncompleto === true));
+    const hasIncomplete = filtered.some((o) => o.itensServico.some((i) => i.custoIncompleto === true));
     // Sum only known costs using custoConhecido; skip incomplete items entirely
-    const custo = filtered.reduce((s, o) => s + o.itensServico.reduce((si, i) => {
-      if (i.custoIncompleto) return si;
-      return si + (i.custoConhecido ?? i.custoTotalObra);
-    }, 0), 0);
+    const custo = filtered.reduce(
+      (s, o) =>
+        s +
+        o.itensServico.reduce((si, i) => {
+          if (i.custoIncompleto) return si;
+          return si + (i.custoConhecido ?? i.custoTotalObra);
+        }, 0),
+      0,
+    );
     const lucro = hasIncomplete ? null : faturamento - custo;
-    const margem = hasIncomplete ? null : (faturamento > 0 ? ((faturamento - custo) / faturamento) * 100 : 0);
+    const margem = hasIncomplete ? null : faturamento > 0 ? ((faturamento - custo) / faturamento) * 100 : 0;
     return { faturamento, custo, lucro, margem, hasIncomplete };
   }, [filtered]);
 
@@ -162,15 +167,16 @@ function OrcamentosTab() {
   const top5 = useMemo(() => {
     return [...filtered]
       .map((o) => {
-        const hasInc = o.itensServico.some(i => i.custoIncompleto === true);
+        const hasInc = o.itensServico.some((i) => i.custoIncompleto === true);
         const custoReal = o.itensServico.reduce((s, i) => {
           if (i.custoIncompleto) return s;
           return s + (i.custoConhecido ?? i.custoTotalObra);
         }, 0);
         return {
           ...o,
+          custoConhecido: custoReal,
           lucro: hasInc ? null : o.valorFinal - custoReal,
-          margem: hasInc ? null : (o.valorFinal > 0 ? ((o.valorFinal - custoReal) / o.valorFinal) * 100 : 0),
+          margem: hasInc ? null : o.valorFinal > 0 ? ((o.valorFinal - custoReal) / o.valorFinal) * 100 : 0,
           hasIncomplete: hasInc,
         };
       })
@@ -225,7 +231,7 @@ function OrcamentosTab() {
           color="text-primary"
         />
         <KpiCard
-          title="Custo Total"
+          title={kpis.hasIncomplete ? "Custo Conhecido (parcial)" : "Custo Total"}
           value={fmt(kpis.custo)}
           icon={BarChart3}
           iconBg="bg-muted"
@@ -309,7 +315,9 @@ function OrcamentosTab() {
                 <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
                   {kpis.hasIncomplete ? "Lucro por Orçamento (parcial)" : "Lucro por Orçamento"}
                 </p>
-                <p className={`text-xl font-semibold ${kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                <p
+                  className={`text-xl font-semibold ${kpis.hasIncomplete ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}
+                >
                   {kpis.lucro != null && filtered.length > 0 ? fmt(kpis.lucro / filtered.length) : "—"}
                 </p>
               </div>
@@ -341,7 +349,10 @@ function OrcamentosTab() {
                         {new Date(o.dataCriacao).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
-                    <Badge variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                    <Badge
+                      variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"}
+                      className="text-[10px]"
+                    >
                       {o.margem != null ? fmtPct(o.margem) : "—"}
                     </Badge>
                   </div>
@@ -351,12 +362,15 @@ function OrcamentosTab() {
                       <p className="font-medium">{fmt(o.valorFinal)}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Custo</p>
-                      <p className="font-medium">{fmt(o.custoTotalObra)}</p>
+                      <p className="text-muted-foreground">{o.hasIncomplete ? "Custo conhecido" : "Custo total"}</p>
+                      <p className="font-medium">{fmt(o.custoConhecido)}</p>
+                      {o.hasIncomplete && <p className="text-[10px] text-amber-600">parcial</p>}
                     </div>
                     <div>
                       <p className="text-muted-foreground">Lucro</p>
-                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">{o.lucro != null ? fmt(o.lucro) : "—"}</p>
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {o.lucro != null ? fmt(o.lucro) : "—"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -370,7 +384,7 @@ function OrcamentosTab() {
                     <th className="py-2.5 px-3 font-medium">Cliente</th>
                     <th className="py-2.5 px-3 font-medium">Data</th>
                     <th className="py-2.5 px-3 font-medium text-right">Valor Total</th>
-                    <th className="py-2.5 px-3 font-medium text-right">Custo Total</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Custo</th>
                     <th className="py-2.5 px-3 font-medium text-right">Lucro Bruto</th>
                     <th className="py-2.5 px-3 font-medium text-right">Margem</th>
                   </tr>
@@ -383,12 +397,20 @@ function OrcamentosTab() {
                         {new Date(o.dataCriacao).toLocaleDateString("pt-BR")}
                       </td>
                       <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.valorFinal)}</td>
-                      <td className="py-2.5 px-3 text-right tabular-nums">{fmt(o.custoTotalObra)}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums">
+                        <div className="flex flex-col items-end">
+                          <span>{fmt(o.custoConhecido)}</span>
+                          {o.hasIncomplete && <span className="text-[10px] text-amber-600">parcial</span>}
+                        </div>
+                      </td>
                       <td className="py-2.5 px-3 text-right font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {o.lucro != null ? fmt(o.lucro) : "—"}
                       </td>
                       <td className="py-2.5 px-3 text-right">
-                        <Badge variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"} className="text-[10px]">
+                        <Badge
+                          variant={o.margem != null && o.margem >= 40 ? "default" : "secondary"}
+                          className="text-[10px]"
+                        >
                           {o.margem != null ? fmtPct(o.margem) : "—"}
                         </Badge>
                       </td>
