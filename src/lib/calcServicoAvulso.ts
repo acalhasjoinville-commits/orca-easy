@@ -10,6 +10,8 @@ export interface CalcAvulsoResult {
   valorVenda: number;
   fatorDificuldade: number;
   custoIncompleto: boolean;
+  /** Known cost for financial aggregation. null when cost is not informed. */
+  custoConhecido: number | null;
 }
 
 /**
@@ -44,6 +46,7 @@ export function calcServicoAvulso(
       valorVenda: valorInformado,
       fatorDificuldade: 1,
       custoIncompleto,
+      custoConhecido: custoIncompleto ? null : custoReal,
     };
   }
 
@@ -59,6 +62,7 @@ export function calcServicoAvulso(
       valorVenda: quantidade * valorInformado,
       fatorDificuldade: 1,
       custoIncompleto,
+      custoConhecido: custoIncompleto ? null : custoReal,
     };
   }
 
@@ -86,6 +90,7 @@ export function calcServicoAvulso(
     valorVenda,
     fatorDificuldade: fator,
     custoIncompleto: false,
+    custoConhecido: custoTotalObra,
   };
 }
 
@@ -129,6 +134,7 @@ export function buildItemServicoAvulso(
     unidadeCobranca: servico.unidadeCobranca,
     custoIncompleto: result.custoIncompleto,
     custoInternoAplicado: opts.custoInternoAplicado ?? null,
+    custoConhecido: result.custoConhecido,
   };
 }
 

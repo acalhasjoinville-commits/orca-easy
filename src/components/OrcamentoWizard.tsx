@@ -267,12 +267,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const totalCusto = itens.reduce((s, i) => s + i.custoTotalObra, 0);
+  // Aggregate only known costs; incomplete items don't contribute to cost total
+  const totalCustoConhecido = itens.reduce((s, i) => {
+    if (i.custoIncompleto) return s; // skip unknown
+    return s + (i.custoConhecido ?? i.custoTotalObra);
+  }, 0);
+  const totalCusto = totalCustoConhecido;
   const totalVenda = itens.reduce((s, i) => s + i.valorVenda, 0);
   const descontoNum = parseFloat(desconto) || 0;
   const valorFinal = Math.max(totalVenda - descontoNum, 0);
   const hasItems = itens.length > 0;
-  const margemPercentual = valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null;
+  const margemPercentual = hasAnyCustoIncompleto
+    ? (valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null)
+    : (valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null);
   const servicoTemplateMap = useMemo(
     () => new Map<string, (typeof servicosList)[number]>(servicosList.map((servico) => [servico.id, servico] as const)),
     [servicosList],

@@ -115,6 +115,11 @@ export interface ItemServico {
   custoIncompleto?: boolean;
   /** Snapshot of the internal cost applied to this item (null = not informed) */
   custoInternoAplicado?: number | null;
+  /**
+   * Known cost for this item. null = cost not informed (custoIncompleto=true).
+   * Aggregations must treat null as "unknown", not zero.
+   */
+  custoConhecido?: number | null;
 }
 
 export type StatusOrcamento = "pendente" | "aprovado" | "rejeitado" | "executado" | "cancelado";
