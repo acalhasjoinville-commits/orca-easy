@@ -395,7 +395,12 @@ export function OrcamentoDetails({
   const st = statusConfig[orcamento.status ?? "pendente"];
   const displayValue =
     (orcamento.desconto ?? 0) > 0 ? (orcamento.valorFinal ?? orcamento.valorVenda) : orcamento.valorVenda;
-  const margem = displayValue > 0 ? (1 - orcamento.custoTotalObra / displayValue) * 100 : 0;
+  // Compute known cost only from items that have cost data
+  const custoConhecidoTotal = orcamento.itensServico.reduce((s, i) => {
+    if (i.custoIncompleto) return s;
+    return s + (i.custoConhecido ?? i.custoTotalObra);
+  }, 0);
+  const margem = displayValue > 0 ? (1 - custoConhecidoTotal / displayValue) * 100 : 0;
   const hasAnyCustoIncompleto = orcamento.itensServico.some(i => i.custoIncompleto === true);
   const dataPrevistaSelecionada = parseDateValue(orcamento.dataPrevista) ?? undefined;
   const showDataPrevista = Boolean(orcamento.dataPrevista && orcamento.status !== "pendente");
@@ -606,8 +611,8 @@ export function OrcamentoDetails({
           <h2 className="text-sm font-semibold text-foreground mb-3">Resumo Financeiro</h2>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Custo Total</span>
-              <span className="font-medium">{formatCurrency(orcamento.custoTotalObra)}</span>
+              <span className="text-muted-foreground">{hasAnyCustoIncompleto ? "Custo Conhecido" : "Custo Total"}</span>
+              <span className="font-medium">{formatCurrency(custoConhecidoTotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Valor de Venda</span>

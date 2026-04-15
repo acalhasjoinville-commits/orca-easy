@@ -400,8 +400,8 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           </>
         )}
 
-        {/* Custo interno warning for valor_fechado and por_unidade */}
-        {(modoCobranca === "valor_fechado" || modoCobranca === "por_unidade") && servico.custoBaseInterno == null && (
+        {/* Custo interno warning for valor_fechado and por_unidade — uses actual form state */}
+        {(modoCobranca === "valor_fechado" || modoCobranca === "por_unidade") && !avulsoCustoInterno && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <div>

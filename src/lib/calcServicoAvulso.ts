@@ -134,6 +134,7 @@ export function buildItemServicoAvulso(
     unidadeCobranca: servico.unidadeCobranca,
     custoIncompleto: result.custoIncompleto,
     custoInternoAplicado: opts.custoInternoAplicado ?? null,
+    custoConhecido: result.custoConhecido,
   };
 }
 
