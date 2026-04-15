@@ -10,6 +10,8 @@ export interface CalcAvulsoResult {
   valorVenda: number;
   fatorDificuldade: number;
   custoIncompleto: boolean;
+  /** Known cost for financial aggregation. null when cost is not informed. */
+  custoConhecido: number | null;
 }
 
 /**
