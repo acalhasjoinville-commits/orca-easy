@@ -46,6 +46,7 @@ export function calcServicoAvulso(
       valorVenda: valorInformado,
       fatorDificuldade: 1,
       custoIncompleto,
+      custoConhecido: custoIncompleto ? null : custoReal,
     };
   }
 
@@ -61,6 +62,7 @@ export function calcServicoAvulso(
       valorVenda: quantidade * valorInformado,
       fatorDificuldade: 1,
       custoIncompleto,
+      custoConhecido: custoIncompleto ? null : custoReal,
     };
   }
 
@@ -88,6 +90,7 @@ export function calcServicoAvulso(
     valorVenda,
     fatorDificuldade: fator,
     custoIncompleto: false,
+    custoConhecido: custoTotalObra,
   };
 }
 
