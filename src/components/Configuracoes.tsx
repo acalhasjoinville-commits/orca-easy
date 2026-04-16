@@ -786,19 +786,23 @@ export function Configuracoes() {
         if (editItem) await updateRegra.mutateAsync(entry);
         else await addRegra.mutateAsync(entry);
       } else if (activeSection === "catalogo") {
-      const tipoServico = (form.tipoServico || 'motor') as import("@/lib/types").TipoServico;
-        const modoCobranca = (form.modoCobranca || 'motor') as import("@/lib/types").ModoCobranca;
+        const tipoServico = (form.tipoServico || "motor") as import("@/lib/types").TipoServico;
+        const modoCobranca = (form.modoCobranca || "motor") as import("@/lib/types").ModoCobranca;
         const entry: ServicoTemplate = {
           id,
           nomeServico: form.nomeServico || "",
-          regraId: modoCobranca === 'por_metro' ? (form.regraId || "") : (tipoServico === 'motor' ? (form.regraId || "") : ""),
-          motorType: tipoServico === 'motor' ? ((form.motorType as MotorType) || "motor1") : "motor1",
-          materialPadrao: tipoServico === 'motor' ? (form.materialPadrao || "") : "",
-          espessuraPadrao: tipoServico === 'motor' ? (parseFloat(form.espessuraPadrao) || 0) : 0,
-          cortePadrao: tipoServico === 'motor' ? (parseFloat(form.cortePadrao) || 0) : 0,
-          dificuldadeFacil: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeFacil) || 2.6) : 1,
-          dificuldadeMedia: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeMedia) || 3.5) : 1,
-          dificuldadeDificil: (modoCobranca === 'motor' || modoCobranca === 'por_metro') ? (parseFloat(form.dificuldadeDificil) || 4.6) : 1,
+          regraId:
+            modoCobranca === "por_metro" ? form.regraId || "" : tipoServico === "motor" ? form.regraId || "" : "",
+          motorType: tipoServico === "motor" ? (form.motorType as MotorType) || "motor1" : "motor1",
+          materialPadrao: tipoServico === "motor" ? form.materialPadrao || "" : "",
+          espessuraPadrao: tipoServico === "motor" ? parseFloat(form.espessuraPadrao) || 0 : 0,
+          cortePadrao: tipoServico === "motor" ? parseFloat(form.cortePadrao) || 0 : 0,
+          dificuldadeFacil:
+            modoCobranca === "motor" || modoCobranca === "por_metro" ? parseFloat(form.dificuldadeFacil) || 2.6 : 1,
+          dificuldadeMedia:
+            modoCobranca === "motor" || modoCobranca === "por_metro" ? parseFloat(form.dificuldadeMedia) || 3.5 : 1,
+          dificuldadeDificil:
+            modoCobranca === "motor" || modoCobranca === "por_metro" ? parseFloat(form.dificuldadeDificil) || 4.6 : 1,
           tipoServico,
           modoCobranca,
           valorBase: parseFloat(form.valorBase) || 0,
@@ -1000,57 +1004,57 @@ export function Configuracoes() {
   );
 
   const renderCatalogoForm = () => {
-    const tipoServico = form.tipoServico || 'motor';
-    const modoCobranca = form.modoCobranca || 'motor';
-    const isMotor = tipoServico === 'motor';
-    const isAvulso = tipoServico === 'avulso';
-    const showRegra = isMotor || modoCobranca === 'por_metro';
-    const showDificuldade = isMotor || modoCobranca === 'por_metro';
+    const tipoServico = form.tipoServico || "motor";
+    const modoCobranca = form.modoCobranca || "motor";
+    const isMotor = tipoServico === "motor";
+    const isAvulso = tipoServico === "avulso";
+    const showRegra = isMotor || modoCobranca === "por_metro";
+    const showDificuldade = isMotor || modoCobranca === "por_metro";
     const showMotorFields = isMotor;
 
     const handleTipoChange = (newTipo: string) => {
-      if (newTipo === 'motor') {
-        setForm(prev => ({
+      if (newTipo === "motor") {
+        setForm((prev) => ({
           ...prev,
-          tipoServico: 'motor',
-          modoCobranca: 'motor',
-          valorBase: '',
-          unidadeCobranca: '',
-          custoBaseInterno: '',
+          tipoServico: "motor",
+          modoCobranca: "motor",
+          valorBase: "",
+          unidadeCobranca: "",
+          custoBaseInterno: "",
         }));
       } else {
-        setForm(prev => ({
+        setForm((prev) => ({
           ...prev,
-          tipoServico: 'avulso',
-          modoCobranca: 'valor_fechado',
-          motorType: '',
-          materialPadrao: '',
-          espessuraPadrao: '',
-          cortePadrao: '',
-          regraId: '',
-          dificuldadeFacil: '1',
-          dificuldadeMedia: '1',
-          dificuldadeDificil: '1',
+          tipoServico: "avulso",
+          modoCobranca: "valor_fechado",
+          motorType: "",
+          materialPadrao: "",
+          espessuraPadrao: "",
+          cortePadrao: "",
+          regraId: "",
+          dificuldadeFacil: "1",
+          dificuldadeMedia: "1",
+          dificuldadeDificil: "1",
         }));
       }
     };
 
     const handleModoChange = (newModo: string) => {
       const updates: Record<string, string> = { modoCobranca: newModo };
-      if (newModo !== 'por_metro') {
-        updates.regraId = '';
-        updates.dificuldadeFacil = '1';
-        updates.dificuldadeMedia = '1';
-        updates.dificuldadeDificil = '1';
+      if (newModo !== "por_metro") {
+        updates.regraId = "";
+        updates.dificuldadeFacil = "1";
+        updates.dificuldadeMedia = "1";
+        updates.dificuldadeDificil = "1";
       } else {
-        updates.dificuldadeFacil = form.dificuldadeFacil === '1' ? '2.6' : (form.dificuldadeFacil || '2.6');
-        updates.dificuldadeMedia = form.dificuldadeMedia === '1' ? '3.5' : (form.dificuldadeMedia || '3.5');
-        updates.dificuldadeDificil = form.dificuldadeDificil === '1' ? '4.6' : (form.dificuldadeDificil || '4.6');
+        updates.dificuldadeFacil = form.dificuldadeFacil === "1" ? "2.6" : form.dificuldadeFacil || "2.6";
+        updates.dificuldadeMedia = form.dificuldadeMedia === "1" ? "3.5" : form.dificuldadeMedia || "3.5";
+        updates.dificuldadeDificil = form.dificuldadeDificil === "1" ? "4.6" : form.dificuldadeDificil || "4.6";
       }
-      if (newModo === 'valor_fechado' || newModo === 'por_unidade') {
-        updates.custoBaseInterno = form.custoBaseInterno || '';
+      if (newModo === "valor_fechado" || newModo === "por_unidade") {
+        updates.custoBaseInterno = form.custoBaseInterno || "";
       }
-      setForm(prev => ({ ...prev, ...updates }));
+      setForm((prev) => ({ ...prev, ...updates }));
     };
 
     return (
@@ -1059,8 +1063,8 @@ export function Configuracoes() {
           <p className="text-xs font-medium text-foreground">O catálogo conecta serviço, material e regra.</p>
           <p className="text-[11px] text-muted-foreground mt-1">
             {isMotor
-              ? 'Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos automaticamente.'
-              : 'Serviços avulsos não dependem do motor. Defina o modo de cobrança e o valor base.'}
+              ? "Ao usar esse serviço no orçamento, o sistema vai buscar o material, aplicar a regra e calcular os insumos automaticamente."
+              : "Serviços avulsos não dependem do motor. Defina o modo de cobrança e o valor base."}
           </p>
         </div>
 
@@ -1100,9 +1104,10 @@ export function Configuracoes() {
               </SelectContent>
             </Select>
             <p className="text-[10px] text-muted-foreground mt-1">
-              {modoCobranca === 'valor_fechado' && 'O preço é definido por serviço. Ex: manutenção, reparo pontual.'}
-              {modoCobranca === 'por_unidade' && 'O preço é multiplicado pela quantidade. Ex: ponto de PVC, peça.'}
-              {modoCobranca === 'por_metro' && 'O sistema usa o custo base por metro, soma os insumos da regra e aplica a dificuldade para calcular o valor de venda.'}
+              {modoCobranca === "valor_fechado" && "O preço é definido por serviço. Ex: manutenção, reparo pontual."}
+              {modoCobranca === "por_unidade" && "O preço é multiplicado pela quantidade. Ex: ponto de PVC, peça."}
+              {modoCobranca === "por_metro" &&
+                "O sistema usa o custo base por metro, soma os insumos da regra e aplica a dificuldade para calcular o valor de venda."}
             </p>
           </div>
         )}
@@ -1111,9 +1116,11 @@ export function Configuracoes() {
         {isAvulso && (
           <div>
             <Label className="text-[11px] font-medium text-muted-foreground">
-              {modoCobranca === 'valor_fechado' ? 'Valor do serviço (R$)' :
-               modoCobranca === 'por_unidade' ? 'Valor por unidade (R$)' :
-               'Custo base por metro (R$)'}
+              {modoCobranca === "valor_fechado"
+                ? "Valor do serviço (R$)"
+                : modoCobranca === "por_unidade"
+                  ? "Valor por unidade (R$)"
+                  : "Custo base por metro (R$)"}
             </Label>
             <Input
               type="number"
@@ -1123,11 +1130,17 @@ export function Configuracoes() {
               placeholder="0.00"
               className="mt-1"
             />
+            {modoCobranca === "por_metro" && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                O sistema usa o custo base por metro, soma os insumos da regra e aplica a dificuldade para calcular o
+                valor de venda.
+              </p>
+            )}
           </div>
         )}
 
         {/* Unidade de cobrança — only for por_unidade */}
-        {isAvulso && modoCobranca === 'por_unidade' && (
+        {isAvulso && modoCobranca === "por_unidade" && (
           <div>
             <Label className="text-[11px] font-medium text-muted-foreground">Unidade de cobrança</Label>
             <Input
@@ -1143,10 +1156,10 @@ export function Configuracoes() {
         )}
 
         {/* Custo interno — for valor_fechado and por_unidade */}
-        {isAvulso && (modoCobranca === 'valor_fechado' || modoCobranca === 'por_unidade') && (
+        {isAvulso && (modoCobranca === "valor_fechado" || modoCobranca === "por_unidade") && (
           <div>
             <Label className="text-[11px] font-medium text-muted-foreground">
-              {modoCobranca === 'valor_fechado' ? 'Custo interno do serviço (R$)' : 'Custo interno por unidade (R$)'}
+              {modoCobranca === "valor_fechado" ? "Custo interno do serviço (R$)" : "Custo interno por unidade (R$)"}
             </Label>
             <Input
               type="number"
@@ -1158,8 +1171,9 @@ export function Configuracoes() {
             />
             <div className="mt-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-2">
               <p className="text-[10px] text-amber-700">
-                ⚠ Sem o custo interno, o financeiro não conseguirá calcular margem e lucro corretamente para este serviço.
-                O orçamento será salvo normalmente, mas os indicadores financeiros ficarão marcados como parciais.
+                ⚠ Sem o custo interno, o financeiro não conseguirá calcular margem e lucro corretamente para este
+                serviço. O orçamento será salvo normalmente, mas os indicadores financeiros ficarão marcados como
+                parciais.
               </p>
             </div>
           </div>
@@ -1180,7 +1194,7 @@ export function Configuracoes() {
                 ))}
               </SelectContent>
             </Select>
-            {isAvulso && modoCobranca === 'por_metro' && (
+            {isAvulso && modoCobranca === "por_metro" && (
               <p className="text-[10px] text-muted-foreground mt-1">
                 Obrigatória para serviços por metro. Define o consumo de insumos pela metragem.
               </p>
@@ -1725,11 +1739,14 @@ export function Configuracoes() {
           </p>
         ) : (
           filteredCatalogo.map((e) => {
-            const modoLabel = e.tipoServico === 'avulso'
-              ? e.modoCobranca === 'valor_fechado' ? 'Fechado'
-                : e.modoCobranca === 'por_unidade' ? `Unidade${e.unidadeCobranca ? ` (${e.unidadeCobranca})` : ''}`
-                : 'Metro'
-              : null;
+            const modoLabel =
+              e.tipoServico === "avulso"
+                ? e.modoCobranca === "valor_fechado"
+                  ? "Fechado"
+                  : e.modoCobranca === "por_unidade"
+                    ? `Unidade${e.unidadeCobranca ? ` (${e.unidadeCobranca})` : ""}`
+                    : "Metro"
+                : null;
             return (
               <ItemRow
                 key={e.id}
@@ -1741,8 +1758,11 @@ export function Configuracoes() {
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium">{e.nomeServico}</p>
-                  {e.tipoServico === 'motor' ? (
-                    <Badge variant={e.motorType === "motor1" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
+                  {e.tipoServico === "motor" ? (
+                    <Badge
+                      variant={e.motorType === "motor1" ? "default" : "secondary"}
+                      className="text-[10px] px-1.5 py-0"
+                    >
                       {e.motorType === "motor1" ? "M1" : "M2"}
                     </Badge>
                   ) : (
@@ -1751,7 +1771,7 @@ export function Configuracoes() {
                     </Badge>
                   )}
                 </div>
-                {e.tipoServico === 'motor' ? (
+                {e.tipoServico === "motor" ? (
                   <>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {e.materialPadrao} · {e.espessuraPadrao}mm · {e.cortePadrao}mm
@@ -1760,11 +1780,16 @@ export function Configuracoes() {
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {e.modoCobranca === 'valor_fechado'
-                      ? `Valor: ${fmt(e.valorBase)}${e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}`
-                      : e.modoCobranca === 'por_unidade'
-                      ? `${fmt(e.valorBase)} / ${e.unidadeCobranca || 'un'}${e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}`
-                      : `Custo base: ${fmt(e.valorBase)}/m · Regra: ${regraName(e.regraId)}`}
+                    {e.modoCobranca === "valor_fechado"
+                      ? `Valor: ${fmt(e.valorBase)}`
+                      : e.modoCobranca === "por_unidade"
+                        ? `${fmt(e.valorBase)} / ${e.unidadeCobranca || "un"}`
+                        : `Custo base: ${fmt(e.valorBase)}/m · Regra: ${regraName(e.regraId)}`}
+                    {e.modoCobranca !== "por_metro"
+                      ? e.custoBaseInterno != null
+                        ? ` · Custo: ${fmt(e.custoBaseInterno)}`
+                        : " · ⚠ Sem custo interno"
+                      : ""}
                   </p>
                 )}
               </ItemRow>

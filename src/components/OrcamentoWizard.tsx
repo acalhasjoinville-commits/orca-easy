@@ -277,7 +277,7 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const descontoNum = parseFloat(desconto) || 0;
   const valorFinal = Math.max(totalVenda - descontoNum, 0);
   const hasItems = itens.length > 0;
-  const hasAnyCustoIncompleto = itens.some(i => i.custoIncompleto === true);
+  const hasAnyCustoIncompleto = itens.some((i) => i.custoIncompleto === true);
   const margemPercentual = valorFinal > 0 ? ((valorFinal - totalCusto) / valorFinal) * 100 : null;
   const servicoTemplateMap = useMemo(
     () => new Map<string, (typeof servicosList)[number]>(servicosList.map((servico) => [servico.id, servico] as const)),
@@ -305,9 +305,10 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   };
 
   const getMaterialResumo = (item: ItemServico) => {
-    if (item.tipoServico === 'avulso') {
-      if (item.modoCobranca === 'valor_fechado') return 'Valor fechado';
-      if (item.modoCobranca === 'por_unidade') return `${item.quantidade ?? 0} ${item.unidadeCobranca || 'un'} × ${fmt(item.valorUnitario ?? 0)}`;
+    if (item.tipoServico === "avulso") {
+      if (item.modoCobranca === "valor_fechado") return "Valor fechado";
+      if (item.modoCobranca === "por_unidade")
+        return `${item.quantidade ?? 0} ${item.unidadeCobranca || "un"} × ${fmt(item.valorUnitario ?? 0)}`;
       return `${item.metragem}m × ${fmt(item.valorUnitario ?? 0)}/m`;
     }
     return `${item.materialId} · ${item.espessura}mm · ${item.corte}mm`;
@@ -315,7 +316,6 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const getAjustesCount = (item: ItemServico) =>
     item.insumosOverrides ? Object.keys(item.insumosOverrides).length : 0;
-
 
   const handleBackFromCart = () => {
     if (isEditing) {
@@ -932,17 +932,17 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">{getMaterialResumo(item)}</p>
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            {item.tipoServico !== 'avulso' && (
+                            {item.tipoServico !== "avulso" && (
                               <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                 {item.metragem}m
                               </span>
                             )}
-                            {(item.tipoServico !== 'avulso' || item.modoCobranca === 'por_metro') && (
+                            {(item.tipoServico !== "avulso" || item.modoCobranca === "por_metro") && (
                               <span className="inline-flex items-center bg-muted rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                                 {dificuldadeLabel[item.dificuldade]}
                               </span>
                             )}
-                            {item.tipoServico === 'avulso' && (
+                            {item.tipoServico === "avulso" && (
                               <span className="inline-flex items-center bg-primary/10 border border-primary/20 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary">
                                 Avulso
                               </span>
@@ -1018,15 +1018,29 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                      <div className={cn("rounded-xl border p-3", item.custoIncompleto ? "bg-amber-500/5 border-amber-500/20" : "bg-muted/20")}>
+                      <div
+                        className={cn(
+                          "rounded-xl border p-3",
+                          item.custoIncompleto ? "bg-amber-500/5 border-amber-500/20" : "bg-muted/20",
+                        )}
+                      >
                         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {item.modoCobranca === 'por_metro' ? 'Custo calculado' : 'Custo interno'}
+                          {item.modoCobranca === "por_metro" ? "Custo calculado" : "Custo interno"}
                         </p>
-                        <p className={cn("text-sm font-semibold mt-1 tabular-nums", item.custoIncompleto ? "text-amber-700" : "text-foreground")}>
+                        <p
+                          className={cn(
+                            "text-sm font-semibold mt-1 tabular-nums",
+                            item.custoIncompleto ? "text-amber-700" : "text-foreground",
+                          )}
+                        >
                           {item.custoIncompleto ? "Não informado" : fmt(item.custoTotalObra)}
                         </p>
                         <p className="text-[11px] text-muted-foreground mt-1">
-                          {item.custoIncompleto ? "Margem e lucro ficam parciais." : item.modoCobranca === 'por_metro' ? "Custo base + insumos + dificuldade." : "Material + insumos calculados para este serviço."}
+                          {item.custoIncompleto
+                            ? "Margem e lucro ficam parciais."
+                            : item.modoCobranca === "por_metro"
+                              ? "Custo base + insumos + dificuldade."
+                              : "Material + insumos calculados para este serviço."}
                         </p>
                       </div>
                       <div className="rounded-xl border bg-muted/20 p-3">
@@ -1042,15 +1056,19 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                           Resumo rápido
                         </p>
-                        {item.tipoServico === 'avulso' ? (
+                        {item.tipoServico === "avulso" ? (
                           <>
                             <p className="text-sm font-semibold text-foreground mt-1">
-                              {item.modoCobranca === 'valor_fechado' ? 'Valor fechado' :
-                               item.modoCobranca === 'por_unidade' ? `${item.quantidade ?? 0} ${item.unidadeCobranca || 'un'}` :
-                               `${item.metragem}m`}
+                              {item.modoCobranca === "valor_fechado"
+                                ? "Valor fechado"
+                                : item.modoCobranca === "por_unidade"
+                                  ? `${item.quantidade ?? 0} ${item.unidadeCobranca || "un"}`
+                                  : `${item.metragem}m`}
                             </p>
                             <p className="text-[11px] text-muted-foreground mt-1">
-                              {item.modoCobranca === 'por_metro' ? `Fator ${item.fatorDificuldade.toFixed(1)} · ${item.metragem}m` : 'Serviço avulso'}
+                              {item.modoCobranca === "por_metro"
+                                ? `Fator ${item.fatorDificuldade.toFixed(1)} · ${item.metragem}m`
+                                : "Serviço avulso"}
                             </p>
                           </>
                         ) : (
@@ -1144,7 +1162,9 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                             : "text-destructive",
                     )}
                   >
-                    {hasAnyCustoIncompleto ? `${margemPercentual.toFixed(1)}% (parcial)` : `${margemPercentual.toFixed(1)}%`}
+                    {hasAnyCustoIncompleto
+                      ? `${margemPercentual.toFixed(1)}% (parcial)`
+                      : `${margemPercentual.toFixed(1)}%`}
                   </span>
                 </div>
               ) : (
@@ -1160,7 +1180,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                 <div>
                   <p className="text-xs font-semibold text-amber-700">Custo incompleto detectado</p>
                   <p className="text-[11px] text-amber-600/80 mt-0.5">
-                    Um ou mais serviços avulsos não possuem custo interno informado. O lucro e a margem exibidos são parciais e podem não refletir a realidade financeira deste orçamento.
+                    Um ou mais serviços avulsos não possuem custo interno informado. O lucro e a margem exibidos são
+                    parciais e podem não refletir a realidade financeira deste orçamento.
                   </p>
                 </div>
               </div>

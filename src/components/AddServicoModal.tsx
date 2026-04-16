@@ -14,7 +14,20 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Loader2, Factory, Truck, Check, ChevronsUpDown, Ruler, Gauge, Package, Calculator, Info, AlertTriangle, Wrench } from "lucide-react";
+import {
+  Loader2,
+  Factory,
+  Truck,
+  Check,
+  ChevronsUpDown,
+  Ruler,
+  Gauge,
+  Package,
+  Calculator,
+  Info,
+  AlertTriangle,
+  Wrench,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -112,7 +125,12 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       if (!motor1) return null;
       custoMetroLinear = calcCustoMetroMotor1(servico.espessuraPadrao, servico.cortePadrao, motor1);
     } else {
-      const resultado = calcCustoMetroMotor2(servico.materialPadrao, servico.espessuraPadrao, servico.cortePadrao, motor2List);
+      const resultado = calcCustoMetroMotor2(
+        servico.materialPadrao,
+        servico.espessuraPadrao,
+        servico.cortePadrao,
+        motor2List,
+      );
       if (resultado === null) return null;
       custoMetroLinear = resultado;
     }
@@ -122,7 +140,18 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
     const fator = getFatorDificuldade(servico, dificuldade);
 
     return { custoMetroLinear, custoTotalMaterial, insumosCalc, fatorDificuldade: fator };
-  }, [servico, isAvulso, regra, metragem, dificuldade, motorType, motorValidationError, motor1List, motor2List, insumosList]);
+  }, [
+    servico,
+    isAvulso,
+    regra,
+    metragem,
+    dificuldade,
+    motorType,
+    motorValidationError,
+    motor1List,
+    motor2List,
+    insumosList,
+  ]);
 
   // ─── Avulso calculation ───
   const calcAvulsoResult = useMemo(() => {
@@ -145,7 +174,18 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
       regra: modoCobranca === "por_metro" ? regra : null,
       insumosList: modoCobranca === "por_metro" ? insumosList : [],
     });
-  }, [servico, isAvulso, avulsoValor, avulsoQuantidade, avulsoCustoInterno, metragem, dificuldade, modoCobranca, regra, insumosList]);
+  }, [
+    servico,
+    isAvulso,
+    avulsoValor,
+    avulsoQuantidade,
+    avulsoCustoInterno,
+    metragem,
+    dificuldade,
+    modoCobranca,
+    regra,
+    insumosList,
+  ]);
 
   // Build real overrides for motor services
   const calc = calcMotor;
@@ -199,9 +239,8 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
   const overrideCount = Object.keys(realOverrides).length;
   const metragemNumero = parseFloat(metragem);
   const hasValidMetragem = !Number.isNaN(metragemNumero) && metragemNumero > 0;
-  const selectedServiceResumo = servico && !isAvulso
-    ? `${servico.materialPadrao} · ${servico.espessuraPadrao}mm · ${servico.cortePadrao}mm`
-    : null;
+  const selectedServiceResumo =
+    servico && !isAvulso ? `${servico.materialPadrao} · ${servico.espessuraPadrao}mm · ${servico.cortePadrao}mm` : null;
   const selectedServiceRule = regra?.nomeRegra ?? null;
 
   // Can save?
@@ -220,7 +259,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
         motorType,
         dificuldade,
         metragem: modoCobranca === "por_metro" ? metNum : 0,
-        quantidade: modoCobranca === "por_unidade" ? qtdNum : (modoCobranca === "valor_fechado" ? 1 : metNum),
+        quantidade: modoCobranca === "por_unidade" ? qtdNum : modoCobranca === "valor_fechado" ? 1 : metNum,
         valorUnitario: valorNum,
         custoInternoAplicado: custoNum,
       });
@@ -285,15 +324,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-primary" />
             <p className="text-xs font-semibold text-foreground">
-              {modoCobranca === "valor_fechado" ? "Valor fechado" :
-               modoCobranca === "por_unidade" ? `Por ${servico.unidadeCobranca || "unidade"}` :
-               "Por metro"}
+              {modoCobranca === "valor_fechado"
+                ? "Valor fechado"
+                : modoCobranca === "por_unidade"
+                  ? `Por ${servico.unidadeCobranca || "unidade"}`
+                  : "Por metro"}
             </p>
           </div>
           <p className="text-[11px] text-muted-foreground mt-1">
-            {modoCobranca === "valor_fechado" ? "Informe ou ajuste o valor total deste serviço." :
-             modoCobranca === "por_unidade" ? `Informe a quantidade de ${servico.unidadeCobranca || "unidades"} e o valor por ${servico.unidadeCobranca || "unidade"}.` :
-             "Informe a metragem. O cálculo considera insumos pela regra e fator de dificuldade."}
+            {modoCobranca === "valor_fechado"
+              ? "Informe ou ajuste o valor total deste serviço."
+              : modoCobranca === "por_unidade"
+                ? `Informe a quantidade de ${servico.unidadeCobranca || "unidades"} e o valor por ${servico.unidadeCobranca || "unidade"}.`
+                : "Informe a metragem. O sistema usa o custo base por metro, soma os insumos da regra e aplica a dificuldade para calcular o valor de venda."}
           </p>
         </div>
 
@@ -424,9 +467,11 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
         <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
           <Calculator className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-sm font-medium text-foreground">
-            {modoCobranca === "valor_fechado" ? "Informe o valor para ver a prévia" :
-             modoCobranca === "por_unidade" ? "Informe quantidade e valor" :
-             "Informe metragem e custo base por metro"}
+            {modoCobranca === "valor_fechado"
+              ? "Informe o valor para ver a prévia"
+              : modoCobranca === "por_unidade"
+                ? "Informe quantidade e valor"
+                : "Informe metragem e custo base por metro"}
           </p>
         </div>
       );
@@ -437,15 +482,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prévia do cálculo</p>
           <p className="text-sm font-semibold text-foreground mt-1">
-            {modoCobranca === "valor_fechado" ? "Valor fechado" :
-             modoCobranca === "por_unidade" ? `${avulsoQuantidade || 0} ${servico.unidadeCobranca || "un"} × ${fmt(parseFloat(avulsoValor) || 0)}` :
-             `${metragem || 0}m × custo base ${fmt(parseFloat(avulsoValor) || 0)}/m`}
+            {modoCobranca === "valor_fechado"
+              ? "Valor fechado"
+              : modoCobranca === "por_unidade"
+                ? `${avulsoQuantidade || 0} ${servico.unidadeCobranca || "un"} × ${fmt(parseFloat(avulsoValor) || 0)}`
+                : `${metragem || 0}m × custo base ${fmt(parseFloat(avulsoValor) || 0)}/m`}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-lg border bg-background/80 p-3">
-            <p className="text-[11px] text-muted-foreground">{modoCobranca === "por_metro" ? "Custo calculado" : "Custo interno"}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {modoCobranca === "por_metro" ? "Custo calculado" : "Custo interno"}
+            </p>
             <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
               {calcAvulsoResult.custoIncompleto ? (
                 <span className="text-amber-600">Não informado</span>
@@ -456,21 +505,19 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           </div>
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
             <p className="text-[11px] text-muted-foreground">Valor de venda</p>
-            <p className="text-sm font-semibold text-primary mt-1 tabular-nums">
-              {fmt(calcAvulsoResult.valorVenda)}
-            </p>
+            <p className="text-sm font-semibold text-primary mt-1 tabular-nums">{fmt(calcAvulsoResult.valorVenda)}</p>
           </div>
         </div>
 
         {modoCobranca === "por_metro" && calcAvulsoResult.insumosCalc.length > 0 && (
           <div className="rounded-lg border bg-background/80 p-3 space-y-2">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Insumos calculados
-            </p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Insumos calculados</p>
             {calcAvulsoResult.insumosCalc.map((insumo) => (
               <div key={insumo.insumoId} className="flex items-center justify-between text-xs">
                 <span className="text-foreground truncate">{insumo.nomeInsumo}</span>
-                <span className="text-muted-foreground">{insumo.quantidade} × {fmt(insumo.custoUnitario)}</span>
+                <span className="text-muted-foreground">
+                  {insumo.quantidade} × {fmt(insumo.custoUnitario)}
+                </span>
               </div>
             ))}
             <div className="flex items-center justify-between text-xs pt-1 border-t">
@@ -626,9 +673,11 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                                   </div>
                                   <span className="text-[11px] text-muted-foreground">
                                     {service.tipoServico === "avulso"
-                                      ? service.modoCobranca === "valor_fechado" ? `Valor fechado · ${fmt(service.valorBase)}`
-                                        : service.modoCobranca === "por_unidade" ? `Por ${service.unidadeCobranca || "un"} · ${fmt(service.valorBase)}`
-                                        : `Por metro · ${fmt(service.valorBase)}/m`
+                                      ? service.modoCobranca === "valor_fechado"
+                                        ? `Valor fechado · ${fmt(service.valorBase)}`
+                                        : service.modoCobranca === "por_unidade"
+                                          ? `Por ${service.unidadeCobranca || "un"} · ${fmt(service.valorBase)}`
+                                          : `Custo base · ${fmt(service.valorBase)}/m`
                                       : `${service.materialPadrao} · ${service.espessuraPadrao}mm · ${service.cortePadrao}mm`}
                                   </span>
                                 </div>
