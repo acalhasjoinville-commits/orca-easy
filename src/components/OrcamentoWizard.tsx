@@ -1020,13 +1020,13 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                       <div className={cn("rounded-xl border p-3", item.custoIncompleto ? "bg-amber-500/5 border-amber-500/20" : "bg-muted/20")}>
                         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          Custo interno
+                          {item.modoCobranca === 'por_metro' ? 'Custo calculado' : 'Custo interno'}
                         </p>
                         <p className={cn("text-sm font-semibold mt-1 tabular-nums", item.custoIncompleto ? "text-amber-700" : "text-foreground")}>
                           {item.custoIncompleto ? "Não informado" : fmt(item.custoTotalObra)}
                         </p>
                         <p className="text-[11px] text-muted-foreground mt-1">
-                          {item.custoIncompleto ? "Margem e lucro ficam parciais." : "Material + insumos calculados para este serviço."}
+                          {item.custoIncompleto ? "Margem e lucro ficam parciais." : item.modoCobranca === 'por_metro' ? "Custo base + insumos + dificuldade." : "Material + insumos calculados para este serviço."}
                         </p>
                       </div>
                       <div className="rounded-xl border bg-muted/20 p-3">

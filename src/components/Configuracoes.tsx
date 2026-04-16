@@ -1102,7 +1102,7 @@ export function Configuracoes() {
             <p className="text-[10px] text-muted-foreground mt-1">
               {modoCobranca === 'valor_fechado' && 'O preço é definido por serviço. Ex: manutenção, reparo pontual.'}
               {modoCobranca === 'por_unidade' && 'O preço é multiplicado pela quantidade. Ex: ponto de PVC, peça.'}
-              {modoCobranca === 'por_metro' && 'O preço é multiplicado pela metragem, com regra de insumos e dificuldade.'}
+              {modoCobranca === 'por_metro' && 'O sistema usa o custo base por metro, soma os insumos da regra e aplica a dificuldade para calcular o valor de venda.'}
             </p>
           </div>
         )}
@@ -1113,7 +1113,7 @@ export function Configuracoes() {
             <Label className="text-[11px] font-medium text-muted-foreground">
               {modoCobranca === 'valor_fechado' ? 'Valor do serviço (R$)' :
                modoCobranca === 'por_unidade' ? 'Valor por unidade (R$)' :
-               'Valor por metro (R$)'}
+               'Custo base por metro (R$)'}
             </Label>
             <Input
               type="number"
@@ -1760,10 +1760,11 @@ export function Configuracoes() {
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {e.modoCobranca === 'valor_fechado' ? `Valor: ${fmt(e.valorBase)}` :
-                     e.modoCobranca === 'por_unidade' ? `${fmt(e.valorBase)} / ${e.unidadeCobranca || 'un'}` :
-                     `${fmt(e.valorBase)}/m · Regra: ${regraName(e.regraId)}`}
-                    {e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}
+                    {e.modoCobranca === 'valor_fechado'
+                      ? `Valor: ${fmt(e.valorBase)}${e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}`
+                      : e.modoCobranca === 'por_unidade'
+                      ? `${fmt(e.valorBase)} / ${e.unidadeCobranca || 'un'}${e.custoBaseInterno != null ? ` · Custo: ${fmt(e.custoBaseInterno)}` : ' · ⚠ Sem custo interno'}`
+                      : `Custo base: ${fmt(e.valorBase)}/m · Regra: ${regraName(e.regraId)}`}
                   </p>
                 )}
               </ItemRow>
