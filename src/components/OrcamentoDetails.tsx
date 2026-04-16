@@ -437,10 +437,10 @@ export function OrcamentoDetails({
       {/* Header Card */}
       <Card className="mb-6">
         <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-2">
             <div>
-              <div className="flex items-center gap-2.5 mb-1">
-                <h1 className="text-xl font-bold text-accent">#{orcamento.numeroOrcamento ?? "—"}</h1>
+              <div className="flex items-center gap-2.5 flex-wrap mb-1">
+                <h1 className="text-xl font-bold text-primary">#{orcamento.numeroOrcamento ?? "—"}</h1>
                 <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold border", st.color)}>
                   {st.label}
                 </span>
@@ -458,7 +458,7 @@ export function OrcamentoDetails({
               </div>
               <p className="text-lg font-medium text-foreground">{orcamento.nomeCliente}</p>
             </div>
-            <p className="text-xl font-bold text-accent">{formatCurrency(displayValue)}</p>
+            <p className="text-xl font-bold text-primary sm:text-right shrink-0">{formatCurrency(displayValue)}</p>
           </div>
           {/* Dates in order: criação → prevista → execução → faturamento → pagamento */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -579,7 +579,7 @@ export function OrcamentoDetails({
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-accent shrink-0 ml-2">{formatCurrency(item.valorVenda)}</p>
+                    <p className="text-sm font-semibold text-primary shrink-0 ml-2">{formatCurrency(item.valorVenda)}</p>
                   </div>
                   {item.insumosCalculados && item.insumosCalculados.length > 0 && (
                     <div className="ml-[34px] mt-2 rounded-md bg-muted/50 p-2.5">
@@ -627,7 +627,7 @@ export function OrcamentoDetails({
             <Separator />
             <div className="flex justify-between items-baseline rounded-lg bg-muted/50 px-3 py-2.5 -mx-1">
               <span className="text-sm font-semibold">Valor Final</span>
-              <span className="text-xl font-bold text-accent">{formatCurrency(displayValue)}</span>
+              <span className="text-xl font-bold text-primary">{formatCurrency(displayValue)}</span>
             </div>
             <div className="flex justify-between text-xs pt-1">
               <span className="text-muted-foreground">Margem</span>
