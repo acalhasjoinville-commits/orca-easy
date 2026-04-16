@@ -358,7 +358,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
                 />
               </div>
               <div>
-                <Label className="text-xs font-medium">Valor por metro (R$)</Label>
+                <Label className="text-xs font-medium">Custo base por metro (R$)</Label>
                 <Input
                   type="number"
                   inputMode="decimal"
@@ -426,7 +426,7 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           <p className="text-sm font-medium text-foreground">
             {modoCobranca === "valor_fechado" ? "Informe o valor para ver a prévia" :
              modoCobranca === "por_unidade" ? "Informe quantidade e valor" :
-             "Informe metragem e valor por metro"}
+             "Informe metragem e custo base por metro"}
           </p>
         </div>
       );
@@ -439,13 +439,13 @@ export function AddServicoModal({ open, onClose, onSave, motorType, editingItem 
           <p className="text-sm font-semibold text-foreground mt-1">
             {modoCobranca === "valor_fechado" ? "Valor fechado" :
              modoCobranca === "por_unidade" ? `${avulsoQuantidade || 0} ${servico.unidadeCobranca || "un"} × ${fmt(parseFloat(avulsoValor) || 0)}` :
-             `${metragem || 0}m × ${fmt(parseFloat(avulsoValor) || 0)}/m`}
+             `${metragem || 0}m × custo base ${fmt(parseFloat(avulsoValor) || 0)}/m`}
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-lg border bg-background/80 p-3">
-            <p className="text-[11px] text-muted-foreground">Custo interno</p>
+            <p className="text-[11px] text-muted-foreground">{modoCobranca === "por_metro" ? "Custo calculado" : "Custo interno"}</p>
             <p className="text-sm font-semibold text-foreground mt-1 tabular-nums">
               {calcAvulsoResult.custoIncompleto ? (
                 <span className="text-amber-600">Não informado</span>
