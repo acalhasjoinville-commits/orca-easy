@@ -25,23 +25,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
 import { RetornoDetailDialog } from "@/components/RetornoDetailDialog";
 import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
-import { WeekStrip } from "@/components/WeekStrip";
-
-function getMondayOf(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  const day = date.getDay(); // 0=Sun..6=Sat
-  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
-  date.setDate(date.getDate() + diff);
-  return toLocalDateStr(date.toISOString()) as string;
-}
-
-function shiftDate(dateStr: string, days: number): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  date.setDate(date.getDate() + days);
-  return toLocalDateStr(date.toISOString()) as string;
-}
 
 type AreaType = "comercial" | "operacao" | "financeiro" | "visita" | "retorno";
 type FilterType = "todos" | AreaType;
@@ -147,9 +130,6 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
   const amanha = addDaysLocal(1);
   const limiteMax = addDaysLocal(7);
   const limitePassado = addDaysLocal(-7);
-
-  const [selectedDate, setSelectedDate] = useState<string>(hoje);
-  const [weekStart, setWeekStart] = useState<string>(() => getMondayOf(hoje));
 
   useEffect(() => {
     if (!user) return;
@@ -410,41 +390,6 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
     return result;
   }, [amanha, effectiveFilter, filtered, hoje]);
 
-  const eventDates = useMemo(() => {
-    const set = new Set<string>();
-    for (const e of eventos) set.add(e.date);
-    return set;
-  }, [eventos]);
-
-  const handleSelectDate = (date: string) => {
-    setSelectedDate(date);
-    // Try exact section first
-    const tryScroll = (key: string) => {
-      const el = document.querySelector(`[data-agenda-date="${key}"]`) as HTMLElement | null;
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        return true;
-      }
-      return false;
-    };
-
-    if (tryScroll(date)) return;
-
-    // Fallback: find the next section >= date (skip overdue/finance keys)
-    const next = sections
-      .map((s) => s.key)
-      .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k) && k >= date)
-      .sort()[0];
-    if (next) tryScroll(next);
-  };
-
-  const handlePrevWeek = () => setWeekStart((w) => shiftDate(w, -7));
-  const handleNextWeek = () => setWeekStart((w) => shiftDate(w, 7));
-  const handleToday = () => {
-    setWeekStart(getMondayOf(hoje));
-    handleSelectDate(hoje);
-  };
-
   const handleClick = (evento: AgendaEvento) => {
     if (evento.visitaId) {
       const visita = visitasMap.get(evento.visitaId);
@@ -501,17 +446,6 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         </CardContent>
       </Card>
 
-      <WeekStrip
-        weekStart={weekStart}
-        selectedDate={selectedDate}
-        today={hoje}
-        eventDates={eventDates}
-        onPrevWeek={handlePrevWeek}
-        onNextWeek={handleNextWeek}
-        onSelectDate={handleSelectDate}
-        onToday={handleToday}
-      />
-
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as AgendaView)} className="w-full">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="timeline" className="flex-1 sm:flex-initial">
@@ -561,11 +495,7 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
           )}
 
           {sections.map((section) => (
-            <div
-              key={section.key}
-              data-agenda-date={section.key}
-              className="space-y-2 scroll-mt-4"
-            >
+            <div key={section.key} className="space-y-2">
               <div className="flex items-center gap-2">
                 {section.isOverdue && <AlertTriangle className="h-4 w-4 text-destructive" />}
                 <h3
