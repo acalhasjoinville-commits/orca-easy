@@ -1534,15 +1534,24 @@ export function Configuracoes() {
   }, [regras, searchRegras]);
 
   const filteredCatalogo = useMemo(() => {
-    if (!searchCatalogo) return servicos;
-    const q = normalize(searchCatalogo);
-    return servicos.filter(
-      (e) =>
-        normalize(e.nomeServico).includes(q) ||
-        normalize(e.materialPadrao).includes(q) ||
-        normalize((regraMap.get(e.regraId) ?? "") as string).includes(q),
-    );
-  }, [servicos, searchCatalogo, regraMap]);
+    const q = searchCatalogo ? normalize(searchCatalogo) : null;
+    return servicos.filter((e) => {
+      if (filterCatalogoTipo !== "all" && (e.tipoServico ?? "motor") !== filterCatalogoTipo) return false;
+      if (filterCatalogoMotor !== "all") {
+        if ((e.tipoServico ?? "motor") !== "motor") return false;
+        if (e.motorType !== filterCatalogoMotor) return false;
+      }
+      if (filterCatalogoModo !== "all" && (e.modoCobranca ?? "motor") !== filterCatalogoModo) return false;
+      if (q) {
+        const matchSearch =
+          normalize(e.nomeServico).includes(q) ||
+          normalize(e.materialPadrao).includes(q) ||
+          normalize((regraMap.get(e.regraId) ?? "") as string).includes(q);
+        if (!matchSearch) return false;
+      }
+      return true;
+    });
+  }, [servicos, searchCatalogo, regraMap, filterCatalogoTipo, filterCatalogoMotor, filterCatalogoModo]);
 
   const filteredPoliticas = useMemo(() => {
     if (!searchPoliticas) return politicas;
