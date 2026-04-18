@@ -501,6 +501,17 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
         </CardContent>
       </Card>
 
+      <WeekStrip
+        weekStart={weekStart}
+        selectedDate={selectedDate}
+        today={hoje}
+        eventDates={eventDates}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onSelectDate={handleSelectDate}
+        onToday={handleToday}
+      />
+
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as AgendaView)} className="w-full">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="timeline" className="flex-1 sm:flex-initial">
