@@ -688,6 +688,9 @@ export function Configuracoes() {
   const [searchRegras, setSearchRegras] = useState("");
   const [searchCatalogo, setSearchCatalogo] = useState("");
   const [searchPoliticas, setSearchPoliticas] = useState("");
+  const [filterCatalogoTipo, setFilterCatalogoTipo] = useState<"all" | "motor" | "avulso">("all");
+  const [filterCatalogoMotor, setFilterCatalogoMotor] = useState<"all" | "motor1" | "motor2">("all");
+  const [filterCatalogoModo, setFilterCatalogoModo] = useState<"all" | "motor" | "valor_fechado" | "por_unidade" | "por_metro">("all");
 
   useEffect(() => {
     if (!user) return;
