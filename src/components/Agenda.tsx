@@ -148,6 +148,9 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
   const limiteMax = addDaysLocal(7);
   const limitePassado = addDaysLocal(-7);
 
+  const [selectedDate, setSelectedDate] = useState<string>(hoje);
+  const [weekStart, setWeekStart] = useState<string>(() => getMondayOf(hoje));
+
   useEffect(() => {
     if (!user) return;
 
