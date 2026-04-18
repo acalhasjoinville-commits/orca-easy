@@ -1,61 +1,51 @@
 
 
-# Correção de Layout Mobile e Visibilidade de Valores — Detalhes do Orçamento
+## Plano: Carrossel de Calendário Diário no Topo da Agenda
 
-## Diagnóstico
+### Decisões aprovadas
+- **Interação**: Scroll suave até o dia selecionado (preserva visão de pipeline)
+- **Alcance**: Infinito com setas semana a semana (~7 dias visíveis por vez)
 
-### Problema 1: Valores quase invisíveis
-A classe `text-accent` é usada para os valores monetários, mas `--accent` no tema claro é `HSL(220, 16%, 94%)` — praticamente branco. Isso torna todos os preços ilegíveis. Afeta:
-- Número do orçamento (`#1010`) — linha 443
-- Preço no header — linha 461
-- Preço de cada item — linha 582
-- Valor Final no resumo — linha 630
+### Implementação
 
-### Problema 2: Header card apertado no mobile
-No mobile (375px), o header tenta colocar na mesma linha: `#1010` + badge de status + badge de motor + preço. Tudo fica espremido e sobreposto (visível no IMG_0355).
+**Arquivo único afetado**: `src/components/Agenda.tsx`
 
-## Alterações Planejadas
+**1. Novo componente inline `WeekStrip` no topo da Agenda**
 
-### `src/components/OrcamentoDetails.tsx`
-
-**A. Trocar `text-accent` por cor legível nos valores monetários**
-
-Substituir todas as ocorrências de `text-accent` usadas em valores/preços por `text-primary` (que é `HSL(231, 65%, 55%)` — azul/indigo legível). Pontos:
-- Linha 443: `text-accent` → `text-primary` (número do orçamento)
-- Linha 461: `text-accent` → `text-primary` (preço header)
-- Linha 582: `text-accent` → `text-primary` (preço de cada item)
-- Linha 630: `text-accent` → `text-primary` (valor final)
-
-**B. Reorganizar header card para mobile**
-
-Hoje (linha 440-461):
-```
-[#1010] [Pendente] [Motor 1]     R$ 1.365,24
-Condomínio Residencial Vista Verde
+Strip horizontal com 7 dias por vez, navegação por setas:
+```text
+┌──────────────────────────────────────────────────────┐
+│  ←   Seg  Ter  QUA  Qui  Sex  Sáb  Dom    [Hoje]  → │
+│      18   19  [20]  21   22   23   24               │
+│       •         •    •              •                │
+└──────────────────────────────────────────────────────┘
+       ↑ ponto = tem evento naquele dia
 ```
 
-Proposta — empilhar no mobile:
-```
-[#1010] [Pendente] [Motor 1]
-Condomínio Residencial Vista Verde
-                        R$ 1.365,24
-```
+- **Estado novo**: `weekStart` (segunda-feira da semana visível) e `selectedDate` (default = hoje)
+- **Setas ←/→**: avançam/voltam 7 dias (`weekStart ± 7`)
+- **Botão "Hoje"**: reseta para semana atual e seleciona hoje
+- **Indicador de eventos**: ponto sob o dia, calculado via `Set<string>` com todas as datas que têm eventos (derivado de `sections`/`eventos` já existentes)
+- **Dia "hoje"**: anel/borda diferenciado (`ring-1 ring-primary`)
+- **Dia selecionado**: `bg-primary text-primary-foreground`
+- **Visual**: card `bg-card border rounded-lg p-2`, cada dia ~52px, `rounded-md`, mobile-first
 
-Mudanças:
-- Linha 440: trocar `flex items-start justify-between` por layout empilhado no mobile — badges na primeira linha, nome do cliente abaixo, valor na terceira linha alinhado à direita
-- O preço sai do canto superior direito e vai para baixo do nome do cliente, com tamanho maior e cor legível
-- Em desktop (sm+), pode manter lado a lado
+**2. Scroll-to-date**
 
-**C. Botões de ação (IMG_0357)**
+- Adicionar `data-agenda-date={section.key}` no `<div>` de cada seção (linha 498)
+- Ao clicar num dia do strip:
+  - Atualiza `selectedDate`
+  - `document.querySelector('[data-agenda-date="YYYY-MM-DD"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' })`
+  - Se não existir seção exata, encontra a próxima seção mais próxima (≥ data selecionada) como fallback
+- Considerar offset de header sticky se houver (usar `scroll-margin-top` na seção)
 
-Os botões "Enviar Orçamento", "Cancelar", "Editar", "Duplicar" já estão com `flex-wrap`, funcionando adequadamente. Sem mudança necessária.
+**3. Posicionamento**
 
-## O que NÃO muda
-- Nenhuma lógica de cálculo
-- Nenhuma alteração de banco
-- Nenhuma alteração em outros componentes
-- Pipeline bar e timeline mantidos como estão
+Strip fica logo abaixo do header da página e acima das `Tabs` (Timeline/Visitas), visível em ambas as views. Pode ser sticky no topo em mobile (`sticky top-0 z-10`) — confirmar se o layout permite.
 
-## Arquivos afetados
-- `src/components/OrcamentoDetails.tsx` — ~6 pontos de ajuste de classe CSS
+### O que NÃO muda
+- Hooks de dados (`useFilaComercial`, `useVisitas`, `useAllRetornos`)
+- Agrupamento e ordenação atual de `sections` e `eventos`
+- Tabs, filtros e modais existentes
+- Banco, tipos, outros componentes
 
