@@ -1745,6 +1745,58 @@ export function Configuracoes() {
         searchPlaceholder="Buscar por nome, material ou regra..."
         addLabel="Novo serviço"
       >
+        <div className="flex flex-wrap gap-2 px-5 pb-3">
+          <Select value={filterCatalogoTipo} onValueChange={(v) => setFilterCatalogoTipo(v as typeof filterCatalogoTipo)}>
+            <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="motor">Motor</SelectItem>
+              <SelectItem value="avulso">Avulso</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={filterCatalogoMotor}
+            onValueChange={(v) => setFilterCatalogoMotor(v as typeof filterCatalogoMotor)}
+            disabled={filterCatalogoTipo === "avulso"}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs">
+              <SelectValue placeholder="Motor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os motores</SelectItem>
+              <SelectItem value="motor1">Motor 1</SelectItem>
+              <SelectItem value="motor2">Motor 2</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterCatalogoModo} onValueChange={(v) => setFilterCatalogoModo(v as typeof filterCatalogoModo)}>
+            <SelectTrigger className="h-8 w-auto min-w-[150px] text-xs">
+              <SelectValue placeholder="Cobrança" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as cobranças</SelectItem>
+              <SelectItem value="motor">Motor</SelectItem>
+              <SelectItem value="valor_fechado">Valor fechado</SelectItem>
+              <SelectItem value="por_unidade">Por unidade</SelectItem>
+              <SelectItem value="por_metro">Por metro</SelectItem>
+            </SelectContent>
+          </Select>
+          {(filterCatalogoTipo !== "all" || filterCatalogoMotor !== "all" || filterCatalogoModo !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => {
+                setFilterCatalogoTipo("all");
+                setFilterCatalogoMotor("all");
+                setFilterCatalogoModo("all");
+              }}
+            >
+              Limpar filtros
+            </Button>
+          )}
+        </div>
         {filteredCatalogo.length === 0 && servicos.length > 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 px-5">
             Nenhum resultado para "{searchCatalogo}"
