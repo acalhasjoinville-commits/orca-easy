@@ -25,6 +25,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VisitaDetailDialog } from "@/components/VisitaDetailDialog";
 import { RetornoDetailDialog } from "@/components/RetornoDetailDialog";
 import { EditVisitaRequest, VisitasManager } from "@/components/VisitasManager";
+import { WeekStrip } from "@/components/WeekStrip";
+
+function getMondayOf(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const day = date.getDay(); // 0=Sun..6=Sat
+  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+  date.setDate(date.getDate() + diff);
+  return toLocalDateStr(date.toISOString()) as string;
+}
+
+function shiftDate(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toLocalDateStr(date.toISOString()) as string;
+}
 
 type AreaType = "comercial" | "operacao" | "financeiro" | "visita" | "retorno";
 type FilterType = "todos" | AreaType;
