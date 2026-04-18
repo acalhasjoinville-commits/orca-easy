@@ -410,6 +410,41 @@ export function Agenda({ orcamentos, onViewOrcamento, openNewVisitaRequest }: Ag
     return result;
   }, [amanha, effectiveFilter, filtered, hoje]);
 
+  const eventDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of eventos) set.add(e.date);
+    return set;
+  }, [eventos]);
+
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date);
+    // Try exact section first
+    const tryScroll = (key: string) => {
+      const el = document.querySelector(`[data-agenda-date="${key}"]`) as HTMLElement | null;
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return true;
+      }
+      return false;
+    };
+
+    if (tryScroll(date)) return;
+
+    // Fallback: find the next section >= date (skip overdue/finance keys)
+    const next = sections
+      .map((s) => s.key)
+      .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k) && k >= date)
+      .sort()[0];
+    if (next) tryScroll(next);
+  };
+
+  const handlePrevWeek = () => setWeekStart((w) => shiftDate(w, -7));
+  const handleNextWeek = () => setWeekStart((w) => shiftDate(w, 7));
+  const handleToday = () => {
+    setWeekStart(getMondayOf(hoje));
+    handleSelectDate(hoje);
+  };
+
   const handleClick = (evento: AgendaEvento) => {
     if (evento.visitaId) {
       const visita = visitasMap.get(evento.visitaId);
