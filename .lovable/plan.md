@@ -1,61 +1,189 @@
 
 
-# Correção de Layout Mobile e Visibilidade de Valores — Detalhes do Orçamento
+# Relatórios & Exportações — Módulo robusto e isolado
 
-## Diagnóstico
+## Princípio fundamental
 
-### Problema 1: Valores quase invisíveis
-A classe `text-accent` é usada para os valores monetários, mas `--accent` no tema claro é `HSL(220, 16%, 94%)` — praticamente branco. Isso torna todos os preços ilegíveis. Afeta:
-- Número do orçamento (`#1010`) — linha 443
-- Preço no header — linha 461
-- Preço de cada item — linha 582
-- Valor Final no resumo — linha 630
+Este módulo é **somente leitura**. Nada de tocar em `calcEngine`, `calcServicoAvulso`, snapshots, RLS, schema do banco ou marcos de data. Apenas reaproveita os dados que já vêm dos hooks existentes (`useOrcamentos`, `useLancamentos`, `useClientes`) e gera artefatos (tela visual, PDF, CSV, XLSX).
 
-### Problema 2: Header card apertado no mobile
-No mobile (375px), o header tenta colocar na mesma linha: `#1010` + badge de status + badge de motor + preço. Tudo fica espremido e sobreposto (visível no IMG_0355).
+Toda regra de "o que conta como receita/lucro" segue **exatamente** as mesmas regras do módulo Financeiro:
+- Faturamento/lucro/margem só consideram orçamentos `aprovado` ou `executado`.
+- Custo usa `custoConhecido ?? custoTotalObra`, **ignorando** itens `custoIncompleto`.
+- Quando há item incompleto no recorte, lucro/margem aparecem como "parcial" (igual ao Financeiro hoje).
+- Datas via `toLocalDateStr` para não quebrar com fuso.
 
-## Alterações Planejadas
+## Arquitetura
 
-### `src/components/OrcamentoDetails.tsx`
-
-**A. Trocar `text-accent` por cor legível nos valores monetários**
-
-Substituir todas as ocorrências de `text-accent` usadas em valores/preços por `text-primary` (que é `HSL(231, 65%, 55%)` — azul/indigo legível). Pontos:
-- Linha 443: `text-accent` → `text-primary` (número do orçamento)
-- Linha 461: `text-accent` → `text-primary` (preço header)
-- Linha 582: `text-accent` → `text-primary` (preço de cada item)
-- Linha 630: `text-accent` → `text-primary` (valor final)
-
-**B. Reorganizar header card para mobile**
-
-Hoje (linha 440-461):
-```
-[#1010] [Pendente] [Motor 1]     R$ 1.365,24
-Condomínio Residencial Vista Verde
+```text
+src/
+├── components/
+│   └── Relatorios.tsx                    ← tela principal (tabs)
+├── lib/
+│   └── relatorios/
+│       ├── aggregations.ts               ← funções puras de agregação (testáveis)
+│       ├── exportCsv.ts                  ← serializador CSV (sem lib externa)
+│       ├── exportXlsx.ts                 ← wrapper sobre lib XLSX
+│       └── pdf/
+│           ├── RelatorioVendasPDF.tsx    ← @react-pdf/renderer
+│           ├── RelatorioFinanceiroPDF.tsx
+│           └── shared.ts                 ← estilos/cores reutilizadas do OrcamentoPDF
+└── hooks/
+    └── useRelatorios.ts                  ← seleção de período + memos centralizados
 ```
 
-Proposta — empilhar no mobile:
+## Acesso e navegação
+
+- Nova rota `/relatorios` (registrada em `src/lib/appShellRoutes.ts` e novo case em `Index.tsx`).
+- Novo `Tab` `"relatorios"` em `AppSidebar` (seção Operação, abaixo de Financeiro).
+- Permissão: **mesma do Financeiro** (`canViewFinanceiro` → admin + financeiro). Sem permissão → `AccessDenied`.
+- No mobile, entra na sheet "Mais" do `MobileBottomNav`.
+- Ícone: `BarChart3` ou `FileBarChart` (lucide).
+
+## Telas / Tabs
+
+A página `Relatorios.tsx` tem barra de filtros global (período + intervalo customizado + escopo) e 4 abas:
+
+### Aba 1 — Vendas
+- KPIs: Faturamento (aprovado+executado), Custo conhecido, Lucro bruto, Margem média, Ticket médio, Conversão (aprovados ÷ aprovados+rejeitados).
+- Gráfico mensal Receita vs Custo (12 meses).
+- Tabela: orçamentos do período com colunas Nº · Data · Cliente · Status · Valor · Custo · Lucro · Margem.
+- Quando algum item é `custoIncompleto`, badge "parcial" e KPIs marcados.
+
+### Aba 2 — Clientes (Curva ABC)
+- Lista de clientes ordenada por faturamento no período (somente aprovado+executado).
+- Colunas: Cliente · Nº orçamentos · Faturamento · % do total · Classe (A ≥80% acumulado, B 80–95%, C >95%) · Ticket médio.
+- Top 10 em destaque visual.
+
+### Aba 3 — Serviços
+- Agregação por `nomeServico` somando `valorVenda` e `custoConhecido` dos `itensServico` (do mesmo recorte de aprovado+executado).
+- Colunas: Serviço · Quantidade vendida · Receita · Custo · Lucro · Margem média.
+- Gráfico de barras top 10 serviços por receita.
+
+### Aba 4 — Financeiro (DRE simplificado)
+- Receita executada (orçamentos `executado` no período via `dataExecucao`) + receitas manuais (`lancamentos_financeiros` tipo `receita`).
+- Despesas: somente `lancamentos_financeiros` tipo `despesa`, agrupadas por categoria.
+- Resultado mensal: Receita − Despesas (lança a barra positivo/negativo).
+- Tabela DRE: linhas por categoria, colunas por mês (últimos 6 meses), totalizadores.
+- Faturado vs Recebido no mês (via `dataFaturamento` e `dataPagamento`).
+
+## Filtros globais (topo)
+
+- **Período**: Mês atual · Últimos 3 meses · Ano atual · Personalizado (date range).
+- **Intervalo personalizado**: dois inputs `type="date"` (start/end), só aparecem com "Personalizado".
+- **Cliente** (combobox opcional, filtra abas Vendas/Serviços).
+- Estado dos filtros persistido em `sessionStorage` por usuário, igual ao padrão do Financeiro.
+
+## Exportações
+
+Cada aba terá um botão **"Exportar"** com dropdown:
+- **PDF** — relatório formatado, A4 paisagem, com header da empresa (logo, nome, cor primária, igual ao OrcamentoPDF). Inclui período do recorte, tabela e KPIs.
+- **CSV** — UTF-8 com BOM (Excel BR abre certo), separador `;`, decimal `,`, datas `dd/mm/aaaa`.
+- **XLSX** — uma planilha por seção (Resumo, Detalhe), com formatação numérica e cabeçalho fixo.
+
+Nome do arquivo padrão: `relatorio-{aba}-{empresa-slug}-{aaaa-mm-dd}.{ext}`.
+
+## Dependências novas
+
+Apenas **uma**, leve e estável:
+- `xlsx` (`xlsx@0.18.5`, ~600 KB) — gera XLSX e também CSV. Sem `file-saver` (uso nativo `URL.createObjectURL` + `<a download>`).
+
+PDF e gráficos reutilizam `@react-pdf/renderer` e `recharts` que já estão no projeto. Zero risco de conflito de versões.
+
+## Detalhamento técnico (para a implementação)
+
+### `lib/relatorios/aggregations.ts` — funções puras
+
+Contrato — todas recebem `Orcamento[]` (ou `LancamentoFinanceiro[]`) e `{ start: Date; end: Date }`, retornam objetos imutáveis. Toda lógica de "custo conhecido" centralizada em **um helper** privado:
+
+```ts
+// helper único, espelha exatamente Financeiro.tsx hoje
+function knownCost(orc: Orcamento): { value: number; partial: boolean } {
+  const partial = orc.itensServico.some(i => i.custoIncompleto === true);
+  const value = orc.itensServico.reduce((s, i) => 
+    i.custoIncompleto ? s : s + (i.custoConhecido ?? i.custoTotalObra), 0);
+  return { value, partial };
+}
+
+const VALID_FOR_PROFIT = ["aprovado", "executado"] as const;
 ```
-[#1010] [Pendente] [Motor 1]
-Condomínio Residencial Vista Verde
-                        R$ 1.365,24
+
+Funções expostas:
+- `aggregateVendas(orcs, range)` → KPIs + série mensal.
+- `aggregateClientesABC(orcs, range)` → lista classificada A/B/C.
+- `aggregateServicos(orcs, range)` → agregação por nome de serviço.
+- `aggregateDRE(orcs, lancamentos, range)` → receita executada + receitas manuais − despesas por categoria/mês.
+
+Todas essas funções terão **testes unitários** em `src/test/relatorios.test.ts` cobrindo:
+- Recorte de período correto.
+- Item `custoIncompleto` não inflando lucro.
+- Status fora de `aprovado/executado` ignorado.
+- Clientes sem orçamento no período não aparecem.
+- Soma por categoria conferindo com soma total.
+
+### `lib/relatorios/exportCsv.ts`
+
+Sem lib externa. Recebe `{ headers: string[]; rows: (string|number)[][] }`. Escapa aspas, usa `;` separador, `\r\n` quebra, BOM `\uFEFF` no início. Datas e moedas formatadas no caller via `Intl`.
+
+### `lib/relatorios/exportXlsx.ts`
+
+Wrapper fino sobre `xlsx`:
+```ts
+export function downloadXlsx(filename: string, sheets: { name: string; data: any[][] }[]) {
+  // SheetJS aoa_to_sheet por aba + book_new + writeFile
+}
 ```
 
-Mudanças:
-- Linha 440: trocar `flex items-start justify-between` por layout empilhado no mobile — badges na primeira linha, nome do cliente abaixo, valor na terceira linha alinhado à direita
-- O preço sai do canto superior direito e vai para baixo do nome do cliente, com tamanho maior e cor legível
-- Em desktop (sm+), pode manter lado a lado
+### `lib/relatorios/pdf/shared.ts`
 
-**C. Botões de ação (IMG_0357)**
+Reusa as cores e tipografia do `OrcamentoPDF`:
+- Header com logo+nome (chama `fetchLogoBase64` igual hoje).
+- `corPrimaria`/`corDestaque` da `useEmpresa()`.
+- Título "Relatório de Vendas — Período: dd/mm/aaaa a dd/mm/aaaa".
+- Rodapé com data de emissão.
 
-Os botões "Enviar Orçamento", "Cancelar", "Editar", "Duplicar" já estão com `flex-wrap`, funcionando adequadamente. Sem mudança necessária.
+### `useRelatorios.ts`
 
-## O que NÃO muda
-- Nenhuma lógica de cálculo
-- Nenhuma alteração de banco
-- Nenhuma alteração em outros componentes
-- Pipeline bar e timeline mantidos como estão
+Hook único que centraliza:
+- Estado do filtro (período, range custom, cliente).
+- Memos de cada agregação (recalcula só quando `orcamentos`/`lancamentos`/filtros mudam).
+- Persistência em `sessionStorage`.
 
-## Arquivos afetados
-- `src/components/OrcamentoDetails.tsx` — ~6 pontos de ajuste de classe CSS
+Isso garante que os 4 export buttons usem **exatamente** o mesmo recorte mostrado na tela. Sem chance de "PDF mostrar número diferente da tela".
+
+### Mudanças nos arquivos existentes (mínimas)
+
+- `src/components/AppSidebar.tsx`: adicionar `Tab` `"relatorios"` no tipo, item no `operationItems` com `permission: "canViewFinanceiro"`.
+- `src/lib/appShellRoutes.ts`: registrar rota `/relatorios`.
+- `src/pages/Index.tsx`: lazy import + case no `content` + entrada em `getHeaderMeta`.
+- `src/components/MobileBottomNav.tsx`: adicionar em `secondaryItems` quando `canViewFinanceiro`.
+
+Nenhum outro arquivo é tocado. **Calcs intactos.**
+
+## Riscos endereçados
+
+| Risco | Mitigação |
+|---|---|
+| Quebrar lógica de cálculo | Módulo só lê. Não importa nada de `calcEngine` nem altera tipos. |
+| Divergência tela vs export | Todos consomem o mesmo `useRelatorios`. |
+| Off-by-one de timezone | Uso obrigatório de `toLocalDateStr` para qualquer data exibida/exportada. |
+| Custo zero "fantasma" inflando margem | Helper `knownCost` único, espelha Financeiro, marca "parcial". |
+| Vazamento entre empresas | Hooks já filtram por RLS + `.eq("empresa_id", ...)` implícito. |
+| Performance com muitos orçamentos | Agregações `useMemo`. PDF/Excel só montados sob demanda no clique do botão. |
+| Lib XLSX pesada na home | `xlsx` carregado via `import()` dinâmico só quando o usuário clica em "Exportar XLSX". |
+
+## Entregáveis
+
+1. Página `Relatorios` acessível por sidebar + mobile (apenas `admin`/`financeiro`).
+2. 4 abas funcionais com KPIs, gráficos e tabelas.
+3. Filtros (período pré-definido, custom, cliente) persistidos.
+4. Export PDF/CSV/XLSX em cada aba, com mesmo recorte da tela.
+5. Suite de testes em `aggregations.ts`.
+6. Zero alteração em código de cálculo, schema, snapshots ou lógica financeira existente.
+
+## Fora de escopo (intencional)
+
+- Agendamento de envio por e-mail (sugestão futura).
+- Comparações YoY/MoM (sugestão futura).
+- Relatórios cruzando retornos de garantia ou visitas (pode entrar em uma v2).
+- Qualquer alteração em RLS, edge functions ou tabelas.
 
