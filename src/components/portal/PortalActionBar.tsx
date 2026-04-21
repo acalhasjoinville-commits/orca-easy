@@ -185,7 +185,7 @@ export function PortalActionBar({ token }: Props) {
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </Dialog>
+          </AlertDialog>
         </div>
 
         {busy ? (
