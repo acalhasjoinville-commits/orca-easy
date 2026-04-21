@@ -1,4 +1,4 @@
-import { CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, Settings, Users } from "lucide-react";
+import { BarChart3, CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ export type Tab =
   | "orcamento-novo"
   | "clientes"
   | "financeiro"
+  | "relatorios"
   | "usuarios"
   | "ajuda"
   | "config";
@@ -72,6 +73,13 @@ const operationItems: NavItem[] = [
     helper: "Lançamentos e leitura do caixa",
     tab: "financeiro",
     icon: DollarSign,
+    permission: "canViewFinanceiro",
+  },
+  {
+    title: "Relatórios",
+    helper: "Vendas, clientes, serviços e DRE",
+    tab: "relatorios",
+    icon: BarChart3,
     permission: "canViewFinanceiro",
   },
 ];
