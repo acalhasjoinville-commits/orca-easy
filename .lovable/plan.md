@@ -1,189 +1,191 @@
 
 
-# Relatórios & Exportações — Módulo robusto e isolado
+# Portal do Cliente — Aprovação online de orçamento
 
 ## Princípio fundamental
 
-Este módulo é **somente leitura**. Nada de tocar em `calcEngine`, `calcServicoAvulso`, snapshots, RLS, schema do banco ou marcos de data. Apenas reaproveita os dados que já vêm dos hooks existentes (`useOrcamentos`, `useLancamentos`, `useClientes`) e gera artefatos (tela visual, PDF, CSV, XLSX).
+Módulo **isolado e somente-leitura** sobre o orçamento. Não toca em `calcEngine`, snapshots, RLS de tenant, fluxo financeiro nem ciclo de vida operacional. A única ação que modifica banco é a transição `pendente → aprovado/rejeitado`, que já é uma transição válida e idêntica à feita hoje internamente.
 
-Toda regra de "o que conta como receita/lucro" segue **exatamente** as mesmas regras do módulo Financeiro:
-- Faturamento/lucro/margem só consideram orçamentos `aprovado` ou `executado`.
-- Custo usa `custoConhecido ?? custoTotalObra`, **ignorando** itens `custoIncompleto`.
-- Quando há item incompleto no recorte, lucro/margem aparecem como "parcial" (igual ao Financeiro hoje).
-- Datas via `toLocalDateStr` para não quebrar com fuso.
-
-## Arquitetura
+## Visão geral do fluxo
 
 ```text
-src/
-├── components/
-│   └── Relatorios.tsx                    ← tela principal (tabs)
-├── lib/
-│   └── relatorios/
-│       ├── aggregations.ts               ← funções puras de agregação (testáveis)
-│       ├── exportCsv.ts                  ← serializador CSV (sem lib externa)
-│       ├── exportXlsx.ts                 ← wrapper sobre lib XLSX
-│       └── pdf/
-│           ├── RelatorioVendasPDF.tsx    ← @react-pdf/renderer
-│           ├── RelatorioFinanceiroPDF.tsx
-│           └── shared.ts                 ← estilos/cores reutilizadas do OrcamentoPDF
-└── hooks/
-    └── useRelatorios.ts                  ← seleção de período + memos centralizados
+Vendedor                     Cliente                       Sistema
+────────                     ───────                       ───────
+Detalhes do orçamento
+  ↓
+[Compartilhar com cliente]
+  ↓ gera token único
+[Copiar link] [WhatsApp]
+                             abre link público
+                             ─────────────────►
+                                                          /p/o/:token
+                                                          • valida token
+                                                          • valida validade
+                                                          • valida status ∈ {pendente, aprovado}
+                                                          • renderiza orçamento
+                             vê orçamento (igual PDF)
+                             [Aprovar] [Rejeitar] [Comentar]
+                                                  ─────►
+                                                          • RPC SECURITY DEFINER
+                                                          • muda status
+                                                          • cria log no follow-up
+Notificação no Acompanhamento
+Comercial (refetch automático)
 ```
 
-## Acesso e navegação
+## Modelo de dados (1 nova tabela)
 
-- Nova rota `/relatorios` (registrada em `src/lib/appShellRoutes.ts` e novo case em `Index.tsx`).
-- Novo `Tab` `"relatorios"` em `AppSidebar` (seção Operação, abaixo de Financeiro).
-- Permissão: **mesma do Financeiro** (`canViewFinanceiro` → admin + financeiro). Sem permissão → `AccessDenied`.
-- No mobile, entra na sheet "Mais" do `MobileBottomNav`.
-- Ícone: `BarChart3` ou `FileBarChart` (lucide).
+Tabela `orcamento_share_links` — token público que dá acesso a UM orçamento.
 
-## Telas / Tabs
+| coluna | tipo | descrição |
+|---|---|---|
+| `id` | uuid PK | |
+| `orcamento_id` | uuid | FK lógica (não FK física, padrão do projeto) |
+| `empresa_id` | uuid | tenant — copiado do orçamento |
+| `token` | text UNIQUE | 32 bytes random base64url, ~43 chars |
+| `expires_at` | timestamptz | copiado de `validade` no momento da criação |
+| `created_by` | uuid | quem gerou |
+| `created_at` | timestamptz | |
+| `revoked_at` | timestamptz NULL | preenchido se vendedor revogar |
 
-A página `Relatorios.tsx` tem barra de filtros global (período + intervalo customizado + escopo) e 4 abas:
+RLS:
+- `SELECT/INSERT/UPDATE` para `authenticated` se `empresa_id = get_user_empresa_id(auth.uid())` (padrão do projeto).
+- Anon **não acessa direto** — só via RPC.
 
-### Aba 1 — Vendas
-- KPIs: Faturamento (aprovado+executado), Custo conhecido, Lucro bruto, Margem média, Ticket médio, Conversão (aprovados ÷ aprovados+rejeitados).
-- Gráfico mensal Receita vs Custo (12 meses).
-- Tabela: orçamentos do período com colunas Nº · Data · Cliente · Status · Valor · Custo · Lucro · Margem.
-- Quando algum item é `custoIncompleto`, badge "parcial" e KPIs marcados.
+Tabela `orcamento_followup_logs` ganha 2 valores opcionais no `tipo` (já existem como string livre na trigger? Não — a trigger valida enum). Por isso, vou adicionar `'cliente_aprovou'` e `'cliente_rejeitou'` e `'cliente_comentou'` à validação `validate_followup_log_tipo`. **Nada além disso.**
 
-### Aba 2 — Clientes (Curva ABC)
-- Lista de clientes ordenada por faturamento no período (somente aprovado+executado).
-- Colunas: Cliente · Nº orçamentos · Faturamento · % do total · Classe (A ≥80% acumulado, B 80–95%, C >95%) · Ticket médio.
-- Top 10 em destaque visual.
+## RPCs públicas (3 funções, todas SECURITY DEFINER, sem JWT)
 
-### Aba 3 — Serviços
-- Agregação por `nomeServico` somando `valorVenda` e `custoConhecido` dos `itensServico` (do mesmo recorte de aprovado+executado).
-- Colunas: Serviço · Quantidade vendida · Receita · Custo · Lucro · Margem média.
-- Gráfico de barras top 10 serviços por receita.
+Todas com input validation rígido, sem nenhuma SQL dinâmica.
 
-### Aba 4 — Financeiro (DRE simplificado)
-- Receita executada (orçamentos `executado` no período via `dataExecucao`) + receitas manuais (`lancamentos_financeiros` tipo `receita`).
-- Despesas: somente `lancamentos_financeiros` tipo `despesa`, agrupadas por categoria.
-- Resultado mensal: Receita − Despesas (lança a barra positivo/negativo).
-- Tabela DRE: linhas por categoria, colunas por mês (últimos 6 meses), totalizadores.
-- Faturado vs Recebido no mês (via `dataFaturamento` e `dataPagamento`).
+### `public_get_orcamento_by_token(_token text) → jsonb`
+- Busca o link pelo token. Retorna erro genérico se inválido/expirado/revogado/status terminal.
+- Retorna JSON com: empresa (nome, logo_url, cores, slogan, contato), cliente (nome, documento, cidade — sem CEP completo nem endereço pra reduzir exposição), orçamento (nº, datas, status, validade, descricaoGeral, itensServico **filtrados** — só campos visíveis no PDF, sem custoConhecido/insumosCalculados/custoTotalObra/motorType/regraId), totais (valorVenda, desconto, valorFinal), snapshots comerciais.
+- Filtragem dos itens é feita **dentro da função SQL** — frontend nunca recebe campos sensíveis, mesmo com DevTools.
 
-## Filtros globais (topo)
+### `public_respond_orcamento(_token text, _action text, _comment text) → jsonb`
+- `_action ∈ {'aprovar', 'rejeitar'}`.
+- Valida token + valida que orçamento está `pendente`.
+- Atualiza status do orçamento.
+- Insere log em `orcamento_followup_logs` com `tipo = 'cliente_aprovou'` ou `'cliente_rejeitou'`, `user_id = NULL` (vai precisar permitir nullable nessa coluna — alteração mínima), `user_name = 'Cliente (' || nome_cliente || ')'`, `descricao = _comment`.
+- Atualiza `ultima_interacao_em` em `orcamento_followups` (via trigger existente).
+- Retorna `{ success: true, status: 'aprovado'|'rejeitado' }`.
 
-- **Período**: Mês atual · Últimos 3 meses · Ano atual · Personalizado (date range).
-- **Intervalo personalizado**: dois inputs `type="date"` (start/end), só aparecem com "Personalizado".
-- **Cliente** (combobox opcional, filtra abas Vendas/Serviços).
-- Estado dos filtros persistido em `sessionStorage` por usuário, igual ao padrão do Financeiro.
+### `public_comment_orcamento(_token text, _comment text) → jsonb`
+- Permite comentário sem mudar status (cliente quer pedir alteração).
+- Insere log com `tipo = 'cliente_comentou'`.
+- Validação: comentário 1–2000 chars trimmed.
 
-## Exportações
+## Frontend — rotas e componentes
 
-Cada aba terá um botão **"Exportar"** com dropdown:
-- **PDF** — relatório formatado, A4 paisagem, com header da empresa (logo, nome, cor primária, igual ao OrcamentoPDF). Inclui período do recorte, tabela e KPIs.
-- **CSV** — UTF-8 com BOM (Excel BR abre certo), separador `;`, decimal `,`, datas `dd/mm/aaaa`.
-- **XLSX** — uma planilha por seção (Resumo, Detalhe), com formatação numérica e cabeçalho fixo.
+### Rota pública nova
+- `/p/o/:token` em `App.tsx`, **fora** do shell autenticado, **fora** do Index. Tem seu próprio layout minimalista.
 
-Nome do arquivo padrão: `relatorio-{aba}-{empresa-slug}-{aaaa-mm-dd}.{ext}`.
+### Componentes novos
+- `src/pages/PortalOrcamento.tsx` — página pública, usa `useQuery` com `queryFn` chamando o RPC. Sem `useAuth`. Render:
+  - Header: logo + nome empresa (cores da empresa).
+  - Bloco hero: "Orçamento Nº XXXX" + valor final em destaque.
+  - Detalhes do cliente (nome).
+  - Lista de itens (mesmo formato do PDF).
+  - Condições comerciais (validade, pagamento, garantia — usando snapshots).
+  - Bloco de ação (só se status = `pendente`):
+    - Botão "Aprovar orçamento" → AlertDialog confirmação → chama RPC.
+    - Botão "Rejeitar" → AlertDialog com textarea opcional.
+    - Botão "Enviar dúvida/comentário" → Dialog com textarea obrigatório.
+  - Se já aprovado/rejeitado/expirado: mensagem clara de estado.
+  - Footer: "Documento gerado por OrcaEasy" (badge discreto).
 
-## Dependências novas
+- `src/components/CompartilharOrcamentoModal.tsx` — invocado pelo botão "Compartilhar com cliente" em `OrcamentoDetails.tsx`:
+  - Chama mutation `criarShareLink(orcamentoId)`.
+  - Mostra a URL pronta.
+  - Botão "Copiar link" (com toast).
+  - Botão "Abrir WhatsApp" — monta `https://wa.me/{telefone limpo}?text={mensagem encoded}`. Usa `cliente.whatsapp` quando existir; valida via zod (apenas dígitos, 10–15 chars).
+  - Mostra status do link: ativo/expirado/revogado + botão "Revogar link".
+  - Mostra histórico: já existe link? Mostra qual e permite gerar novo (que invalida o anterior).
 
-Apenas **uma**, leve e estável:
-- `xlsx` (`xlsx@0.18.5`, ~600 KB) — gera XLSX e também CSV. Sem `file-saver` (uso nativo `URL.createObjectURL` + `<a download>`).
+### Componente alterado (mínimo)
+- `OrcamentoDetails.tsx`: adicionar UM botão "Compartilhar com cliente" no bloco de ações, visível apenas quando `orcamento.status ∈ {pendente, aprovado}` e usuário tem permissão de editar orçamento. Abre o modal acima.
 
-PDF e gráficos reutilizam `@react-pdf/renderer` e `recharts` que já estão no projeto. Zero risco de conflito de versões.
+### Hook novo
+- `src/hooks/useShareLink.ts`:
+  - `useShareLink(orcamentoId)` — query do link ativo.
+  - `useCreateShareLink()` — mutation.
+  - `useRevokeShareLink()` — mutation.
+  - `usePublicOrcamento(token)` — query pública (sem auth).
 
-## Detalhamento técnico (para a implementação)
+### Refetch reativo
+- Quando RPC público é chamado, o vendedor não percebe na hora. Para atualizar, `OrcamentoDetails.tsx` e `useFilaComercial` já são revalidados via React Query no foco/manual. Adicionalmente, **uma subscription Realtime** em `orcamentos` filtrada por `id = orcamentoId` (apenas na tela de detalhes) — invalida o cache quando o status muda. Sem polling.
 
-### `lib/relatorios/aggregations.ts` — funções puras
-
-Contrato — todas recebem `Orcamento[]` (ou `LancamentoFinanceiro[]`) e `{ start: Date; end: Date }`, retornam objetos imutáveis. Toda lógica de "custo conhecido" centralizada em **um helper** privado:
-
-```ts
-// helper único, espelha exatamente Financeiro.tsx hoje
-function knownCost(orc: Orcamento): { value: number; partial: boolean } {
-  const partial = orc.itensServico.some(i => i.custoIncompleto === true);
-  const value = orc.itensServico.reduce((s, i) => 
-    i.custoIncompleto ? s : s + (i.custoConhecido ?? i.custoTotalObra), 0);
-  return { value, partial };
-}
-
-const VALID_FOR_PROFIT = ["aprovado", "executado"] as const;
-```
-
-Funções expostas:
-- `aggregateVendas(orcs, range)` → KPIs + série mensal.
-- `aggregateClientesABC(orcs, range)` → lista classificada A/B/C.
-- `aggregateServicos(orcs, range)` → agregação por nome de serviço.
-- `aggregateDRE(orcs, lancamentos, range)` → receita executada + receitas manuais − despesas por categoria/mês.
-
-Todas essas funções terão **testes unitários** em `src/test/relatorios.test.ts` cobrindo:
-- Recorte de período correto.
-- Item `custoIncompleto` não inflando lucro.
-- Status fora de `aprovado/executado` ignorado.
-- Clientes sem orçamento no período não aparecem.
-- Soma por categoria conferindo com soma total.
-
-### `lib/relatorios/exportCsv.ts`
-
-Sem lib externa. Recebe `{ headers: string[]; rows: (string|number)[][] }`. Escapa aspas, usa `;` separador, `\r\n` quebra, BOM `\uFEFF` no início. Datas e moedas formatadas no caller via `Intl`.
-
-### `lib/relatorios/exportXlsx.ts`
-
-Wrapper fino sobre `xlsx`:
-```ts
-export function downloadXlsx(filename: string, sheets: { name: string; data: any[][] }[]) {
-  // SheetJS aoa_to_sheet por aba + book_new + writeFile
-}
-```
-
-### `lib/relatorios/pdf/shared.ts`
-
-Reusa as cores e tipografia do `OrcamentoPDF`:
-- Header com logo+nome (chama `fetchLogoBase64` igual hoje).
-- `corPrimaria`/`corDestaque` da `useEmpresa()`.
-- Título "Relatório de Vendas — Período: dd/mm/aaaa a dd/mm/aaaa".
-- Rodapé com data de emissão.
-
-### `useRelatorios.ts`
-
-Hook único que centraliza:
-- Estado do filtro (período, range custom, cliente).
-- Memos de cada agregação (recalcula só quando `orcamentos`/`lancamentos`/filtros mudam).
-- Persistência em `sessionStorage`.
-
-Isso garante que os 4 export buttons usem **exatamente** o mesmo recorte mostrado na tela. Sem chance de "PDF mostrar número diferente da tela".
-
-### Mudanças nos arquivos existentes (mínimas)
-
-- `src/components/AppSidebar.tsx`: adicionar `Tab` `"relatorios"` no tipo, item no `operationItems` com `permission: "canViewFinanceiro"`.
-- `src/lib/appShellRoutes.ts`: registrar rota `/relatorios`.
-- `src/pages/Index.tsx`: lazy import + case no `content` + entrada em `getHeaderMeta`.
-- `src/components/MobileBottomNav.tsx`: adicionar em `secondaryItems` quando `canViewFinanceiro`.
-
-Nenhum outro arquivo é tocado. **Calcs intactos.**
-
-## Riscos endereçados
+## Segurança — análise rigorosa
 
 | Risco | Mitigação |
 |---|---|
-| Quebrar lógica de cálculo | Módulo só lê. Não importa nada de `calcEngine` nem altera tipos. |
-| Divergência tela vs export | Todos consomem o mesmo `useRelatorios`. |
-| Off-by-one de timezone | Uso obrigatório de `toLocalDateStr` para qualquer data exibida/exportada. |
-| Custo zero "fantasma" inflando margem | Helper `knownCost` único, espelha Financeiro, marca "parcial". |
-| Vazamento entre empresas | Hooks já filtram por RLS + `.eq("empresa_id", ...)` implícito. |
-| Performance com muitos orçamentos | Agregações `useMemo`. PDF/Excel só montados sob demanda no clique do botão. |
-| Lib XLSX pesada na home | `xlsx` carregado via `import()` dinâmico só quando o usuário clica em "Exportar XLSX". |
+| Token vazado | 256 bits de entropia (`gen_random_bytes(32)`) — inviável adivinhar. Revogável a qualquer momento. |
+| Cliente vê custo/margem | Filtragem **server-side** dentro da RPC. Frontend nunca recebe esses campos. |
+| Cliente aprova orçamento já executado | RPC checa `status = 'pendente'` antes de aceitar. |
+| Bypass de RLS via RPC | RPCs são `SECURITY DEFINER` mas **não usam input do cliente em SQL** — só parâmetros tipados. Token é SELECT por igualdade. |
+| Cross-tenant via token | Cada link tem `empresa_id`, mas a RPC nunca expõe ID de outras empresas. Token é unique global. |
+| Replay/spam de comentários | Rate limit aplicativo: 1 comentário a cada 30s por token (controle simples no frontend + checagem no servidor por `created_at` do último log). |
+| Injeção HTML em comentário | Render como texto puro (React escapa por padrão). |
+| WhatsApp URL injection | `encodeURIComponent` + zod validando telefone. |
+| Link permanente após aprovação | RPC bloqueia ações; mas leitura continua válida (cliente quer ver o que aprovou). Exibe status "Aprovado em DD/MM". |
+
+## Mudanças no banco (mínimas)
+
+Migration única:
+1. `CREATE TABLE orcamento_share_links` + RLS + índice em `token`.
+2. `ALTER TABLE orcamento_followup_logs ALTER COLUMN user_id DROP NOT NULL` (atualmente é NOT NULL — para aceitar ações do cliente).
+3. `ALTER FUNCTION validate_followup_log_tipo` para incluir `'cliente_aprovou'`, `'cliente_rejeitou'`, `'cliente_comentou'`.
+4. `CREATE FUNCTION public_get_orcamento_by_token`.
+5. `CREATE FUNCTION public_respond_orcamento`.
+6. `CREATE FUNCTION public_comment_orcamento`.
+7. `GRANT EXECUTE` nas 3 funções para `anon` (são as únicas que `anon` pode chamar).
+
+Tipos do `TipoInteracao` em `src/lib/types.ts` ganham os 3 novos valores e `TIPO_INTERACAO_CONFIG` ganha os labels. `FollowUpBlock.tsx` exibe naturalmente.
+
+## Arquitetura final
+
+```text
+src/
+├── pages/
+│   └── PortalOrcamento.tsx           ← nova rota /p/o/:token (pública)
+├── components/
+│   ├── CompartilharOrcamentoModal.tsx ← novo
+│   ├── OrcamentoDetails.tsx           ← + botão "Compartilhar"
+│   └── portal/
+│       ├── PortalHeader.tsx
+│       ├── PortalOrcamentoView.tsx    ← layout do orçamento
+│       └── PortalActionBar.tsx        ← aprovar/rejeitar/comentar
+├── hooks/
+│   └── useShareLink.ts               ← novo
+└── lib/
+    └── shareLink.ts                  ← helpers (URL, WhatsApp text)
+
+supabase/migrations/
+└── XXXX_portal_cliente.sql           ← migration única
+```
+
+## O que NÃO muda
+
+- `calcEngine.ts`, `calcServicoAvulso.ts` — não tocados.
+- Snapshots comerciais — só lidos.
+- RLS multi-tenant — preservado integralmente.
+- `App.tsx` autenticação, `Index.tsx`, sidebar, navegação — apenas adiciona rota pública nova.
+- Hooks existentes (`useOrcamentos`, `useFollowUp`, `useFilaComercial`) — sem alteração.
 
 ## Entregáveis
 
-1. Página `Relatorios` acessível por sidebar + mobile (apenas `admin`/`financeiro`).
-2. 4 abas funcionais com KPIs, gráficos e tabelas.
-3. Filtros (período pré-definido, custom, cliente) persistidos.
-4. Export PDF/CSV/XLSX em cada aba, com mesmo recorte da tela.
-5. Suite de testes em `aggregations.ts`.
-6. Zero alteração em código de cálculo, schema, snapshots ou lógica financeira existente.
+1. Tabela `orcamento_share_links` com RLS de tenant.
+2. 3 RPCs públicas com filtragem de dados sensíveis no servidor.
+3. Página pública `/p/o/:token` com 3 estados (ativo, encerrado, expirado).
+4. Modal "Compartilhar com cliente" com gerar/copiar/WhatsApp/revogar.
+5. Logs automáticos no Acompanhamento Comercial quando cliente age.
+6. Atualização em tempo real do status no painel do vendedor (Realtime).
 
-## Fora de escopo (intencional)
+## Fora de escopo (intencional, futuro)
 
-- Agendamento de envio por e-mail (sugestão futura).
-- Comparações YoY/MoM (sugestão futura).
-- Relatórios cruzando retornos de garantia ou visitas (pode entrar em uma v2).
-- Qualquer alteração em RLS, edge functions ou tabelas.
+- Envio por e-mail (requer config de remetente).
+- Anexos (cliente subir foto/PDF).
+- Múltiplas versões do orçamento no mesmo link.
+- Notificação push/e-mail para o vendedor quando cliente age (hoje aparece via Realtime + Acompanhamento Comercial).
 
