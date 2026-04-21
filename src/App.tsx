@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 
 const SuperAdminPage = lazy(() => import("./pages/SuperAdmin"));
+const PortalOrcamentoPage = lazy(() => import("./pages/PortalOrcamento"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +70,20 @@ const App = () => (
             <Route path="/configuracoes" element={<Index />} />
             <Route path="/config" element={<Navigate to="/configuracoes" replace />} />
             <Route path="/super-admin" element={<SuperAdminGuard />} />
+            <Route
+              path="/p/o/:token"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen flex items-center justify-center bg-background">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  }
+                >
+                  <PortalOrcamentoPage />
+                </Suspense>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

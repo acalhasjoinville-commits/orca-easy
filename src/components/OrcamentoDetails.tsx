@@ -411,6 +411,7 @@ export function OrcamentoDetails({
 
   // Data prevista picker state — only saves on explicit action
   const [dataPrevPopoverOpen, setDataPrevPopoverOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleDataPrevistaSelect = (date: Date | undefined) => {
     if (onUpdateDataPrevista) {
