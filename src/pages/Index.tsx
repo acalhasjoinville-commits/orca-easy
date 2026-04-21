@@ -31,6 +31,7 @@ const Configuracoes = lazy(() =>
 );
 const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ default: module.Clientes })));
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
+const Relatorios = lazy(() => import("@/components/Relatorios").then((module) => ({ default: module.Relatorios })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
 const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
@@ -242,6 +243,10 @@ const Index = () => {
       toast.error("Sem permissão para acessar Financeiro.");
       return;
     }
+    if (newTab === "relatorios" && !canViewFinanceiro) {
+      toast.error("Sem permissão para acessar Relatórios.");
+      return;
+    }
     if (newTab === "agenda" && !canManageAgenda) {
       toast.error("Sem permissão para acessar Agenda.");
       return;
@@ -436,6 +441,8 @@ const Index = () => {
         return { title: "Clientes", helper: "Base cadastral, contatos e histórico operacional." };
       case "financeiro":
         return { title: "Financeiro", helper: "Movimentações, leitura dos números e rotina financeira." };
+      case "relatorios":
+        return { title: "Relatórios", helper: "Vendas, clientes, serviços e DRE com exportações." };
       case "usuarios":
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "ajuda":
@@ -526,6 +533,13 @@ const Index = () => {
           <Financeiro openNewLancamentoRequest={lancamentoCreateRequest} />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar o Financeiro." />
+        ))}
+
+      {tab === "relatorios" &&
+        (canViewFinanceiro ? (
+          <Relatorios />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar Relatórios." />
         ))}
 
       {tab === "usuarios" &&

@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   CalendarDays,
   DollarSign,
   FileText,
@@ -122,6 +123,7 @@ export function MobileBottomNav({
   }
   if (canViewFinanceiro) {
     secondaryItems.push({ title: "Financeiro", tab: "financeiro", icon: DollarSign });
+    secondaryItems.push({ title: "Relatórios", tab: "relatorios", icon: BarChart3 });
   }
   if (canManageSettings) {
     secondaryItems.push({ title: "Configurações", tab: "config", icon: Settings });

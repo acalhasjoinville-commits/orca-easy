@@ -636,7 +636,7 @@ function ClientesPanel({
         <CardContent className="p-4 lg:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-foreground">Curva ABC</h2>
-            <span className="text-[10px] text-muted-foreground">A ≤ 80% • B 80–95% • C > 95%</span>
+            <span className="text-[10px] text-muted-foreground">{"A ≤ 80% • B 80–95% • C > 95%"}</span>
           </div>
           {data.rows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10">
