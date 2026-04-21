@@ -32,13 +32,19 @@ interface FollowUpBlockProps {
 }
 
 const allStatuses: StatusFollowUp[] = ["sem_retorno", "em_negociacao", "aguardando_cliente", "agendado", "concluido"];
-const allTipos = Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[];
+// Tipos disponíveis para o vendedor registrar manualmente.
+// Os tipos `cliente_*` vêm do Portal do Cliente e não devem aparecer no dropdown.
+const allTipos = (Object.keys(TIPO_INTERACAO_CONFIG) as TipoInteracao[]).filter(
+  (t) => !t.startsWith("cliente_"),
+);
 const statusByInteractionType: Partial<Record<TipoInteracao, StatusFollowUp>> = {
   retorno_agendado: "agendado",
   negociacao: "em_negociacao",
   cliente_sem_resposta: "aguardando_cliente",
   aprovado: "concluido",
   encerrado: "concluido",
+  cliente_aprovou: "concluido",
+  cliente_rejeitou: "concluido",
 };
 
 const FOLLOWUP_STATUS_UI: Record<StatusFollowUp, { label: string; description: string }> = {
