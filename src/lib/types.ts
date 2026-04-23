@@ -223,10 +223,7 @@ export type TipoInteracao =
   | "cliente_sem_resposta"
   | "aprovado"
   | "encerrado"
-  | "observacao"
-  | "cliente_aprovou"
-  | "cliente_rejeitou"
-  | "cliente_comentou";
+  | "observacao";
 
 export interface OrcamentoFollowUp {
   id: string;
@@ -268,9 +265,6 @@ export const TIPO_INTERACAO_CONFIG: Record<TipoInteracao, { label: string }> = {
   aprovado: { label: "Aprovado" },
   encerrado: { label: "Encerrado" },
   observacao: { label: "Observação" },
-  cliente_aprovou: { label: "Cliente aprovou (portal)" },
-  cliente_rejeitou: { label: "Cliente rejeitou (portal)" },
-  cliente_comentou: { label: "Comentário do cliente (portal)" },
 };
 
 // VISITAS (pré-orçamento)

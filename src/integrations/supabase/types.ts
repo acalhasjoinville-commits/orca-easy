@@ -405,7 +405,7 @@ export type Database = {
           id: string
           orcamento_id: string
           tipo: string
-          user_id: string | null
+          user_id: string
           user_name: string
         }
         Insert: {
@@ -415,7 +415,7 @@ export type Database = {
           id?: string
           orcamento_id: string
           tipo: string
-          user_id?: string | null
+          user_id: string
           user_name?: string
         }
         Update: {
@@ -425,7 +425,7 @@ export type Database = {
           id?: string
           orcamento_id?: string
           tipo?: string
-          user_id?: string | null
+          user_id?: string
           user_name?: string
         }
         Relationships: [
@@ -504,39 +504,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      orcamento_share_links: {
-        Row: {
-          created_at: string
-          created_by: string
-          empresa_id: string
-          expires_at: string
-          id: string
-          orcamento_id: string
-          revoked_at: string | null
-          token: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          empresa_id: string
-          expires_at: string
-          id?: string
-          orcamento_id: string
-          revoked_at?: string | null
-          token: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          empresa_id?: string
-          expires_at?: string
-          id?: string
-          orcamento_id?: string
-          revoked_at?: string | null
-          token?: string
-        }
-        Relationships: []
       }
       orcamentos: {
         Row: {
@@ -1128,15 +1095,6 @@ export type Database = {
       }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       next_orcamento_number: { Args: never; Returns: number }
-      public_comment_orcamento: {
-        Args: { _comment: string; _token: string }
-        Returns: Json
-      }
-      public_get_orcamento_by_token: { Args: { _token: string }; Returns: Json }
-      public_respond_orcamento: {
-        Args: { _action: string; _comment?: string; _token: string }
-        Returns: Json
-      }
       sa_approve_user: {
         Args: {
           _empresa_id: string

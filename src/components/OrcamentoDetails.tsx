@@ -21,9 +21,7 @@ import {
   CalendarClock,
   Check,
   Ban,
-  Link2,
 } from "lucide-react";
-import { CompartilharOrcamentoModal } from "./CompartilharOrcamentoModal";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { PDFDownloadButton } from "./PDFDownloadButton";
@@ -411,7 +409,6 @@ export function OrcamentoDetails({
 
   // Data prevista picker state — only saves on explicit action
   const [dataPrevPopoverOpen, setDataPrevPopoverOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
 
   const handleDataPrevistaSelect = (date: Date | undefined) => {
     if (onUpdateDataPrevista) {
@@ -856,27 +853,7 @@ export function OrcamentoDetails({
             Duplicar
           </Button>
         )}
-
-        {canCreateEditBudget &&
-          (orcamento.status === "pendente" || orcamento.status === "aprovado") && (
-            <Button
-              variant="outline"
-              onClick={() => setShareOpen(true)}
-              className="h-10 px-4 text-xs sm:text-sm border-primary/30 text-primary hover:bg-primary/10"
-            >
-              <Link2 className="mr-1.5 h-4 w-4" />
-              Compartilhar
-            </Button>
-          )}
       </div>
-
-      <CompartilharOrcamentoModal
-        open={shareOpen}
-        onOpenChange={setShareOpen}
-        orcamento={orcamento}
-        cliente={cliente}
-        empresaNome={empresa?.nomeFantasia || "Fornecedor"}
-      />
     </div>
   );
 }
