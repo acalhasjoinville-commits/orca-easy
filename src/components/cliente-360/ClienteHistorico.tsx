@@ -45,7 +45,9 @@ export function ClienteHistorico({ onEditarCliente }: Props) {
       toast.error("Sem permissão para criar orçamentos.");
       return;
     }
-    navigate("/orcamentos/novo");
+    navigate("/orcamentos/novo", {
+      state: cliente ? { preselectClienteId: cliente.id } : undefined,
+    });
   };
 
   const handleAgendarVisita = () => {
@@ -53,7 +55,18 @@ export function ClienteHistorico({ onEditarCliente }: Props) {
       toast.error("Sem permissão para agendar visitas.");
       return;
     }
-    navigate("/agenda");
+    const prefillVisita = cliente
+      ? {
+          nomeCliente: cliente.nomeRazaoSocial,
+          telefone: cliente.whatsapp ?? "",
+          enderecoCompleto: [cliente.endereco, cliente.numero].filter(Boolean).join(", "),
+          bairro: cliente.bairro ?? "",
+          cidade: cliente.cidade ?? "",
+        }
+      : nomeAvulso
+        ? { nomeCliente: nomeAvulso }
+        : undefined;
+    navigate("/agenda", { state: prefillVisita ? { prefillVisita } : undefined });
   };
 
   const handleEditar = onEditarCliente && cliente && canManageClientes ? onEditarCliente : undefined;
