@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useMotor1, useMotor2, useInsumos, useRegras, useServicos } from "@/hooks/useSupabaseTechnicalData";
 import { useClientes, useOrcamentos, usePoliticas, useEmpresa } from "@/hooks/useSupabaseData";
 import { ItemServico, Orcamento, Dificuldade, StatusOrcamento, MotorType, Cliente } from "@/lib/types";
@@ -130,6 +131,11 @@ function StepIndicator({ current }: { current: "cliente" | "motor" | "carrinho" 
 
 export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
   const isEditing = !!editingOrcamento;
+  const location = useLocation();
+  const preselectClienteId =
+    !isEditing && typeof (location.state as { preselectClienteId?: string } | null)?.preselectClienteId === "string"
+      ? ((location.state as { preselectClienteId?: string }).preselectClienteId as string)
+      : null;
 
   const draftKey = isEditing ? `draft:orcamento-edit:${editingOrcamento!.id}` : "draft:orcamento-new";
 
@@ -152,8 +158,8 @@ export function OrcamentoWizard({ onDone, editingOrcamento }: Props) {
 
   const defaultDraft = useMemo<WizardDraft>(
     () => ({
-      phase: isEditing ? "carrinho" : "cliente",
-      selectedClienteId: editingOrcamento?.clienteId ?? "",
+      phase: isEditing ? "carrinho" : preselectClienteId ? "motor" : "cliente",
+      selectedClienteId: editingOrcamento?.clienteId ?? preselectClienteId ?? "",
       motorType: editingOrcamento?.motorType ?? "motor1",
       itens: editingOrcamento?.itensServico ?? [],
       status: editingOrcamento?.status ?? "pendente",
