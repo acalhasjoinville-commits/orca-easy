@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, Clock, MapPin, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -118,6 +119,8 @@ export function VisitasManager({ openNewRequest, editRequest }: VisitasManagerPr
   const addVisita = useAddVisita();
   const updateVisita = useUpdateVisita();
   const { data: teamMembers = [] } = useTeamMembers();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [filter, setFilter] = useState<FilterStatus>("todos");
   const [search, setSearch] = useState("");
@@ -129,6 +132,23 @@ export function VisitasManager({ openNewRequest, editRequest }: VisitasManagerPr
 
   const hoje = getTodayLocal();
   const amanha = addDaysLocal(1);
+
+  // Pré-preenchimento via location.state (vindo do Cliente 360°)
+  useEffect(() => {
+    const state = location.state as { prefillVisita?: Partial<VisitaFormData> } | null;
+    const prefill = state?.prefillVisita;
+    if (!prefill) return;
+
+    setFormMode("create");
+    setEditingVisita(null);
+    setDetailVisita(null);
+    setForm({ ...emptyForm, dataVisita: hoje, ...prefill });
+    setFormOpen(true);
+
+    // Limpa o state para não reabrir em re-renders / voltar do navegador
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   useEffect(() => {
     if (!openNewRequest) return;
