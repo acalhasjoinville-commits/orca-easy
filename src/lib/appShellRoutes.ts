@@ -8,7 +8,7 @@ export interface ResolvedAppShellRoute {
   isEditingOrcamento: boolean;
 }
 
-const PRIMARY_TAB_PATHS: Record<Exclude<Tab, "orcamento-detalhes" | "orcamento-novo">, string> = {
+const PRIMARY_TAB_PATHS: Record<Exclude<Tab, "orcamento-detalhes" | "orcamento-novo" | "cliente-historico">, string> = {
   dashboard: "/dashboard",
   agenda: "/agenda",
   orcamentos: "/orcamentos",
