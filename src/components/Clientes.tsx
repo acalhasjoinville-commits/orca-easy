@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClientes } from "@/hooks/useSupabaseData";
 import { Cliente } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Users, Loader2, Phone, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Users, Loader2, Phone, MapPin, MoreVertical, Pencil, Trash2, History } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ import { ClienteFormModal } from "./ClienteFormModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getClienteHistoricoPath } from "@/lib/appShellRoutes";
 
 const getDocumentoLabel = (cliente: Cliente) => {
   const documento = cliente.documento?.trim();
@@ -44,6 +46,9 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Cliente | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleOpenHistorico = (c: Cliente) => navigate(getClienteHistoricoPath(c.id));
 
   const normalizedSearch = search.toLowerCase().trim();
   const clientesSemDocumento = clientes.filter((c) => !c.documento?.trim()).length;
