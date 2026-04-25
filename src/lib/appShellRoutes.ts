@@ -36,6 +36,14 @@ export function getOrcamentoEditPath(orcamentoId: string) {
   return `/orcamentos/${orcamentoId}/editar`;
 }
 
+export function getClienteHistoricoPath(clienteId: string) {
+  return `/clientes/${clienteId}`;
+}
+
+export function getClienteAvulsoHistoricoPath(nomeCliente: string) {
+  return `/clientes/avulso/${encodeURIComponent(nomeCliente)}`;
+}
+
 export function getPathForTab(tab: Tab) {
   if (tab === "orcamento-detalhes") {
     return PRIMARY_TAB_PATHS.orcamentos;
@@ -43,6 +51,10 @@ export function getPathForTab(tab: Tab) {
 
   if (tab === "orcamento-novo") {
     return getOrcamentoNewPath();
+  }
+
+  if (tab === "cliente-historico") {
+    return PRIMARY_TAB_PATHS.clientes;
   }
 
   return getPrimaryPathForTab(tab);
@@ -85,6 +97,16 @@ export function resolveAppShellRoute(pathname: string): ResolvedAppShellRoute {
 
   if (pathname === "/clientes") {
     return { tab: "clientes", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  // /clientes/avulso/:nome  OR  /clientes/:clienteId
+  const clienteAvulsoMatch = matchPath("/clientes/avulso/:nome", pathname);
+  if (clienteAvulsoMatch?.params.nome) {
+    return { tab: "cliente-historico", orcamentoId: null, isEditingOrcamento: false };
+  }
+  const clienteDetailMatch = matchPath("/clientes/:clienteId", pathname);
+  if (clienteDetailMatch?.params.clienteId) {
+    return { tab: "cliente-historico", orcamentoId: null, isEditingOrcamento: false };
   }
 
   if (pathname === "/financeiro") {
