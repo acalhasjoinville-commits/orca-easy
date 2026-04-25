@@ -62,6 +62,8 @@ const App = () => (
             <Route path="/orcamentos/:orcamentoId" element={<Index />} />
             <Route path="/orcamentos/:orcamentoId/editar" element={<Index />} />
             <Route path="/clientes" element={<Index />} />
+            <Route path="/clientes/avulso/:nome" element={<Index />} />
+            <Route path="/clientes/:clienteId" element={<Index />} />
             <Route path="/financeiro" element={<Index />} />
             <Route path="/relatorios" element={<Index />} />
             <Route path="/usuarios" element={<Index />} />

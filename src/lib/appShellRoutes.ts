@@ -20,7 +20,7 @@ const PRIMARY_TAB_PATHS: Record<Exclude<Tab, "orcamento-detalhes" | "orcamento-n
   config: "/configuracoes",
 };
 
-export function getPrimaryPathForTab(tab: Exclude<Tab, "orcamento-detalhes" | "orcamento-novo">) {
+export function getPrimaryPathForTab(tab: Exclude<Tab, "orcamento-detalhes" | "orcamento-novo" | "cliente-historico">) {
   return PRIMARY_TAB_PATHS[tab];
 }
 
