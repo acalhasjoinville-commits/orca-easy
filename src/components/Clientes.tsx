@@ -203,7 +203,11 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
               </thead>
               <tbody>
                 {filtered.map((c) => (
-                  <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={c.id}
+                    className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => handleOpenHistorico(c)}
+                  >
                     <td className="py-2.5 px-3">
                       <span
                         className={cn(
@@ -225,14 +229,17 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
                     </td>
                     <td className="py-2.5 px-3 text-muted-foreground text-xs">{c.whatsapp || "—"}</td>
                     <td className="py-2.5 px-3 text-muted-foreground text-xs">{c.cidade || "—"}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-[120px]">
+                        <DropdownMenuContent align="end" className="min-w-[140px]">
+                          <DropdownMenuItem onClick={() => handleOpenHistorico(c)} className="text-xs gap-2">
+                            <History className="h-3.5 w-3.5" /> Ver histórico
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
                             <Pencil className="h-3.5 w-3.5" /> Editar
                           </DropdownMenuItem>
@@ -256,8 +263,9 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
           {filtered.map((c) => (
             <Card
               key={c.id}
+              onClick={() => handleOpenHistorico(c)}
               className={cn(
-                "overflow-hidden border-l-4",
+                "overflow-hidden border-l-4 cursor-pointer hover:bg-muted/30 transition-colors",
                 c.tipo === "PJ" ? "border-l-accent/60" : "border-l-primary/40",
               )}
             >
@@ -291,24 +299,29 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
                       )}
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-2">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[120px]">
-                      <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
-                        <Pencil className="h-3.5 w-3.5" /> Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeleteTarget(c)}
-                        className="text-xs gap-2 text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-2">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[140px]">
+                        <DropdownMenuItem onClick={() => handleOpenHistorico(c)} className="text-xs gap-2">
+                          <History className="h-3.5 w-3.5" /> Ver histórico
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeleteTarget(c)}
+                          className="text-xs gap-2 text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardContent>
             </Card>
