@@ -236,7 +236,8 @@ describe("cliente-360/aggregations", () => {
     });
 
     it("inclui visitas e retornos", () => {
-      const v = [makeVisita({ id: "v1", dataVisita: "2025-05-01", status: "agendada" })];
+      const futureYear = new Date().getFullYear() + 5;
+      const v = [makeVisita({ id: "v1", dataVisita: `${futureYear}-05-01`, status: "agendada" })];
       const r = [
         makeRetorno({
           id: "r1",
