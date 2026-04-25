@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClientes } from "@/hooks/useSupabaseData";
 import { Cliente } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Users, Loader2, Phone, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Users, Loader2, Phone, MapPin, MoreVertical, Pencil, Trash2, History } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ import { ClienteFormModal } from "./ClienteFormModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getClienteHistoricoPath } from "@/lib/appShellRoutes";
 
 const getDocumentoLabel = (cliente: Cliente) => {
   const documento = cliente.documento?.trim();
@@ -44,6 +46,9 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Cliente | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  const handleOpenHistorico = (c: Cliente) => navigate(getClienteHistoricoPath(c.id));
 
   const normalizedSearch = search.toLowerCase().trim();
   const clientesSemDocumento = clientes.filter((c) => !c.documento?.trim()).length;
@@ -198,7 +203,11 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
               </thead>
               <tbody>
                 {filtered.map((c) => (
-                  <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={c.id}
+                    className="border-b last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => handleOpenHistorico(c)}
+                  >
                     <td className="py-2.5 px-3">
                       <span
                         className={cn(
@@ -220,14 +229,17 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
                     </td>
                     <td className="py-2.5 px-3 text-muted-foreground text-xs">{c.whatsapp || "—"}</td>
                     <td className="py-2.5 px-3 text-muted-foreground text-xs">{c.cidade || "—"}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                             <MoreVertical className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="min-w-[120px]">
+                        <DropdownMenuContent align="end" className="min-w-[140px]">
+                          <DropdownMenuItem onClick={() => handleOpenHistorico(c)} className="text-xs gap-2">
+                            <History className="h-3.5 w-3.5" /> Ver histórico
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
                             <Pencil className="h-3.5 w-3.5" /> Editar
                           </DropdownMenuItem>
@@ -251,8 +263,9 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
           {filtered.map((c) => (
             <Card
               key={c.id}
+              onClick={() => handleOpenHistorico(c)}
               className={cn(
-                "overflow-hidden border-l-4",
+                "overflow-hidden border-l-4 cursor-pointer hover:bg-muted/30 transition-colors",
                 c.tipo === "PJ" ? "border-l-accent/60" : "border-l-primary/40",
               )}
             >
@@ -286,24 +299,29 @@ export function Clientes({ openNewRequest = 0 }: ClientesProps) {
                       )}
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-2">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[120px]">
-                      <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
-                        <Pencil className="h-3.5 w-3.5" /> Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setDeleteTarget(c)}
-                        className="text-xs gap-2 text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1.5 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ml-2">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="min-w-[140px]">
+                        <DropdownMenuItem onClick={() => handleOpenHistorico(c)} className="text-xs gap-2">
+                          <History className="h-3.5 w-3.5" /> Ver histórico
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(c)} className="text-xs gap-2">
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeleteTarget(c)}
+                          className="text-xs gap-2 text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardContent>
             </Card>

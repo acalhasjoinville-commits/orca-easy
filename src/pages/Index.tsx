@@ -30,6 +30,9 @@ const Configuracoes = lazy(() =>
   import("@/components/Configuracoes").then((module) => ({ default: module.Configuracoes })),
 );
 const Clientes = lazy(() => import("@/components/Clientes").then((module) => ({ default: module.Clientes })));
+const ClienteHistorico = lazy(() =>
+  import("@/components/cliente-360/ClienteHistorico").then((module) => ({ default: module.ClienteHistorico })),
+);
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Relatorios = lazy(() => import("@/components/Relatorios").then((module) => ({ default: module.Relatorios })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
@@ -447,6 +450,8 @@ const Index = () => {
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "ajuda":
         return { title: "Ajuda", helper: "Perguntas frequentes e orientações rápidas para o uso do sistema." };
+      case "cliente-historico":
+        return { title: "Histórico do cliente", helper: "Visão 360° com orçamentos, visitas, retornos e indicadores." };
       case "config":
         return { title: "Configurações", helper: "Materiais, regras, catálogo e dados-base do sistema." };
       default:
@@ -524,6 +529,13 @@ const Index = () => {
       {tab === "clientes" &&
         (canManageClientes ? (
           <Clientes openNewRequest={clienteCreateRequest} />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar Clientes." />
+        ))}
+
+      {tab === "cliente-historico" &&
+        (canManageClientes ? (
+          <ClienteHistorico />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Clientes." />
         ))}

@@ -11,6 +11,7 @@ export type Tab =
   | "orcamento-detalhes"
   | "orcamento-novo"
   | "clientes"
+  | "cliente-historico"
   | "financeiro"
   | "relatorios"
   | "usuarios"
