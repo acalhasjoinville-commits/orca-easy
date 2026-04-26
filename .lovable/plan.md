@@ -56,11 +56,11 @@ CREATE TABLE public.rufolab_projects (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Peças (filhas de uma obra)
+-- Peças (filhas de uma obra) — FK composta garante integridade tenant
 CREATE TABLE public.rufolab_pieces (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id uuid NOT NULL REFERENCES public.empresa(id) ON DELETE CASCADE,
-  project_id uuid NOT NULL REFERENCES public.rufolab_projects(id) ON DELETE CASCADE,
+  project_id uuid NOT NULL,
   nome text NOT NULL,
   tipo_peca text NOT NULL DEFAULT 'reta',         -- 'reta' | 'conica'
   comprimento numeric NOT NULL DEFAULT 0,         -- metros lineares
@@ -69,8 +69,17 @@ CREATE TABLE public.rufolab_pieces (
   segmentos jsonb NOT NULL DEFAULT '[]'::jsonb,   -- desenho da peça
   calc_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb, -- desenvolvimento, área, dobras...
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- FK composta: peça só pode apontar para projeto da MESMA empresa
+  CONSTRAINT rufolab_pieces_project_tenant_fk
+    FOREIGN KEY (project_id, empresa_id)
+    REFERENCES public.rufolab_projects (id, empresa_id)
+    ON DELETE CASCADE
 );
+
+-- Necessário para servir de alvo da FK composta acima
+ALTER TABLE public.rufolab_projects
+  ADD CONSTRAINT rufolab_projects_id_empresa_unique UNIQUE (id, empresa_id);
 
 -- Templates por empresa
 CREATE TABLE public.rufolab_templates (
