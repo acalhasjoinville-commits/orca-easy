@@ -28,13 +28,18 @@ A regra de ouro: **não reescrever o editor à toa**. O "miolo" geométrico e o 
 
 ---
 
-## 2. Decisão técnica pendente — FK vs trigger
+## 2. Integridade tenant entre projeto e peça (decisão final)
 
-**Validação antes da migration final**:
+**Não basta confiar em RLS** para garantir que uma peça pertença ao mesmo tenant do projeto pai. Sem reforço explícito, um bug de aplicação ou um insert via service role poderia criar uma peça com `empresa_id = A` apontando para um `project_id` cujo `empresa_id = B`.
 
-- O padrão atual do projeto **não evita FK** entre tabelas do mesmo tenant. As tabelas existentes (`orcamentos.cliente_id → clientes.id`, `orcamentos.empresa_id → empresa.id`, etc.) usam FK normalmente. RLS não conflita com FK quando ambas as pontas filtram pelo mesmo `empresa_id`.
-- **Decisão**: usar FK com `ON DELETE CASCADE` entre `rufolab_pieces.project_id → rufolab_projects.id`. Sem trigger manual.
-- Templates ficam soltos (sem FK para projeto/peça), pois são uma biblioteca da empresa, não dependem de uma obra específica.
+**Decisão**: usar **FK composta** `(project_id, empresa_id) REFERENCES rufolab_projects(id, empresa_id) ON DELETE CASCADE`. Isso exige uma `UNIQUE (id, empresa_id)` em `rufolab_projects` (o `id` já é PK e único; a unique composta é redundante para o banco mas necessária para servir de alvo da FK composta).
+
+Vantagens sobre trigger:
+- Garantia declarativa, sem custo de função PL/pgSQL.
+- Falha imediata e clara em violação.
+- Sem risco de o trigger ser desabilitado/esquecido em manutenção.
+
+Templates continuam soltos (sem FK para projeto/peça): são biblioteca da empresa, isoladas só por `empresa_id` + RLS.
 
 ---
 
@@ -51,11 +56,11 @@ CREATE TABLE public.rufolab_projects (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Peças (filhas de uma obra)
+-- Peças (filhas de uma obra) — FK composta garante integridade tenant
 CREATE TABLE public.rufolab_pieces (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id uuid NOT NULL REFERENCES public.empresa(id) ON DELETE CASCADE,
-  project_id uuid NOT NULL REFERENCES public.rufolab_projects(id) ON DELETE CASCADE,
+  project_id uuid NOT NULL,
   nome text NOT NULL,
   tipo_peca text NOT NULL DEFAULT 'reta',         -- 'reta' | 'conica'
   comprimento numeric NOT NULL DEFAULT 0,         -- metros lineares
@@ -64,8 +69,17 @@ CREATE TABLE public.rufolab_pieces (
   segmentos jsonb NOT NULL DEFAULT '[]'::jsonb,   -- desenho da peça
   calc_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb, -- desenvolvimento, área, dobras...
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  -- FK composta: peça só pode apontar para projeto da MESMA empresa
+  CONSTRAINT rufolab_pieces_project_tenant_fk
+    FOREIGN KEY (project_id, empresa_id)
+    REFERENCES public.rufolab_projects (id, empresa_id)
+    ON DELETE CASCADE
 );
+
+-- Necessário para servir de alvo da FK composta acima
+ALTER TABLE public.rufolab_projects
+  ADD CONSTRAINT rufolab_projects_id_empresa_unique UNIQUE (id, empresa_id);
 
 -- Templates por empresa
 CREATE TABLE public.rufolab_templates (
@@ -196,8 +210,51 @@ Bloqueio de rota e item de menu condicionados a esse flag. `financeiro` não vê
 
 - **`AppSidebar`**: novo `Tab = 'rufolab'`, item na seção Operação com ícone `Ruler` ou `Square`, `permission: 'canUseRufoLab'`.
 - **`MobileBottomNav`**: entra no sheet "Mais".
-- **`appShellRoutes.ts`**: rota `/rufolab` (e `/rufolab/:projectId/:pieceId?` para deep link opcional).
+- **`appShellRoutes.ts`**: rota única `/rufolab` na Fase 1. Estado interno (projeto/peça selecionados) vive em React state local da tela `RufoLab.tsx`, não em URL.
+- **`App.tsx`**: uma única `<Route path="/rufolab" element={<Index />} />`.
 - **`Index.tsx`**: lazy import + case `'rufolab'` no switch + `getHeaderMeta`.
+
+**Deep link `/rufolab/:projectId/:pieceId?` fica EXPLICITAMENTE FORA do escopo da Fase 1.** Motivo: evita acoplar URL ao modelo de dados antes de o módulo estabilizar e dispensa lógica extra de `matchPath` no `resolveAppShellRoute`. Pode ser adicionado numa fase posterior (proposta: Fase 9), seguindo o padrão já existente para `/orcamentos/:orcamentoId`.
+
+---
+
+## 6.1 Estratégia concreta de port do `bendy-maker`
+
+O repositório `https://github.com/rjdev-com/bendy-maker` é a referência técnica. Análise concreta do que entra, o que adapta e o que descarta:
+
+### Portar como está (Fase 2 — geometria pura)
+- **Funções de cálculo de desenvolvimento linear** de cada segmento (reto e diagonal), incluindo soma acumulada para `desenvolvimentoInicial` e, em peças cônicas, `desenvolvimentoFinal`.
+- **Cálculo de número de dobras** (= número de junções entre segmentos consecutivos não-colineares).
+- **Cálculo de área** da peça (desenvolvimento × comprimento; para cônica usa média entre inicial e final).
+- **Normalização angular** dos segmentos diagonais (graus → radianos, clamp de ângulo válido).
+- **Tipos puros** `Segmento`, `TipoSegmento`, `TipoPeca`.
+
+Critério: tudo isso vai para `src/lib/rufolab/geometry.ts` **sem nenhuma dependência de React, DOM ou localStorage**. Coberto por testes unitários em `src/test/rufolab.test.ts`.
+
+### Portar com adaptação (Fase 5 — canvas/editor)
+- **Renderização SVG da peça** (path acumulado a partir dos segmentos): manter a lógica de coordenadas e escala automática (fit-to-viewport), mas reescrever os atributos visuais usando **tokens semânticos do design system** (`hsl(var(--primary))`, `hsl(var(--border))` etc.). Sem cores hardcoded.
+- **Editor de segmentos** (lista lateral com inputs de medida e ângulo): manter o fluxo de UX (adicionar segmento, remover, reordenar), mas reescrever os controles em componentes `shadcn/ui` (`Input`, `Button`, `Select`).
+- **Cotas/labels visuais sobre o desenho**: portar a lógica de posicionamento das medidas, adaptar tipografia para `text-xs text-muted-foreground`.
+- **Painel de cálculo em tempo real**: reusa a função pura de `geometry.ts`, layout em `Card` do shadcn.
+
+Critério: nenhuma importação direta de componentes React do bendy-maker — só a lógica é portada, a árvore de componentes é reescrita no padrão deste projeto.
+
+### NÃO portar (descartado)
+- **Roteador, shell, layout global, header, theme provider** do bendy-maker → este projeto já tem `Index.tsx` + `AppSidebar` + `SystemThemeApplicator`.
+- **Persistência em localStorage** → substituída integralmente por Supabase + React Query.
+- **Sistema de undo/redo**, **atalhos de teclado**, **menus contextuais** → fora de escopo da Fase 1.
+- **Qualquer dependência npm exclusiva do bendy-maker** (jsPDF, libs de canvas, etc.) → não adicionar; usamos `@react-pdf/renderer` já presente no projeto.
+- **Export PDF próprio do bendy-maker** → descartado em favor do `PecaTecnicaPDF` desenhado para o nosso shell (header com logo da empresa via `fetchLogoBase64`).
+
+### Em qual fase entra cada parte
+| Parte | Fase |
+|---|---|
+| Geometria pura (cálculos + tipos) | **Fase 2** |
+| Renderização SVG + editor de segmentos | **Fase 5** |
+| Templates (salvar/instanciar) | **Fase 6** |
+| PDF técnico próprio (não portado) | **Fase 7** |
+| Refinamentos de UX (undo/redo, atalhos) | **Fase 8** (se priorizado) |
+| Deep link na URL | **Fase 9** (fora do escopo inicial) |
 
 ---
 
