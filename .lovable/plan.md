@@ -210,8 +210,51 @@ Bloqueio de rota e item de menu condicionados a esse flag. `financeiro` não vê
 
 - **`AppSidebar`**: novo `Tab = 'rufolab'`, item na seção Operação com ícone `Ruler` ou `Square`, `permission: 'canUseRufoLab'`.
 - **`MobileBottomNav`**: entra no sheet "Mais".
-- **`appShellRoutes.ts`**: rota `/rufolab` (e `/rufolab/:projectId/:pieceId?` para deep link opcional).
+- **`appShellRoutes.ts`**: rota única `/rufolab` na Fase 1. Estado interno (projeto/peça selecionados) vive em React state local da tela `RufoLab.tsx`, não em URL.
+- **`App.tsx`**: uma única `<Route path="/rufolab" element={<Index />} />`.
 - **`Index.tsx`**: lazy import + case `'rufolab'` no switch + `getHeaderMeta`.
+
+**Deep link `/rufolab/:projectId/:pieceId?` fica EXPLICITAMENTE FORA do escopo da Fase 1.** Motivo: evita acoplar URL ao modelo de dados antes de o módulo estabilizar e dispensa lógica extra de `matchPath` no `resolveAppShellRoute`. Pode ser adicionado numa fase posterior (proposta: Fase 9), seguindo o padrão já existente para `/orcamentos/:orcamentoId`.
+
+---
+
+## 6.1 Estratégia concreta de port do `bendy-maker`
+
+O repositório `https://github.com/rjdev-com/bendy-maker` é a referência técnica. Análise concreta do que entra, o que adapta e o que descarta:
+
+### Portar como está (Fase 2 — geometria pura)
+- **Funções de cálculo de desenvolvimento linear** de cada segmento (reto e diagonal), incluindo soma acumulada para `desenvolvimentoInicial` e, em peças cônicas, `desenvolvimentoFinal`.
+- **Cálculo de número de dobras** (= número de junções entre segmentos consecutivos não-colineares).
+- **Cálculo de área** da peça (desenvolvimento × comprimento; para cônica usa média entre inicial e final).
+- **Normalização angular** dos segmentos diagonais (graus → radianos, clamp de ângulo válido).
+- **Tipos puros** `Segmento`, `TipoSegmento`, `TipoPeca`.
+
+Critério: tudo isso vai para `src/lib/rufolab/geometry.ts` **sem nenhuma dependência de React, DOM ou localStorage**. Coberto por testes unitários em `src/test/rufolab.test.ts`.
+
+### Portar com adaptação (Fase 5 — canvas/editor)
+- **Renderização SVG da peça** (path acumulado a partir dos segmentos): manter a lógica de coordenadas e escala automática (fit-to-viewport), mas reescrever os atributos visuais usando **tokens semânticos do design system** (`hsl(var(--primary))`, `hsl(var(--border))` etc.). Sem cores hardcoded.
+- **Editor de segmentos** (lista lateral com inputs de medida e ângulo): manter o fluxo de UX (adicionar segmento, remover, reordenar), mas reescrever os controles em componentes `shadcn/ui` (`Input`, `Button`, `Select`).
+- **Cotas/labels visuais sobre o desenho**: portar a lógica de posicionamento das medidas, adaptar tipografia para `text-xs text-muted-foreground`.
+- **Painel de cálculo em tempo real**: reusa a função pura de `geometry.ts`, layout em `Card` do shadcn.
+
+Critério: nenhuma importação direta de componentes React do bendy-maker — só a lógica é portada, a árvore de componentes é reescrita no padrão deste projeto.
+
+### NÃO portar (descartado)
+- **Roteador, shell, layout global, header, theme provider** do bendy-maker → este projeto já tem `Index.tsx` + `AppSidebar` + `SystemThemeApplicator`.
+- **Persistência em localStorage** → substituída integralmente por Supabase + React Query.
+- **Sistema de undo/redo**, **atalhos de teclado**, **menus contextuais** → fora de escopo da Fase 1.
+- **Qualquer dependência npm exclusiva do bendy-maker** (jsPDF, libs de canvas, etc.) → não adicionar; usamos `@react-pdf/renderer` já presente no projeto.
+- **Export PDF próprio do bendy-maker** → descartado em favor do `PecaTecnicaPDF` desenhado para o nosso shell (header com logo da empresa via `fetchLogoBase64`).
+
+### Em qual fase entra cada parte
+| Parte | Fase |
+|---|---|
+| Geometria pura (cálculos + tipos) | **Fase 2** |
+| Renderização SVG + editor de segmentos | **Fase 5** |
+| Templates (salvar/instanciar) | **Fase 6** |
+| PDF técnico próprio (não portado) | **Fase 7** |
+| Refinamentos de UX (undo/redo, atalhos) | **Fase 8** (se priorizado) |
+| Deep link na URL | **Fase 9** (fora do escopo inicial) |
 
 ---
 
