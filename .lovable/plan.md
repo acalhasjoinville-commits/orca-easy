@@ -28,13 +28,18 @@ A regra de ouro: **não reescrever o editor à toa**. O "miolo" geométrico e o 
 
 ---
 
-## 2. Decisão técnica pendente — FK vs trigger
+## 2. Integridade tenant entre projeto e peça (decisão final)
 
-**Validação antes da migration final**:
+**Não basta confiar em RLS** para garantir que uma peça pertença ao mesmo tenant do projeto pai. Sem reforço explícito, um bug de aplicação ou um insert via service role poderia criar uma peça com `empresa_id = A` apontando para um `project_id` cujo `empresa_id = B`.
 
-- O padrão atual do projeto **não evita FK** entre tabelas do mesmo tenant. As tabelas existentes (`orcamentos.cliente_id → clientes.id`, `orcamentos.empresa_id → empresa.id`, etc.) usam FK normalmente. RLS não conflita com FK quando ambas as pontas filtram pelo mesmo `empresa_id`.
-- **Decisão**: usar FK com `ON DELETE CASCADE` entre `rufolab_pieces.project_id → rufolab_projects.id`. Sem trigger manual.
-- Templates ficam soltos (sem FK para projeto/peça), pois são uma biblioteca da empresa, não dependem de uma obra específica.
+**Decisão**: usar **FK composta** `(project_id, empresa_id) REFERENCES rufolab_projects(id, empresa_id) ON DELETE CASCADE`. Isso exige uma `UNIQUE (id, empresa_id)` em `rufolab_projects` (o `id` já é PK e único; a unique composta é redundante para o banco mas necessária para servir de alvo da FK composta).
+
+Vantagens sobre trigger:
+- Garantia declarativa, sem custo de função PL/pgSQL.
+- Falha imediata e clara em violação.
+- Sem risco de o trigger ser desabilitado/esquecido em manutenção.
+
+Templates continuam soltos (sem FK para projeto/peça): são biblioteca da empresa, isoladas só por `empresa_id` + RLS.
 
 ---
 
