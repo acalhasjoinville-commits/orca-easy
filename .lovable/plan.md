@@ -1,189 +1,302 @@
+# RufoLab — Plano aprovado e roteiro de execução
 
+> **Status**: Aprovado como blueprint do destino final.
+> Persistência em banco, isolamento por empresa, JSONB para segmentos, PDF client-side, debounce fora dos hooks.
 
-# Relatórios & Exportações — Módulo robusto e isolado
+---
 
-## Princípio fundamental
+## 0. Contexto da aprovação
 
-Este módulo é **somente leitura**. Nada de tocar em `calcEngine`, `calcServicoAvulso`, snapshots, RLS, schema do banco ou marcos de data. Apenas reaproveita os dados que já vêm dos hooks existentes (`useOrcamentos`, `useLancamentos`, `useClientes`) e gera artefatos (tela visual, PDF, CSV, XLSX).
+Este plano define **dois alvos distintos**:
 
-Toda regra de "o que conta como receita/lucro" segue **exatamente** as mesmas regras do módulo Financeiro:
-- Faturamento/lucro/margem só consideram orçamentos `aprovado` ou `executado`.
-- Custo usa `custoConhecido ?? custoTotalObra`, **ignorando** itens `custoIncompleto`.
-- Quando há item incompleto no recorte, lucro/margem aparecem como "parcial" (igual ao Financeiro hoje).
-- Datas via `toLocalDateStr` para não quebrar com fuso.
+- **Alvo A — Módulo isolado atual** (repo `bendy-maker` ou similar): mantém-se vivo como etapa intermediária e laboratório de UX/geometria. Não deve sofrer troca brusca de stack.
+- **Alvo B — Sistema principal (este repo: OrçaCalhas)**: destino final. Aqui o RufoLab vira módulo nativo, com Supabase como fonte da verdade, RLS por empresa, integrado ao shell (`AppSidebar`, `MobileBottomNav`, `Index.tsx`, `useAuth`).
 
-## Arquitetura
+A regra de ouro: **não reescrever o editor à toa**. O "miolo" geométrico e o canvas do módulo isolado são portados como estão; o que muda é a **camada de dados** (localStorage → Supabase) e a **camada de shell** (router próprio → integração com Index/AppSidebar).
 
-```text
+---
+
+## 1. Princípios não-negociáveis
+
+1. **Banco como fonte da verdade** na integração final. localStorage só como cache de UX (rascunho do editor), nunca como persistência primária.
+2. **Isolamento por `empresa_id`** em todas as tabelas, com RLS espelhando o padrão atual (`empresa_id = get_user_empresa_id(auth.uid())`).
+3. **JSONB para segmentos e snapshot de cálculo**. Sem tabela separada de segmento nesta fase.
+4. **Debounce mora na tela/editor**, não no hook de mutation. O hook expõe `save(data)` síncrono do ponto de vista do React Query; quem decide quando chamar é o componente.
+5. **PDF é client-side**: SVG da peça → PNG via canvas → `@react-pdf/renderer`. Sem edge function.
+6. **Zero acoplamento com o fluxo comercial nesta fase**: nada de orçamento, catálogo, motor 1/2, serviços avulsos, PDF comercial.
+7. **Permissões**: `admin` e `vendedor` acessam; `financeiro` não. Encaixa no `useAuth` atual via novo flag `canUseRufoLab`.
+
+---
+
+## 2. Decisão técnica pendente — FK vs trigger
+
+**Validação antes da migration final**:
+
+- O padrão atual do projeto **não evita FK** entre tabelas do mesmo tenant. As tabelas existentes (`orcamentos.cliente_id → clientes.id`, `orcamentos.empresa_id → empresa.id`, etc.) usam FK normalmente. RLS não conflita com FK quando ambas as pontas filtram pelo mesmo `empresa_id`.
+- **Decisão**: usar FK com `ON DELETE CASCADE` entre `rufolab_pieces.project_id → rufolab_projects.id`. Sem trigger manual.
+- Templates ficam soltos (sem FK para projeto/peça), pois são uma biblioteca da empresa, não dependem de uma obra específica.
+
+---
+
+## 3. Modelagem de banco (alvo B)
+
+```sql
+-- Obras/projetos
+CREATE TABLE public.rufolab_projects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id uuid NOT NULL REFERENCES public.empresa(id) ON DELETE CASCADE,
+  nome text NOT NULL,
+  observacoes text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Peças (filhas de uma obra)
+CREATE TABLE public.rufolab_pieces (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id uuid NOT NULL REFERENCES public.empresa(id) ON DELETE CASCADE,
+  project_id uuid NOT NULL REFERENCES public.rufolab_projects(id) ON DELETE CASCADE,
+  nome text NOT NULL,
+  tipo_peca text NOT NULL DEFAULT 'reta',         -- 'reta' | 'conica'
+  comprimento numeric NOT NULL DEFAULT 0,         -- metros lineares
+  quantidade integer NOT NULL DEFAULT 1,
+  observacoes text NOT NULL DEFAULT '',
+  segmentos jsonb NOT NULL DEFAULT '[]'::jsonb,   -- desenho da peça
+  calc_snapshot jsonb NOT NULL DEFAULT '{}'::jsonb, -- desenvolvimento, área, dobras...
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Templates por empresa
+CREATE TABLE public.rufolab_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id uuid NOT NULL REFERENCES public.empresa(id) ON DELETE CASCADE,
+  nome text NOT NULL,
+  tipo_peca text NOT NULL DEFAULT 'reta',
+  segmentos jsonb NOT NULL DEFAULT '[]'::jsonb,
+  observacoes text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- RLS: padrão tenant isolation
+ALTER TABLE public.rufolab_projects  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rufolab_pieces    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rufolab_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Tenant isolation" ON public.rufolab_projects
+  FOR ALL USING (empresa_id = get_user_empresa_id(auth.uid()))
+  WITH CHECK (empresa_id = get_user_empresa_id(auth.uid()));
+
+CREATE POLICY "Tenant isolation" ON public.rufolab_pieces
+  FOR ALL USING (empresa_id = get_user_empresa_id(auth.uid()))
+  WITH CHECK (empresa_id = get_user_empresa_id(auth.uid()));
+
+CREATE POLICY "Tenant isolation" ON public.rufolab_templates
+  FOR ALL USING (empresa_id = get_user_empresa_id(auth.uid()))
+  WITH CHECK (empresa_id = get_user_empresa_id(auth.uid()));
+
+-- Triggers de updated_at (reusa update_updated_at_column existente)
+CREATE TRIGGER trg_rufolab_projects_updated  BEFORE UPDATE ON public.rufolab_projects  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER trg_rufolab_pieces_updated    BEFORE UPDATE ON public.rufolab_pieces    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER trg_rufolab_templates_updated BEFORE UPDATE ON public.rufolab_templates FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Índices úteis
+CREATE INDEX idx_rufolab_pieces_project    ON public.rufolab_pieces(project_id);
+CREATE INDEX idx_rufolab_projects_empresa  ON public.rufolab_projects(empresa_id);
+CREATE INDEX idx_rufolab_templates_empresa ON public.rufolab_templates(empresa_id);
+```
+
+**Forma do `segmentos` (JSONB)**:
+```ts
+type Segmento = {
+  id: string;
+  tipo: 'reto' | 'diagonal';
+  medida: number;            // mm ou cm — definido na const SHARED
+  anguloDeg?: number;        // para diagonais
+  // medidaInicial/medidaFinal ficam em fields da peça quando cônica
+};
+```
+
+**Forma do `calc_snapshot` (JSONB)**:
+```ts
+type CalcSnapshot = {
+  desenvolvimentoInicial: number;
+  desenvolvimentoFinal?: number;   // só cônica
+  area: number;
+  numeroDobras: number;
+  numeroSegmentos: number;
+  comprimento: number;
+  quantidade: number;
+  calculadoEm: string;             // ISO
+};
+```
+
+---
+
+## 4. Camadas de código (alvo B)
+
+```
 src/
-├── components/
-│   └── Relatorios.tsx                    ← tela principal (tabs)
-├── lib/
-│   └── relatorios/
-│       ├── aggregations.ts               ← funções puras de agregação (testáveis)
-│       ├── exportCsv.ts                  ← serializador CSV (sem lib externa)
-│       ├── exportXlsx.ts                 ← wrapper sobre lib XLSX
-│       └── pdf/
-│           ├── RelatorioVendasPDF.tsx    ← @react-pdf/renderer
-│           ├── RelatorioFinanceiroPDF.tsx
-│           └── shared.ts                 ← estilos/cores reutilizadas do OrcamentoPDF
-└── hooks/
-    └── useRelatorios.ts                  ← seleção de período + memos centralizados
+├── lib/rufolab/
+│   ├── types.ts            # Project, Piece, Template, Segmento, CalcSnapshot
+│   ├── geometry.ts         # PORT do bendy-maker (cálculos puros)
+│   └── pdf/
+│       ├── shared.tsx      # estilos reusáveis (cores empresa, header)
+│       └── PecaTecnicaPDF.tsx
+├── hooks/
+│   ├── useRufoLabProjects.ts   # CRUD via React Query
+│   ├── useRufoLabPieces.ts
+│   └── useRufoLabTemplates.ts
+└── components/rufolab/
+    ├── RufoLab.tsx              # shell com 3 colunas / tabs mobile
+    ├── ProjectsList.tsx
+    ├── PiecesList.tsx
+    ├── PieceEditor.tsx          # PORT do canvas/editor
+    ├── PieceCanvas.tsx          # PORT
+    ├── SegmentList.tsx
+    ├── CalcPanel.tsx
+    ├── TemplatesLibrary.tsx
+    └── PdfDownloadButton.tsx
 ```
 
-## Acesso e navegação
-
-- Nova rota `/relatorios` (registrada em `src/lib/appShellRoutes.ts` e novo case em `Index.tsx`).
-- Novo `Tab` `"relatorios"` em `AppSidebar` (seção Operação, abaixo de Financeiro).
-- Permissão: **mesma do Financeiro** (`canViewFinanceiro` → admin + financeiro). Sem permissão → `AccessDenied`.
-- No mobile, entra na sheet "Mais" do `MobileBottomNav`.
-- Ícone: `BarChart3` ou `FileBarChart` (lucide).
-
-## Telas / Tabs
-
-A página `Relatorios.tsx` tem barra de filtros global (período + intervalo customizado + escopo) e 4 abas:
-
-### Aba 1 — Vendas
-- KPIs: Faturamento (aprovado+executado), Custo conhecido, Lucro bruto, Margem média, Ticket médio, Conversão (aprovados ÷ aprovados+rejeitados).
-- Gráfico mensal Receita vs Custo (12 meses).
-- Tabela: orçamentos do período com colunas Nº · Data · Cliente · Status · Valor · Custo · Lucro · Margem.
-- Quando algum item é `custoIncompleto`, badge "parcial" e KPIs marcados.
-
-### Aba 2 — Clientes (Curva ABC)
-- Lista de clientes ordenada por faturamento no período (somente aprovado+executado).
-- Colunas: Cliente · Nº orçamentos · Faturamento · % do total · Classe (A ≥80% acumulado, B 80–95%, C >95%) · Ticket médio.
-- Top 10 em destaque visual.
-
-### Aba 3 — Serviços
-- Agregação por `nomeServico` somando `valorVenda` e `custoConhecido` dos `itensServico` (do mesmo recorte de aprovado+executado).
-- Colunas: Serviço · Quantidade vendida · Receita · Custo · Lucro · Margem média.
-- Gráfico de barras top 10 serviços por receita.
-
-### Aba 4 — Financeiro (DRE simplificado)
-- Receita executada (orçamentos `executado` no período via `dataExecucao`) + receitas manuais (`lancamentos_financeiros` tipo `receita`).
-- Despesas: somente `lancamentos_financeiros` tipo `despesa`, agrupadas por categoria.
-- Resultado mensal: Receita − Despesas (lança a barra positivo/negativo).
-- Tabela DRE: linhas por categoria, colunas por mês (últimos 6 meses), totalizadores.
-- Faturado vs Recebido no mês (via `dataFaturamento` e `dataPagamento`).
-
-## Filtros globais (topo)
-
-- **Período**: Mês atual · Últimos 3 meses · Ano atual · Personalizado (date range).
-- **Intervalo personalizado**: dois inputs `type="date"` (start/end), só aparecem com "Personalizado".
-- **Cliente** (combobox opcional, filtra abas Vendas/Serviços).
-- Estado dos filtros persistido em `sessionStorage` por usuário, igual ao padrão do Financeiro.
-
-## Exportações
-
-Cada aba terá um botão **"Exportar"** com dropdown:
-- **PDF** — relatório formatado, A4 paisagem, com header da empresa (logo, nome, cor primária, igual ao OrcamentoPDF). Inclui período do recorte, tabela e KPIs.
-- **CSV** — UTF-8 com BOM (Excel BR abre certo), separador `;`, decimal `,`, datas `dd/mm/aaaa`.
-- **XLSX** — uma planilha por seção (Resumo, Detalhe), com formatação numérica e cabeçalho fixo.
-
-Nome do arquivo padrão: `relatorio-{aba}-{empresa-slug}-{aaaa-mm-dd}.{ext}`.
-
-## Dependências novas
-
-Apenas **uma**, leve e estável:
-- `xlsx` (`xlsx@0.18.5`, ~600 KB) — gera XLSX e também CSV. Sem `file-saver` (uso nativo `URL.createObjectURL` + `<a download>`).
-
-PDF e gráficos reutilizam `@react-pdf/renderer` e `recharts` que já estão no projeto. Zero risco de conflito de versões.
-
-## Detalhamento técnico (para a implementação)
-
-### `lib/relatorios/aggregations.ts` — funções puras
-
-Contrato — todas recebem `Orcamento[]` (ou `LancamentoFinanceiro[]`) e `{ start: Date; end: Date }`, retornam objetos imutáveis. Toda lógica de "custo conhecido" centralizada em **um helper** privado:
-
+**Hooks — contrato simples (sem debounce escondido)**:
 ```ts
-// helper único, espelha exatamente Financeiro.tsx hoje
-function knownCost(orc: Orcamento): { value: number; partial: boolean } {
-  const partial = orc.itensServico.some(i => i.custoIncompleto === true);
-  const value = orc.itensServico.reduce((s, i) => 
-    i.custoIncompleto ? s : s + (i.custoConhecido ?? i.custoTotalObra), 0);
-  return { value, partial };
-}
-
-const VALID_FOR_PROFIT = ["aprovado", "executado"] as const;
+// useRufoLabPieces.ts
+export function usePieces(projectId: string | null) { /* useQuery */ }
+export function useCreatePiece() { /* useMutation */ }
+export function useUpdatePiece() { /* useMutation — chamada explícita */ }
+export function useDeletePiece() { /* useMutation */ }
 ```
 
-Funções expostas:
-- `aggregateVendas(orcs, range)` → KPIs + série mensal.
-- `aggregateClientesABC(orcs, range)` → lista classificada A/B/C.
-- `aggregateServicos(orcs, range)` → agregação por nome de serviço.
-- `aggregateDRE(orcs, lancamentos, range)` → receita executada + receitas manuais − despesas por categoria/mês.
-
-Todas essas funções terão **testes unitários** em `src/test/relatorios.test.ts` cobrindo:
-- Recorte de período correto.
-- Item `custoIncompleto` não inflando lucro.
-- Status fora de `aprovado/executado` ignorado.
-- Clientes sem orçamento no período não aparecem.
-- Soma por categoria conferindo com soma total.
-
-### `lib/relatorios/exportCsv.ts`
-
-Sem lib externa. Recebe `{ headers: string[]; rows: (string|number)[][] }`. Escapa aspas, usa `;` separador, `\r\n` quebra, BOM `\uFEFF` no início. Datas e moedas formatadas no caller via `Intl`.
-
-### `lib/relatorios/exportXlsx.ts`
-
-Wrapper fino sobre `xlsx`:
+**Debounce na camada do editor**:
 ```ts
-export function downloadXlsx(filename: string, sheets: { name: string; data: any[][] }[]) {
-  // SheetJS aoa_to_sheet por aba + book_new + writeFile
-}
+// PieceEditor.tsx
+const updatePiece = useUpdatePiece();
+const debouncedSave = useMemo(
+  () => debounce((data) => updatePiece.mutate(data), 600),
+  [updatePiece]
+);
+// chamado a cada mudança de segmento
 ```
 
-### `lib/relatorios/pdf/shared.ts`
+---
 
-Reusa as cores e tipografia do `OrcamentoPDF`:
-- Header com logo+nome (chama `fetchLogoBase64` igual hoje).
-- `corPrimaria`/`corDestaque` da `useEmpresa()`.
-- Título "Relatório de Vendas — Período: dd/mm/aaaa a dd/mm/aaaa".
-- Rodapé com data de emissão.
+## 5. Permissões
 
-### `useRelatorios.ts`
+Adicionar em `useAuth.tsx`:
+```ts
+canUseRufoLab: roles.includes('admin') || roles.includes('vendedor')
+```
+Bloqueio de rota e item de menu condicionados a esse flag. `financeiro` não vê.
 
-Hook único que centraliza:
-- Estado do filtro (período, range custom, cliente).
-- Memos de cada agregação (recalcula só quando `orcamentos`/`lancamentos`/filtros mudam).
-- Persistência em `sessionStorage`.
+---
 
-Isso garante que os 4 export buttons usem **exatamente** o mesmo recorte mostrado na tela. Sem chance de "PDF mostrar número diferente da tela".
+## 6. Integração com o shell
 
-### Mudanças nos arquivos existentes (mínimas)
+- **`AppSidebar`**: novo `Tab = 'rufolab'`, item na seção Operação com ícone `Ruler` ou `Square`, `permission: 'canUseRufoLab'`.
+- **`MobileBottomNav`**: entra no sheet "Mais".
+- **`appShellRoutes.ts`**: rota `/rufolab` (e `/rufolab/:projectId/:pieceId?` para deep link opcional).
+- **`Index.tsx`**: lazy import + case `'rufolab'` no switch + `getHeaderMeta`.
 
-- `src/components/AppSidebar.tsx`: adicionar `Tab` `"relatorios"` no tipo, item no `operationItems` com `permission: "canViewFinanceiro"`.
-- `src/lib/appShellRoutes.ts`: registrar rota `/relatorios`.
-- `src/pages/Index.tsx`: lazy import + case no `content` + entrada em `getHeaderMeta`.
-- `src/components/MobileBottomNav.tsx`: adicionar em `secondaryItems` quando `canViewFinanceiro`.
+---
 
-Nenhum outro arquivo é tocado. **Calcs intactos.**
+## 7. PDF técnico — fluxo client-side
 
-## Riscos endereçados
+1. Editor expõe ref do SVG da peça.
+2. Botão "Baixar PDF técnico" chama helper `svgToPng(svgEl, scale=2)` que:
+   - serializa o SVG (`XMLSerializer`)
+   - desenha em `<canvas>` via `Image` + `drawImage`
+   - retorna `dataURL` PNG
+3. Render `<PecaTecnicaPDF empresa={...} project={...} piece={...} pngDataUrl={...} />` com `@react-pdf/renderer`.
+4. `pdf().toBlob()` → `URL.createObjectURL` → `<a download>`.
 
-| Risco | Mitigação |
-|---|---|
-| Quebrar lógica de cálculo | Módulo só lê. Não importa nada de `calcEngine` nem altera tipos. |
-| Divergência tela vs export | Todos consomem o mesmo `useRelatorios`. |
-| Off-by-one de timezone | Uso obrigatório de `toLocalDateStr` para qualquer data exibida/exportada. |
-| Custo zero "fantasma" inflando margem | Helper `knownCost` único, espelha Financeiro, marca "parcial". |
-| Vazamento entre empresas | Hooks já filtram por RLS + `.eq("empresa_id", ...)` implícito. |
-| Performance com muitos orçamentos | Agregações `useMemo`. PDF/Excel só montados sob demanda no clique do botão. |
-| Lib XLSX pesada na home | `xlsx` carregado via `import()` dinâmico só quando o usuário clica em "Exportar XLSX". |
+Conteúdo: empresa (logo+cor), obra, peça, tipo, medidas dos segmentos, comprimento, quantidade, observações, desenvolvimento (inicial e final se cônica), área, dobras, data emissão.
 
-## Entregáveis
+---
 
-1. Página `Relatorios` acessível por sidebar + mobile (apenas `admin`/`financeiro`).
-2. 4 abas funcionais com KPIs, gráficos e tabelas.
-3. Filtros (período pré-definido, custom, cliente) persistidos.
-4. Export PDF/CSV/XLSX em cada aba, com mesmo recorte da tela.
-5. Suite de testes em `aggregations.ts`.
-6. Zero alteração em código de cálculo, schema, snapshots ou lógica financeira existente.
+## 8. Roteiro de execução em fases
 
-## Fora de escopo (intencional)
+### Fase 0 — Preparação (este repo, sem código ainda)
+- ✅ Plano aprovado e versionado em `.lovable/plan.md`.
+- Validar com você se o alvo da próxima sessão é **A** (continuar isolado) ou **B** (port para sistema principal).
 
-- Agendamento de envio por e-mail (sugestão futura).
-- Comparações YoY/MoM (sugestão futura).
-- Relatórios cruzando retornos de garantia ou visitas (pode entrar em uma v2).
-- Qualquer alteração em RLS, edge functions ou tabelas.
+### Fase 1 — Banco (alvo B, sistema principal)
+- Migration única: 3 tabelas + RLS + triggers + índices.
+- **Não mexe em código ainda.** Aguarda aprovação da migration.
 
+### Fase 2 — Tipos e geometria portados (alvo B)
+- `src/lib/rufolab/types.ts`
+- `src/lib/rufolab/geometry.ts` (port direto do bendy-maker, sem dependências de UI)
+- Testes unitários da geometria em `src/test/rufolab.test.ts`.
+
+### Fase 3 — Hooks de dados (alvo B)
+- `useRufoLabProjects`, `useRufoLabPieces`, `useRufoLabTemplates`.
+- Padrão React Query igual ao resto do projeto. Sem debounce embutido.
+
+### Fase 4 — Shell e navegação (alvo B)
+- `canUseRufoLab` em `useAuth`.
+- Item no `AppSidebar` + `MobileBottomNav` + rota + case no `Index`.
+- Tela `RufoLab.tsx` com layout vazio (3 colunas desktop / tabs mobile).
+
+### Fase 5 — Editor portado (alvo B)
+- `PieceCanvas`, `SegmentList`, `CalcPanel` portados do bendy-maker, ajustados para tokens de design do sistema.
+- Debounce de save **na tela**, não no hook.
+- Cache local opcional (sessionStorage via `useDraft` existente) só para rascunho não-salvo.
+
+### Fase 6 — Templates (alvo B)
+- `TemplatesLibrary`: listar, criar a partir de peça, instanciar nova peça a partir de template.
+
+### Fase 7 — PDF técnico (alvo B)
+- Helper `svgToPng`.
+- `PecaTecnicaPDF` com header da empresa (reusa `fetchLogoBase64`).
+- Botão de download na tela do editor.
+
+### Fase 8 — Refinamentos (alvo B)
+- Mobile polish.
+- Empty states.
+- Loading skeletons.
+- Atalhos de teclado no editor (opcional).
+
+---
+
+## 9. Divisão clara: alvo A vs alvo B
+
+| Item | Alvo A (módulo isolado) | Alvo B (sistema principal) |
+|---|---|---|
+| Editor de canvas | mantém | porta tal como está |
+| Geometria | fonte da verdade do código a portar | recebe port |
+| Persistência | localStorage segue ok | **Supabase obrigatório** |
+| Roteamento | router próprio | integrado em `Index.tsx` |
+| Auth | sem auth ou mock | `useAuth` real + `empresa_id` |
+| PDF | pode ser jsPDF | `@react-pdf/renderer` (padrão do projeto) |
+| Templates | localStorage | tabela `rufolab_templates` por empresa |
+
+**Não fazer no alvo A**: trocar persistência para Supabase, importar `useAuth`, importar `AppSidebar`. Isso é trabalho do alvo B.
+
+**Não fazer no alvo B**: copiar router, copiar shell, copiar persistência localStorage do bendy-maker. Importar só o miolo (geometria + canvas + editor visual).
+
+---
+
+## 10. Fora de escopo (reafirmado)
+
+- Integração com orçamento.
+- Integração com catálogo.
+- Cálculo comercial / preço.
+- Alteração em motor 1/motor 2.
+- Alteração em serviços avulsos.
+- Edge functions.
+- PDF comercial do orçamento.
+- Tabela separada de segmentos.
+- Importar bendy-maker como iframe ou mini-app.
+
+---
+
+## 11. Próxima decisão sua
+
+Antes de eu começar a Fase 1, preciso que você confirme:
+
+**A próxima sessão atua em qual alvo?**
+1. **Alvo B agora** → começo pela migration das 3 tabelas neste repo.
+2. **Alvo A primeiro** → você indica o repo isolado e o que deve evoluir lá antes do port.
+3. **Os dois em paralelo** → defino com você qual peça vai em cada lado.
