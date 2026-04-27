@@ -907,6 +907,142 @@ export type Database = {
           },
         ]
       }
+      rufolab_pieces: {
+        Row: {
+          calc_snapshot: Json
+          comprimento: number
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string
+          project_id: string
+          quantidade: number
+          segmentos: Json
+          tipo_peca: string
+          updated_at: string
+        }
+        Insert: {
+          calc_snapshot?: Json
+          comprimento?: number
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          observacoes?: string
+          project_id: string
+          quantidade?: number
+          segmentos?: Json
+          tipo_peca?: string
+          updated_at?: string
+        }
+        Update: {
+          calc_snapshot?: Json
+          comprimento?: number
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string
+          project_id?: string
+          quantidade?: number
+          segmentos?: Json
+          tipo_peca?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rufolab_pieces_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rufolab_pieces_project_tenant_fk"
+            columns: ["project_id", "empresa_id"]
+            isOneToOne: false
+            referencedRelation: "rufolab_projects"
+            referencedColumns: ["id", "empresa_id"]
+          },
+        ]
+      }
+      rufolab_projects: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          observacoes?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rufolab_projects_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rufolab_templates: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          observacoes: string
+          segmentos: Json
+          tipo_peca: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          observacoes?: string
+          segmentos?: Json
+          tipo_peca?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string
+          segmentos?: Json
+          tipo_peca?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rufolab_templates_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seed_control: {
         Row: {
           empresa_id: string
