@@ -349,11 +349,61 @@ Conteúdo: empresa (logo+cor), obra, peça, tipo, medidas dos segmentos, comprim
 
 ---
 
-## 11. Próxima decisão sua
+## 11. Decisão atual: Alvo A primeiro (aprovado)
 
-Antes de eu começar a Fase 1, preciso que você confirme:
+A migration no sistema principal **não começa agora**. Antes do port, o módulo isolado (Alvo A) precisa estar redondo, portátil e validado. Só depois disso seguimos para o Alvo B começando pela migration Supabase.
 
-**A próxima sessão atua em qual alvo?**
-1. **Alvo B agora** → começo pela migration das 3 tabelas neste repo.
-2. **Alvo A primeiro** → você indica o repo isolado e o que deve evoluir lá antes do port.
-3. **Os dois em paralelo** → defino com você qual peça vai em cada lado.
+### 11.1 Ordem aprovada de execução no Alvo A
+
+1. **Encapsular persistência local atrás de uma camada async**
+   - Criar interface `RufoLabStorage` (`load`, `save`, `list`, `remove`) com assinaturas `Promise`-based.
+   - Implementação atual: adapter sobre `localStorage` (mantém comportamento).
+   - UI passa a depender da interface, nunca de `localStorage` direto.
+   - Critério de port: trocar o adapter por um Supabase adapter no Alvo B sem tocar na UI.
+
+2. **Lazy import da exportação (PDF)**
+   - Mover libs de exportação (jsPDF / canvas helpers) para `import()` dinâmico dentro do handler do botão.
+   - Reduz bundle inicial e isola dependência que será trocada no Alvo B.
+
+3. **Autosave com debounce + flush seguro**
+   - Debounce mora na tela do editor (não no storage).
+   - `flushOnUnmount` e `flushOnBeforeUnload` para não perder edição pendente.
+   - Estado visível de "salvo / salvando / não salvo".
+
+4. **Trocar `confirm()` nativo por dialogs do app**
+   - Substituir todos os `window.confirm` por `AlertDialog` (shadcn) ou equivalente já em uso.
+   - Aplica a: excluir obra, excluir peça, descartar rascunho, sobrescrever template.
+
+5. **Corrigir scroll/navegação mobile**
+   - Garantir que canvas + lista de segmentos não travem o scroll do shell.
+   - Validar viewport pequeno (≤ 375px) sem overflow lateral.
+   - Ajustar áreas de toque (mín. 44px) nos controles do editor.
+
+6. **Ajustar branding/idioma**
+   - Português pt-BR consistente em toda a UI do RufoLab.
+   - Terminologia alinhada ao sistema principal ("obra", "peça", "segmento", "desenvolvimento").
+   - Remover textos/marca residuais do bendy-maker.
+
+7. **Validar com build + testes mínimos do miolo geométrico**
+   - `bun run build` sem erros.
+   - Testes unitários para: desenvolvimento (reto e cônico), área, número de dobras, normalização angular.
+   - Pelo menos 1 caso por função pura de `geometry.ts`.
+
+### 11.2 Critério de liberação para o port (Alvo B)
+
+Só iniciar a migration no sistema principal quando TODOS os itens abaixo estiverem verdadeiros:
+
+- [ ] Módulo isolado estável (sem regressões conhecidas).
+- [ ] UI sem acoplamento direto com `localStorage` (tudo atrás de `RufoLabStorage`).
+- [ ] UX principal polida (autosave, dialogs, mobile, idioma).
+- [ ] Exportação PDF preservada e funcional.
+- [ ] Regressões de cálculo descartadas via testes do miolo geométrico.
+
+### 11.3 O que pertence a cada lado AGORA
+
+- **Alvo A (módulo isolado)**: itens 1–7 acima. Foco total nesta fase.
+- **Alvo B (sistema principal, este repo)**: **nada de código ainda**. O blueprint das seções 2–10 fica congelado como destino, sem migration, sem hook, sem rota. Antes da migration final, revisar a decisão FK composta vs trigger à luz do que aprendermos no Alvo A.
+
+### 11.4 Próxima ação concreta
+
+Aguardando indicação do repo do Alvo A para começar pelo item 1 (encapsular persistência atrás da camada async).
