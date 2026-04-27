@@ -349,61 +349,39 @@ Conteúdo: empresa (logo+cor), obra, peça, tipo, medidas dos segmentos, comprim
 
 ---
 
-## 11. Decisão atual: Alvo A primeiro (aprovado)
+## 11. Decisão final: Alvo B direto (aprovado)
 
-A migration no sistema principal **não começa agora**. Antes do port, o módulo isolado (Alvo A) precisa estar redondo, portátil e validado. Só depois disso seguimos para o Alvo B começando pela migration Supabase.
+A execução vai direto para o **Alvo B (sistema principal — OrçaCalhas)**. O Alvo A **não é etapa obrigatória** e fica apenas como **referência técnica** para portar geometria, editor e canvas.
 
-### 11.1 Ordem aprovada de execução no Alvo A
+Razão: os requisitos que o produto precisa entregar (persistência por empresa, templates por empresa, permissões por papel, integração com o shell atual, PDF técnico no padrão do sistema) só existem no sistema principal. Adiar isso pelo Alvo A seria custo sem retorno.
 
-1. **Encapsular persistência local atrás de uma camada async**
-   - Criar interface `RufoLabStorage` (`load`, `save`, `list`, `remove`) com assinaturas `Promise`-based.
-   - Implementação atual: adapter sobre `localStorage` (mantém comportamento).
-   - UI passa a depender da interface, nunca de `localStorage` direto.
-   - Critério de port: trocar o adapter por um Supabase adapter no Alvo B sem tocar na UI.
+### 11.1 Decisões congeladas
 
-2. **Lazy import da exportação (PDF)**
-   - Mover libs de exportação (jsPDF / canvas helpers) para `import()` dinâmico dentro do handler do botão.
-   - Reduz bundle inicial e isola dependência que será trocada no Alvo B.
+- **FK composta** `(project_id, empresa_id)` entre peça e projeto: **decisão final**, não reabrir.
+- **JSONB** para `segmentos` e `calc_snapshot`: **decisão final**.
+- **Debounce na tela**, não no hook: **decisão final**.
+- **PDF client-side** com `@react-pdf/renderer`: **decisão final**.
+- **Permissões**: `admin` e `vendedor` acessam; `financeiro` não.
+- **Rota única `/rufolab`** na Fase 1; deep link fica para Fase 9.
 
-3. **Autosave com debounce + flush seguro**
-   - Debounce mora na tela do editor (não no storage).
-   - `flushOnUnmount` e `flushOnBeforeUnload` para não perder edição pendente.
-   - Estado visível de "salvo / salvando / não salvo".
+### 11.2 Ordem de execução aprovada (Alvo B)
 
-4. **Trocar `confirm()` nativo por dialogs do app**
-   - Substituir todos os `window.confirm` por `AlertDialog` (shadcn) ou equivalente já em uso.
-   - Aplica a: excluir obra, excluir peça, descartar rascunho, sobrescrever template.
+1. **Fase 1 — Migration** (próxima ação): 3 tabelas + RLS + triggers + índices + FK composta.
+2. **Fase 2 — Tipos e geometria**: `src/lib/rufolab/types.ts` + `geometry.ts` (port puro do bendy-maker, sem React/DOM).
+3. **Fase 3 — Hooks**: `useRufoLabProjects`, `useRufoLabPieces`, `useRufoLabTemplates` (React Query, sem debounce embutido).
+4. **Fase 4 — Shell e permissões**: `canUseRufoLab` em `useAuth`, item no `AppSidebar`, entrada no `MobileBottomNav` (sheet "Mais"), rota em `App.tsx` + `appShellRoutes.ts`, case em `Index.tsx`.
+5. **Fase 5 — Editor**: `PieceCanvas`, `SegmentList`, `CalcPanel` adaptados ao design system (tokens semânticos, shadcn). Debounce de save na tela.
+6. **Fase 6 — Templates**: `TemplatesLibrary` com salvar/instanciar.
+7. **Fase 7 — PDF técnico**: `svgToPng` + `PecaTecnicaPDF` com header da empresa (`fetchLogoBase64`).
+8. **Fase 8 — Refinamentos**: mobile polish, empty states, skeletons.
+9. **Fase 9 — Deep link** (opcional): `/rufolab/:projectId/:pieceId?` via `matchPath`.
 
-5. **Corrigir scroll/navegação mobile**
-   - Garantir que canvas + lista de segmentos não travem o scroll do shell.
-   - Validar viewport pequeno (≤ 375px) sem overflow lateral.
-   - Ajustar áreas de toque (mín. 44px) nos controles do editor.
+### 11.3 Papel do Alvo A daqui pra frente
 
-6. **Ajustar branding/idioma**
-   - Português pt-BR consistente em toda a UI do RufoLab.
-   - Terminologia alinhada ao sistema principal ("obra", "peça", "segmento", "desenvolvimento").
-   - Remover textos/marca residuais do bendy-maker.
+- **Apenas referência técnica de leitura** para portar geometria/canvas/editor.
+- **Não** será evoluído como produto neste projeto.
+- **Não** bloqueia nem condiciona nenhuma fase do Alvo B.
 
-7. **Validar com build + testes mínimos do miolo geométrico**
-   - `bun run build` sem erros.
-   - Testes unitários para: desenvolvimento (reto e cônico), área, número de dobras, normalização angular.
-   - Pelo menos 1 caso por função pura de `geometry.ts`.
+### 11.4 Próxima ação
 
-### 11.2 Critério de liberação para o port (Alvo B)
-
-Só iniciar a migration no sistema principal quando TODOS os itens abaixo estiverem verdadeiros:
-
-- [ ] Módulo isolado estável (sem regressões conhecidas).
-- [ ] UI sem acoplamento direto com `localStorage` (tudo atrás de `RufoLabStorage`).
-- [ ] UX principal polida (autosave, dialogs, mobile, idioma).
-- [ ] Exportação PDF preservada e funcional.
-- [ ] Regressões de cálculo descartadas via testes do miolo geométrico.
-
-### 11.3 O que pertence a cada lado AGORA
-
-- **Alvo A (módulo isolado)**: itens 1–7 acima. Foco total nesta fase.
-- **Alvo B (sistema principal, este repo)**: **nada de código ainda**. O blueprint das seções 2–10 fica congelado como destino, sem migration, sem hook, sem rota. Antes da migration final, revisar a decisão FK composta vs trigger à luz do que aprendermos no Alvo A.
-
-### 11.4 Próxima ação concreta
-
-Aguardando indicação do repo do Alvo A para começar pelo item 1 (encapsular persistência atrás da camada async).
+Disparar a **migration da Fase 1** no Supabase do sistema principal.
