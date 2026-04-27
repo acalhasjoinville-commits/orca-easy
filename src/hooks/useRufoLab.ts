@@ -246,8 +246,7 @@ export function useRufoLabProjects() {
 // ---------- Pieces ----------
 
 export function useRufoLabPieces(projectId: string | null | undefined) {
-  const { profile } = useAuth();
-  const empresaId = profile?.empresaId ?? null;
+  const { empresaId } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -370,8 +369,7 @@ export function useRufoLabPieces(projectId: string | null | undefined) {
 // ---------- Templates ----------
 
 export function useRufoLabTemplates() {
-  const { profile } = useAuth();
-  const empresaId = profile?.empresaId ?? null;
+  const { empresaId } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
