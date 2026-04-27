@@ -126,8 +126,7 @@ export const rufolabKeys = {
 // ---------- Projects ----------
 
 export function useRufoLabProjects() {
-  const { profile } = useAuth();
-  const empresaId = profile?.empresaId ?? null;
+  const { empresaId } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
