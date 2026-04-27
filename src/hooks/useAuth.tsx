@@ -72,6 +72,7 @@ interface AuthContextType {
   canCreateEditBudget: boolean;
   canManageClientes: boolean;
   canManageUsers: boolean;
+  canManageRufoLab: boolean;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -244,6 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     canCreateEditBudget: isAdmin || isVendedor,
     canManageClientes: isAdmin || isVendedor,
     canManageUsers: isAdmin,
+    canManageRufoLab: isAdmin || isVendedor,
     signIn: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error };
