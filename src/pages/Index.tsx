@@ -35,6 +35,7 @@ const ClienteHistorico = lazy(() =>
 );
 const Financeiro = lazy(() => import("@/components/Financeiro").then((module) => ({ default: module.Financeiro })));
 const Relatorios = lazy(() => import("@/components/Relatorios").then((module) => ({ default: module.Relatorios })));
+const RufoLab = lazy(() => import("@/components/RufoLab").then((module) => ({ default: module.RufoLab })));
 const Usuarios = lazy(() => import("@/components/Usuarios").then((module) => ({ default: module.Usuarios })));
 const Agenda = lazy(() => import("@/components/Agenda").then((module) => ({ default: module.Agenda })));
 const Ajuda = lazy(() => import("@/components/Ajuda").then((module) => ({ default: module.Ajuda })));
@@ -109,6 +110,7 @@ const Index = () => {
     canCreateEditBudget,
     canManageClientes,
     canManageUsers,
+    canManageRufoLab,
   } = useAuth();
 
   const [wizardKey, setWizardKey] = useState(0);
@@ -264,6 +266,10 @@ const Index = () => {
     }
     if (newTab === "usuarios" && !canManageUsers) {
       toast.error("Sem permissão para gerenciar usuários.");
+      return;
+    }
+    if (newTab === "rufolab" && !canManageRufoLab) {
+      toast.error("Sem permissão para acessar o RufoLab.");
       return;
     }
 
@@ -446,6 +452,8 @@ const Index = () => {
         return { title: "Financeiro", helper: "Movimentações, leitura dos números e rotina financeira." };
       case "relatorios":
         return { title: "Relatórios", helper: "Vendas, clientes, serviços e DRE com exportações." };
+      case "rufolab":
+        return { title: "RufoLab", helper: "Cálculo técnico de peças, dobras, áreas e desenvolvimento." };
       case "usuarios":
         return { title: "Usuários", helper: "Convites, aprovações e papéis da equipe." };
       case "ajuda":
@@ -552,6 +560,13 @@ const Index = () => {
           <Relatorios />
         ) : (
           <AccessDenied message="Você não tem permissão para acessar Relatórios." />
+        ))}
+
+      {tab === "rufolab" &&
+        (canManageRufoLab ? (
+          <RufoLab />
+        ) : (
+          <AccessDenied message="Você não tem permissão para acessar o RufoLab." />
         ))}
 
       {tab === "usuarios" &&

@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, DollarSign, FileText, HelpCircle, LayoutDashboard, Settings, Users } from "lucide-react";
+import { BarChart3, CalendarDays, DollarSign, FileText, FlaskConical, HelpCircle, LayoutDashboard, Settings, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ export type Tab =
   | "cliente-historico"
   | "financeiro"
   | "relatorios"
+  | "rufolab"
   | "usuarios"
   | "ajuda"
   | "config";
@@ -30,7 +31,8 @@ type Permission =
   | "canManageClientes"
   | "canViewFinanceiro"
   | "canManageSettings"
-  | "canManageUsers";
+  | "canManageUsers"
+  | "canManageRufoLab";
 
 interface NavItem {
   title: string;
@@ -83,6 +85,13 @@ const operationItems: NavItem[] = [
     icon: BarChart3,
     permission: "canViewFinanceiro",
   },
+  {
+    title: "RufoLab",
+    helper: "Cálculo técnico de peças e dobras",
+    tab: "rufolab",
+    icon: FlaskConical,
+    permission: "canManageRufoLab",
+  },
 ];
 
 const adminItems: NavItem[] = [
@@ -117,7 +126,7 @@ function isOrcamentoTab(tab: Tab) {
 }
 
 export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
-  const { canManageAgenda, canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers } = useAuth();
+  const { canManageAgenda, canManageClientes, canViewFinanceiro, canManageSettings, canManageUsers, canManageRufoLab } = useAuth();
 
   const permissionMap: Record<Permission, boolean> = {
     all: true,
@@ -126,6 +135,7 @@ export function AppSidebar({ active, collapsed, onNavigate }: AppSidebarProps) {
     canViewFinanceiro,
     canManageSettings,
     canManageUsers,
+    canManageRufoLab,
   };
 
   const visibleOps = operationItems.filter((item) => permissionMap[item.permission]);

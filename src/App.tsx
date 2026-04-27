@@ -66,6 +66,7 @@ const App = () => (
             <Route path="/clientes/:clienteId" element={<Index />} />
             <Route path="/financeiro" element={<Index />} />
             <Route path="/relatorios" element={<Index />} />
+            <Route path="/rufolab" element={<Index />} />
             <Route path="/usuarios" element={<Index />} />
             <Route path="/ajuda" element={<Index />} />
             <Route path="/configuracoes" element={<Index />} />
