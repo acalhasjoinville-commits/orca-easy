@@ -15,6 +15,7 @@ const PRIMARY_TAB_PATHS: Record<Exclude<Tab, "orcamento-detalhes" | "orcamento-n
   clientes: "/clientes",
   financeiro: "/financeiro",
   relatorios: "/relatorios",
+  rufolab: "/rufolab",
   usuarios: "/usuarios",
   ajuda: "/ajuda",
   config: "/configuracoes",
@@ -115,6 +116,10 @@ export function resolveAppShellRoute(pathname: string): ResolvedAppShellRoute {
 
   if (pathname === "/relatorios") {
     return { tab: "relatorios", orcamentoId: null, isEditingOrcamento: false };
+  }
+
+  if (pathname === "/rufolab") {
+    return { tab: "rufolab", orcamentoId: null, isEditingOrcamento: false };
   }
 
   if (pathname === "/usuarios") {
