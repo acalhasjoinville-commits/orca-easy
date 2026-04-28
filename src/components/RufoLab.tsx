@@ -29,6 +29,7 @@ import { toast } from "sonner";
 
 import { useRufoLabProjects } from "@/hooks/useRufoLab";
 import type { RufoLabProject } from "@/lib/rufolab/types";
+import { ObraDetail } from "./rufolab/ObraDetail";
 
 interface ProjectDialogState {
   open: boolean;
@@ -59,6 +60,16 @@ export function RufoLab() {
   const [search, setSearch] = useState("");
   const [dialog, setDialog] = useState<ProjectDialogState>(EMPTY_DIALOG);
   const [confirmDelete, setConfirmDelete] = useState<RufoLabProject | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+
+  const activeProject = useMemo(
+    () => projects.find((p) => p.id === activeProjectId) ?? null,
+    [projects, activeProjectId],
+  );
+
+  if (activeProject) {
+    return <ObraDetail project={activeProject} onBack={() => setActiveProjectId(null)} />;
+  }
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -222,13 +233,12 @@ export function RufoLab() {
                 )}
 
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-                  <p className="text-[11px] text-muted-foreground">Editor de peças em breve</p>
+                  <p className="text-[11px] text-muted-foreground">Peças e desenhos técnicos</p>
                   <Button
-                    variant="ghost"
+                    variant="default"
                     size="sm"
-                    className="h-8 px-2 text-xs text-muted-foreground"
-                    disabled
-                    title="Disponível em breve"
+                    className="h-8 px-3 text-xs"
+                    onClick={() => setActiveProjectId(project.id)}
                   >
                     Abrir obra
                   </Button>
