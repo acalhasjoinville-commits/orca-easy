@@ -2,8 +2,17 @@
 // Mantém estado local; recalcula snapshot a cada mudança via geometry.ts.
 // Persistência fica a cargo do hook useRufoLabPieces no componente pai.
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, FileDown, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useRufoLabTemplates } from "@/hooks/useRufoLab";
 import { calcularSnapshot } from "@/lib/rufolab/geometry";
 import type {
   RufoLabPiece,
   RufoLabPieceInput,
+  RufoLabTemplate,
   Segmento,
   TipoPeca,
 } from "@/lib/rufolab/types";
