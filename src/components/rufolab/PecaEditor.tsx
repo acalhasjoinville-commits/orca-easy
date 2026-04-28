@@ -125,6 +125,42 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
 
   const podeSalvar = !!nome.trim() && segmentos.length > 0 && !isSaving;
 
+  // ----- Templates -----
+  const { templates, createTemplate } = useRufoLabTemplates();
+  const [saveTplOpen, setSaveTplOpen] = useState(false);
+  const [tplNome, setTplNome] = useState("");
+  const [tplObs, setTplObs] = useState("");
+
+  const aplicarTemplate = (templateId: string) => {
+    const tpl: RufoLabTemplate | undefined = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setTipoPeca(tpl.tipoPeca);
+    setSegmentos(tpl.segmentos.map((s) => ({ ...s, id: crypto.randomUUID() })));
+    toast.success(`Template "${tpl.nome}" aplicado.`);
+  };
+
+  const salvarComoTemplate = async () => {
+    const n = tplNome.trim();
+    if (!n) {
+      toast.error("Informe um nome para o template.");
+      return;
+    }
+    try {
+      await createTemplate.mutateAsync({
+        nome: n,
+        tipoPeca,
+        segmentos,
+        observacoes: tplObs,
+      });
+      toast.success("Template salvo.");
+      setSaveTplOpen(false);
+      setTplNome("");
+      setTplObs("");
+    } catch {
+      // toast exibido pelo hook
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Topo */}
