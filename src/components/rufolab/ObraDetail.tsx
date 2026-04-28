@@ -20,6 +20,7 @@ import type { RufoLabPiece, RufoLabProject } from "@/lib/rufolab/types";
 
 import { PecaCanvas } from "./PecaCanvas";
 import { PecaEditor } from "./PecaEditor";
+import { RufoLabPDFButton } from "./RufoLabPDFButton";
 
 interface ObraDetailProps {
   project: RufoLabProject;
