@@ -391,6 +391,60 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
           })}
         </div>
       </div>
+
+      {/* Modal: salvar como template */}
+      <Dialog open={saveTplOpen} onOpenChange={(open) => (open ? null : setSaveTplOpen(false))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Salvar como template</DialogTitle>
+            <DialogDescription>
+              Templates ficam disponíveis em todas as obras desta empresa para reaproveitar a seção.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="tpl-nome">Nome do template *</Label>
+              <Input
+                id="tpl-nome"
+                value={tplNome}
+                onChange={(e) => setTplNome(e.target.value)}
+                placeholder="Ex.: Rufo lateral 250mm"
+                autoFocus
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tpl-obs">Observações</Label>
+              <Textarea
+                id="tpl-obs"
+                rows={3}
+                value={tplObs}
+                onChange={(e) => setTplObs(e.target.value)}
+                placeholder="Notas sobre uso, material recomendado, etc."
+                maxLength={500}
+              />
+            </div>
+            <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+              {segmentos.length} segmento(s) · tipo {tipoPeca === "conica" ? "cônica" : "reta"}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setSaveTplOpen(false)}
+              disabled={createTemplate.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={salvarComoTemplate} disabled={createTemplate.isPending}>
+              {createTemplate.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
