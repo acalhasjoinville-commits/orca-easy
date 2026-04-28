@@ -174,10 +174,40 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
             {initial ? "Editar peça" : "Nova peça"}
           </h3>
         </div>
-        <Button onClick={handleSubmit} disabled={!podeSalvar}>
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {initial ? "Salvar alterações" : "Criar peça"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {templates.length > 0 && (
+            <Select onValueChange={aplicarTemplate}>
+              <SelectTrigger className="h-9 w-[200px]">
+                <FileDown className="h-4 w-4" />
+                <SelectValue placeholder="Aplicar template" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((tpl) => (
+                  <SelectItem key={tpl.id} value={tpl.id}>
+                    {tpl.nome} · {tpl.tipoPeca === "conica" ? "Cônica" : "Reta"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTplNome(nome.trim() || "");
+              setSaveTplOpen(true);
+            }}
+            disabled={segmentos.length === 0}
+            title="Salvar a seção atual como template reutilizável"
+          >
+            <BookmarkPlus className="h-4 w-4" />
+            Salvar como template
+          </Button>
+          <Button onClick={handleSubmit} disabled={!podeSalvar}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {initial ? "Salvar alterações" : "Criar peça"}
+          </Button>
+        </div>
       </div>
 
       {/* Layout principal: canvas + dados */}
