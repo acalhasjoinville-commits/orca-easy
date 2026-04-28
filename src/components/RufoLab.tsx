@@ -67,10 +67,6 @@ export function RufoLab() {
     [projects, activeProjectId],
   );
 
-  if (activeProject) {
-    return <ObraDetail project={activeProject} onBack={() => setActiveProjectId(null)} />;
-  }
-
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return projects;
@@ -79,6 +75,10 @@ export function RufoLab() {
         project.nome.toLowerCase().includes(term) || project.observacoes.toLowerCase().includes(term),
     );
   }, [projects, search]);
+
+  if (activeProject) {
+    return <ObraDetail project={activeProject} onBack={() => setActiveProjectId(null)} />;
+  }
 
   const openCreate = () => {
     setDialog({ ...EMPTY_DIALOG, open: true, mode: "create" });
