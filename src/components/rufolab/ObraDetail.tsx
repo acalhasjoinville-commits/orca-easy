@@ -20,6 +20,7 @@ import type { RufoLabPiece, RufoLabProject } from "@/lib/rufolab/types";
 
 import { PecaCanvas } from "./PecaCanvas";
 import { PecaEditor } from "./PecaEditor";
+import { RufoLabPDFButton } from "./RufoLabPDFButton";
 
 interface ObraDetailProps {
   project: RufoLabProject;
@@ -86,10 +87,13 @@ export function ObraDetail({ project, onBack }: ObraDetailProps) {
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{project.observacoes}</p>
           )}
         </div>
-        <Button onClick={() => setView({ mode: "create" })} className="self-start sm:self-end">
-          <Plus className="h-4 w-4" />
-          Nova peça
-        </Button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-end">
+          <RufoLabPDFButton project={project} pieces={pieces} size="sm" />
+          <Button onClick={() => setView({ mode: "create" })}>
+            <Plus className="h-4 w-4" />
+            Nova peça
+          </Button>
+        </div>
       </div>
 
       {/* Conteúdo */}
