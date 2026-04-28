@@ -2,8 +2,17 @@
 // Mantém estado local; recalcula snapshot a cada mudança via geometry.ts.
 // Persistência fica a cargo do hook useRufoLabPieces no componente pai.
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, FileDown, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useRufoLabTemplates } from "@/hooks/useRufoLab";
 import { calcularSnapshot } from "@/lib/rufolab/geometry";
 import type {
   RufoLabPiece,
   RufoLabPieceInput,
+  RufoLabTemplate,
   Segmento,
   TipoPeca,
 } from "@/lib/rufolab/types";
@@ -114,6 +125,42 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
 
   const podeSalvar = !!nome.trim() && segmentos.length > 0 && !isSaving;
 
+  // ----- Templates -----
+  const { templates, createTemplate } = useRufoLabTemplates();
+  const [saveTplOpen, setSaveTplOpen] = useState(false);
+  const [tplNome, setTplNome] = useState("");
+  const [tplObs, setTplObs] = useState("");
+
+  const aplicarTemplate = (templateId: string) => {
+    const tpl: RufoLabTemplate | undefined = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setTipoPeca(tpl.tipoPeca);
+    setSegmentos(tpl.segmentos.map((s) => ({ ...s, id: crypto.randomUUID() })));
+    toast.success(`Template "${tpl.nome}" aplicado.`);
+  };
+
+  const salvarComoTemplate = async () => {
+    const n = tplNome.trim();
+    if (!n) {
+      toast.error("Informe um nome para o template.");
+      return;
+    }
+    try {
+      await createTemplate.mutateAsync({
+        nome: n,
+        tipoPeca,
+        segmentos,
+        observacoes: tplObs,
+      });
+      toast.success("Template salvo.");
+      setSaveTplOpen(false);
+      setTplNome("");
+      setTplObs("");
+    } catch {
+      // toast exibido pelo hook
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Topo */}
@@ -127,10 +174,40 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
             {initial ? "Editar peça" : "Nova peça"}
           </h3>
         </div>
-        <Button onClick={handleSubmit} disabled={!podeSalvar}>
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {initial ? "Salvar alterações" : "Criar peça"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {templates.length > 0 && (
+            <Select onValueChange={aplicarTemplate}>
+              <SelectTrigger className="h-9 w-[200px]">
+                <FileDown className="h-4 w-4" />
+                <SelectValue placeholder="Aplicar template" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((tpl) => (
+                  <SelectItem key={tpl.id} value={tpl.id}>
+                    {tpl.nome} · {tpl.tipoPeca === "conica" ? "Cônica" : "Reta"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTplNome(nome.trim() || "");
+              setSaveTplOpen(true);
+            }}
+            disabled={segmentos.length === 0}
+            title="Salvar a seção atual como template reutilizável"
+          >
+            <BookmarkPlus className="h-4 w-4" />
+            Salvar como template
+          </Button>
+          <Button onClick={handleSubmit} disabled={!podeSalvar}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {initial ? "Salvar alterações" : "Criar peça"}
+          </Button>
+        </div>
       </div>
 
       {/* Layout principal: canvas + dados */}
@@ -314,6 +391,60 @@ export function PecaEditor({ projectId, initial, onCancel, onSubmit, isSaving }:
           })}
         </div>
       </div>
+
+      {/* Modal: salvar como template */}
+      <Dialog open={saveTplOpen} onOpenChange={(open) => (open ? null : setSaveTplOpen(false))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Salvar como template</DialogTitle>
+            <DialogDescription>
+              Templates ficam disponíveis em todas as obras desta empresa para reaproveitar a seção.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="tpl-nome">Nome do template *</Label>
+              <Input
+                id="tpl-nome"
+                value={tplNome}
+                onChange={(e) => setTplNome(e.target.value)}
+                placeholder="Ex.: Rufo lateral 250mm"
+                autoFocus
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tpl-obs">Observações</Label>
+              <Textarea
+                id="tpl-obs"
+                rows={3}
+                value={tplObs}
+                onChange={(e) => setTplObs(e.target.value)}
+                placeholder="Notas sobre uso, material recomendado, etc."
+                maxLength={500}
+              />
+            </div>
+            <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+              {segmentos.length} segmento(s) · tipo {tipoPeca === "conica" ? "cônica" : "reta"}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setSaveTplOpen(false)}
+              disabled={createTemplate.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={salvarComoTemplate} disabled={createTemplate.isPending}>
+              {createTemplate.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
